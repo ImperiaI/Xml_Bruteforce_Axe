@@ -1,0 +1,161 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{BDF7A0EC-2F93-493C-9CA9-A43CC1C90B9C}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Log_Compactor</RootNamespace>
+    <AssemblyName>Log_Compactor</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Resources\Button_Jutsu.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Caution_Window.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Caution_Window.designer.cs">
+      <DependentUpon>Caution_Window.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Window.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Window.Designer.cs">
+      <DependentUpon>Window.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="Caution_Window.resx">
+      <DependentUpon>Caution_Window.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
+    </EmbeddedResource>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
+    </Compile>
+    <EmbeddedResource Include="Window.resx">
+      <DependentUpon>Window.cs</DependentUpon>
+    </EmbeddedResource>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Shadow_Clone_01.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Shadow_Clone_02.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Jutsu.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Excluded_Lines.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_File.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_File_Lit.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Run.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Run_Lit.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Rasengan_01.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Settings.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Settings_Lit.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Refresh.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Refresh_Lit.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Compacted_01.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Compacted_02.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Compacted_03.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Compacted_04.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Starting_01.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Logs.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Logs_Lit.png" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

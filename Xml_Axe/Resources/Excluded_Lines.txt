@@ -1,0 +1,25 @@
+// I am a Comment # too
+CRC:
+Program:
+00 Root
+Console Command
+SteamClass
+MegaFile
+DefaultLangID
+alD3dEffect::Load
+Supported language
+Creating cursors
+Creating game objects
+Creating SFXEvents
+Creating new
+Created new
+Adding file
+xmlParseFile(
+Parsing found map
+Added player
+towards
+can fire
+firepower
+is on team
+Frame Advance to
+WM_IME_SETCONTEXT
