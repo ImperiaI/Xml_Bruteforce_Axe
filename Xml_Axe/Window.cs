@@ -283,21 +283,28 @@ namespace Log_Compactor
                 string The_Settings = Properties.Settings.Default.Tags;
 
 
+                // List_View_Info  string.Join("\n", Changed_Xmls)
+
                 // if (The_Settings.Contains("Show_Files_That_Would_Change = true") | The_Settings.Contains("Show_Files_That_Would_Change=true"))
                 if (Match_Without_Emptyspace(The_Settings, "Show_Files_That_Would_Change = true") & Combo_Box_Entity_Name.Text != "Multi")
                 {
                     Warn_User = false;
-                    Temporal_B = Slice(false); // Don't apply any changes
-                    Line_Count = (Temporal_B.Split('\n').Count() * 30) + 160;
+                    //Temporal_B = Slice(false); // Don't apply any changes
+                    // Line_Count = (Temporal_B.Split('\n').Count() * 30) + 160;
+                    Line_Count = (10 * 30) + 160;
                     if (Line_Count > 800) { Line_Count = 800; }
 
-                    iDialogue(560, Line_Count, "Yes", "Cancel", "false", "\nAre you sure you wish to apply changes to:\n\n" + Temporal_B);
-                    if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
+                   
+                    iDialogue(560, Line_Count, "Yes", "Cancel", "Ignore", "Are you sure you wish to apply changes to:", Slice(false));
+                 
+  
+                    if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }          
                 }
 
+               
+                Slice(true); // This line does the actual Job!
 
-                Temporal_B = Slice(true); // This line does the actual Job!
-
+                return;
                 if (Temporal_B != "" & Warn_User & Combo_Box_Entity_Name.Text != "Multi" 
                     & Match_Without_Emptyspace(The_Settings, "Show_Changed_Files = true"))
                 {
@@ -388,7 +395,12 @@ namespace Log_Compactor
         }
 
 
-        private string Slice(bool Apply_Changes = true)
+        
+        //-----------------------------------------------------------------------------
+        // Main Function
+        //-----------------------------------------------------------------------------
+      
+        private List<string> Slice(bool Apply_Changes = true)
         { 
             //MessageBox.Show(Properties.Settings.Default.Xml_Directory);
             //MessageBox.Show(Properties.Settings.Default.Mod_Directory);
@@ -402,15 +414,29 @@ namespace Log_Compactor
             XElement Selected_Instance = null;
             IEnumerable<XElement> Instances = null;
             List <string> Changed_Xmls = new List<string>();
-
+            List<string> File_Collection = null;
 
             
 
             if (!Directory.Exists(Properties.Settings.Default.Xml_Directory))
-            { MessageBox.Show("Can't find the Xml Directory."); return ""; }
+            { MessageBox.Show("Can't find the Xml Directory."); return null; }
 
 
-            foreach (var Xml in Get_Xmls())
+
+            if (Apply_Changes) 
+            {
+                // Caution_Window Caution = (Caution_Window)Application.OpenForms["Caution"]; // Caution_Window();
+                foreach (string Entry in Caution_Window.Passed_Table.Content)
+                { if (Entry != "" & Entry != null) { File_Collection.Add(Entry); } }
+
+                if (File_Collection == null) { return null; }
+                iConsole(560, 600, string.Join("\n", File_Collection)); 
+            }
+            else { File_Collection = Get_Xmls(); }
+
+
+
+            foreach (var Xml in File_Collection)
             {   try
                 {
                     Selected_Xml = Xml;
@@ -485,13 +511,13 @@ namespace Log_Compactor
                         }
                     }
 
-                    Xml_File.Save(Selected_Xml); // MessageBox.Show("Saving to " + Xml);
-                    if (Entity_Name == "Multi") { return string.Join("\n", Changed_Xmls); } // Exiting after the first (and only) Xml
+                    if (Apply_Changes) { Xml_File.Save(Selected_Xml); } // MessageBox.Show("Saving to " + Xml); }
+                    if (Entity_Name == "Multi") { return Changed_Xmls; } // Exiting after the first (and only) Xml
       
                 } catch {}
             }
 
-            return string.Join("\n", Changed_Xmls);      
+            return Changed_Xmls;      
         }
 
         //===========================//
@@ -552,15 +578,6 @@ namespace Log_Compactor
 
         private void Button_Reset_Blacklist_MouseLeave(object sender, EventArgs e)
         { Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Refresh); }
-
-
-        //-----------------------------------------------------------------------------
-        // Main Function
-        //-----------------------------------------------------------------------------
-        private void Bruteforce_Slice()
-        {
-           
-        }
 
       
 
@@ -947,7 +964,7 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
 
         //===========================//
 
-        public void iDialogue(int Window_Size_X, int Window_Size_Y, string Button_A_Text, string Button_B_Text, string Button_C_Text, string Text)
+        public void iDialogue(int Window_Size_X, int Window_Size_Y, string Button_A_Text, string Button_B_Text, string Button_C_Text, string Text, List<string> The_List = null)
         {
             //========== Displaying Error Messages to User   
             // Innitiating new Form
@@ -990,12 +1007,27 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
                 Display.Button_Caution_Box_3.Location = new Point(220, Display.Size.Height - 96);
             }
 
-            // Display.Text_Box_Caution_Window.Text = Text;
 
-            List<string> New_Text = new List<string>();
-            foreach (string Line in Text.Split('\n'))
-            { New_Text.Add("      " + Line); }
-            Display.Text_Box_Caution_Window.Text = string.Join("\n", New_Text);
+            if (The_List == null)
+            { 
+                // Display.Text_Box_Caution_Window.Text = Text;
+                List<string> New_Text = new List<string>();
+                foreach (string Line in Text.Split('\n'))
+                { New_Text.Add("      " + Line); }
+                Display.Text_Box_Caution_Window.Text = string.Join("\n", New_Text);
+            }
+            else
+            {
+                Display.List_Exclusion_Mode = true;
+                Display.List_View_Info.Visible = true;
+                Display.List_View_Info.Items.Add(Text); // Text serves as Header here
+                Display.List_View_Info.Items.Add("");
+                Display.List_View_Info.Items.Add("");
+
+                foreach (string Entry in The_List)
+                { Display.List_View_Info.Items.Add(Entry); }
+            }
+
 
             Display.ShowDialog(this);
         }

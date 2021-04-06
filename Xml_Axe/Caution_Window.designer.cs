@@ -33,6 +33,8 @@
             this.Button_Caution_Box_2 = new System.Windows.Forms.Button();
             this.Button_Caution_Box_1 = new System.Windows.Forms.Button();
             this.Button_Caution_Box_3 = new System.Windows.Forms.Button();
+            this.List_View_Info = new System.Windows.Forms.ListView();
+            this.Columns = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.SuspendLayout();
             // 
             // Text_Box_Caution_Window
@@ -92,6 +94,27 @@
             this.Button_Caution_Box_3.Visible = false;
             this.Button_Caution_Box_3.Click += new System.EventHandler(this.Button_Caution_Box_3_Click);
             // 
+            // List_View_Info
+            // 
+            this.List_View_Info.BackColor = System.Drawing.SystemColors.WindowFrame;
+            this.List_View_Info.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.Columns});
+            this.List_View_Info.Font = new System.Drawing.Font("Georgia", 12F);
+            this.List_View_Info.ForeColor = System.Drawing.Color.White;
+            this.List_View_Info.FullRowSelect = true;
+            this.List_View_Info.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
+            this.List_View_Info.Location = new System.Drawing.Point(-5, -5);
+            this.List_View_Info.Name = "List_View_Info";
+            this.List_View_Info.Size = new System.Drawing.Size(510, 320);
+            this.List_View_Info.TabIndex = 99;
+            this.List_View_Info.UseCompatibleStateImageBehavior = false;
+            this.List_View_Info.View = System.Windows.Forms.View.Details;
+            this.List_View_Info.Visible = false;
+            // 
+            // Columns
+            // 
+            this.Columns.Width = 502;
+            // 
             // Caution_Window
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -100,6 +123,7 @@
             this.Controls.Add(this.Button_Caution_Box_3);
             this.Controls.Add(this.Button_Caution_Box_1);
             this.Controls.Add(this.Button_Caution_Box_2);
+            this.Controls.Add(this.List_View_Info);
             this.Controls.Add(this.Text_Box_Caution_Window);
             this.Font = new System.Drawing.Font("Georgia", 10F);
             this.Margin = new System.Windows.Forms.Padding(4);
@@ -110,6 +134,7 @@
             this.Text = "Caution";
             this.TopMost = true;
             this.Load += new System.EventHandler(this.Caution_Window_Load);
+            this.Resize += new System.EventHandler(this.Caution_Window_Resize);
             this.ResumeLayout(false);
 
         }
@@ -120,6 +145,8 @@
         public System.Windows.Forms.Button Button_Caution_Box_2;
         public System.Windows.Forms.Button Button_Caution_Box_1;
         public System.Windows.Forms.Button Button_Caution_Box_3;
+        private System.Windows.Forms.ColumnHeader Columns;
+        public System.Windows.Forms.ListView List_View_Info;
 
     }
 }
