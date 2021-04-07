@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -43,6 +42,8 @@ namespace Log_Compactor
         int Scale_Factor = 10;
         string Tag_List = "";
         string Temporal_A, Temporal_B = "";
+        public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
+        public List<string> File_Collection = new List<string>();
         string[] Tag_Info;
 
         private void Window_Load(object sender, EventArgs e)
@@ -190,7 +191,8 @@ namespace Log_Compactor
                 if (!Regex.IsMatch(Temporal_A, "(?i).*?" + "xml$")) { Temporal_A = Path.GetDirectoryName(Temporal_A); }
                 else if (Regex.IsMatch(Temporal_A, "(?i).*?" + "data$"))
                 {
-                    Properties.Settings.Default.Xml_Directory = Temporal_A + @"\xml";                 
+                    Xml_Directory = Temporal_A + @"\xml\"; // Updating 
+                    Properties.Settings.Default.Xml_Directory = Temporal_A + @"\xml\";                 
                     // Leaping back for a directy, to get the name of the Modpath
                     Properties.Settings.Default.Mod_Directory = Path.GetDirectoryName(Temporal_A); ;
 
@@ -198,9 +200,11 @@ namespace Log_Compactor
                     break;
                 }
 
-                else //Until we goot to the Xml directory
+                else //Until we got to the Xml directory
                 {
-                    Properties.Settings.Default.Xml_Directory = Temporal_A;
+                    Xml_Directory = Temporal_A + @"\"; // Updating 
+                    Properties.Settings.Default.Xml_Directory = Temporal_A + @"\";
+
 
                     // Leaping back by 2 directoies, to get the name of the Modpath
                     Properties.Settings.Default.Mod_Directory = Path.GetDirectoryName(Path.GetDirectoryName(Temporal_A)); ;
@@ -286,7 +290,7 @@ namespace Log_Compactor
                 // List_View_Info  string.Join("\n", Changed_Xmls)
 
                 // if (The_Settings.Contains("Show_Files_That_Would_Change = true") | The_Settings.Contains("Show_Files_That_Would_Change=true"))
-                if (Match_Without_Emptyspace(The_Settings, "Show_Files_That_Would_Change = true") & Combo_Box_Entity_Name.Text != "Multi")
+                if (Match_Without_Emptyspace(The_Settings, "Show_Files_That_Would_Change = true") & !Is_In_Selected_Xml(Combo_Box_Entity_Name.Text))
                 {
                     Warn_User = false;
                     //Temporal_B = Slice(false); // Don't apply any changes
@@ -305,7 +309,7 @@ namespace Log_Compactor
                 Slice(true); // This line does the actual Job!
 
                 return;
-                if (Temporal_B != "" & Warn_User & Combo_Box_Entity_Name.Text != "Multi" 
+                if (Temporal_B != "" & Warn_User & !Is_In_Selected_Xml(Combo_Box_Entity_Name.Text) 
                     & Match_Without_Emptyspace(The_Settings, "Show_Changed_Files = true"))
                 {
                     Line_Count = (Temporal_B.Split('\n').Count() * 30) + 90;
@@ -406,33 +410,28 @@ namespace Log_Compactor
             //MessageBox.Show(Properties.Settings.Default.Mod_Directory);
             int Changed_Entities = 0;
 
-            string Selected_Xml = "";           
+            string Selected_Xml = "";
+            string Xml_Directory = Properties.Settings.Default.Xml_Directory;
             string Entity_Name = Wash_String(Combo_Box_Entity_Name.Text);
             string Selected_Tag = Regex.Replace(Combo_Box_Tag_Name.Text, "[\n\r\t </>]", ""); // Also removing </> tag values
             string Selected_Type = Wash_String(Combo_Box_Type_Filter.Text);
 
-            XElement Selected_Instance = null;
+            // XElement Selected_Instance = null;
             IEnumerable<XElement> Instances = null;
             List <string> Changed_Xmls = new List<string>();
-            List<string> File_Collection = null;
 
-            
 
-            if (!Directory.Exists(Properties.Settings.Default.Xml_Directory))
+
+
+            if (!Directory.Exists(Xml_Directory))
             { MessageBox.Show("Can't find the Xml Directory."); return null; }
 
 
 
-            if (Apply_Changes) 
-            {
-                // Caution_Window Caution = (Caution_Window)Application.OpenForms["Caution"]; // Caution_Window();
-                foreach (string Entry in Caution_Window.Passed_Table.Content)
-                { if (Entry != "" & Entry != null) { File_Collection.Add(Entry); } }
-
-                if (File_Collection == null) { return null; }
-                iConsole(560, 600, string.Join("\n", File_Collection)); 
-            }
-            else { File_Collection = Get_Xmls(); }
+            if (Apply_Changes) // File_Collection is a global variable, feeded from the remaining filenames in the Caution_Window 
+            {   if (File_Collection == null | File_Collection.Count == 0) { File_Collection = Get_Xmls(); } // Failsafe
+                // iConsole(560, 600, Xml_Directory + string.Join("\n", File_Collection)); // return null; // Debug Code
+            } else { File_Collection = Get_Xmls(); }
 
 
 
@@ -440,11 +439,14 @@ namespace Log_Compactor
             {   try
                 {
                     Selected_Xml = Xml;
+                    if (Apply_Changes) { Selected_Xml = Properties.Settings.Default.Last_File; iConsole(560, 600, Selected_Xml); }
+         
+           
                     XDocument Xml_File = XDocument.Load(Selected_Xml, LoadOptions.PreserveWhitespace);
-
+                    
                     // ===================== Opening Xml File =====================
 
-                    if (Entity_Name == "Multi") // Select Multiple by Name
+                    if (Is_In_Selected_Xml(Entity_Name)) // Select Multiple by Name
                     {
                         Selected_Xml = Properties.Settings.Default.Last_File; // Overwride what ever xml this loop selected before
                         Xml_File = XDocument.Load(Selected_Xml, LoadOptions.PreserveWhitespace);
@@ -494,7 +496,7 @@ namespace Log_Compactor
 
                                 if (Instance.Descendants(Selected_Tag).Any()) // Set the new tag value(s)
                                 {
-                                    Temporal_A = Selected_Xml.Replace(Properties.Settings.Default.Xml_Directory + @"\", ""); // Removing Path
+                                    Temporal_A = Selected_Xml.Replace(Xml_Directory, ""); // Removing Path
                                     if (!Changed_Xmls.Contains(Temporal_A))
                                     { Changed_Xmls.Add(Temporal_A); }
 
@@ -512,11 +514,12 @@ namespace Log_Compactor
                     }
 
                     if (Apply_Changes) { Xml_File.Save(Selected_Xml); } // MessageBox.Show("Saving to " + Xml); }
-                    if (Entity_Name == "Multi") { return Changed_Xmls; } // Exiting after the first (and only) Xml
+                    if (Is_In_Selected_Xml(Entity_Name)) { return Changed_Xmls; } // Exiting after the first (and only) Xml File.
       
                 } catch {}
             }
 
+            File_Collection = new List<string>(); // Clearing for the next time
             return Changed_Xmls;      
         }
 
@@ -526,6 +529,13 @@ namespace Log_Compactor
         { return Regex.Replace(The_String, "[\n\r\t ]", ""); }
 
 
+        //===========================//
+        public bool Is_In_Selected_Xml(string Entry) 
+        {   if (Entry == "Multi") { return true; } 
+            else if (List_View_Matches(List_View_Selection, Entry)) { return true; }
+            return false;
+        }
+      
         //===========================//
         private void Button_Toggle_Settings_Click(object sender, EventArgs e)
         {
@@ -638,8 +648,6 @@ namespace Log_Compactor
         //===========================//
         public Bitmap Get_Start_Image()
         {        
-            Bitmap Result = null;
-
             if (Properties.Settings.Default.Star_Wars_Theme == false)
             {  return Properties.Resources.Shadow_Clone_01; }
             else {  return Properties.Resources.Starting_01; }
@@ -1035,8 +1043,7 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
         //===========================//
         public List<string> Get_Xmls()
         {
-            List<string> All_Xmls = new List<string>();
-            string Xml_Directory = Properties.Settings.Default.Xml_Directory;
+            List<string> All_Xmls = new List<string>();          
             string Error = "Please dragg and drop any target Xml, \nor the Xml directory of your mod into the Dropzone.";
 
             if (Xml_Directory == "" | Xml_Directory == null)
