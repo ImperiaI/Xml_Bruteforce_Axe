@@ -290,7 +290,7 @@ namespace Log_Compactor
                 // List_View_Info  string.Join("\n", Changed_Xmls)
 
                 // if (The_Settings.Contains("Show_Files_That_Would_Change = true") | The_Settings.Contains("Show_Files_That_Would_Change=true"))
-                if (Match_Without_Emptyspace(The_Settings, "Show_Files_That_Would_Change = true") & Combo_Box_Entity_Name.Text != "Multi")
+                if (Match_Without_Emptyspace(The_Settings, "Show_Files_That_Would_Change = true") & !Is_In_Selected_Xml(Combo_Box_Entity_Name.Text))
                 {
                     Warn_User = false;
                     //Temporal_B = Slice(false); // Don't apply any changes
@@ -309,7 +309,7 @@ namespace Log_Compactor
                 Slice(true); // This line does the actual Job!
 
                 return;
-                if (Temporal_B != "" & Warn_User & Combo_Box_Entity_Name.Text != "Multi" 
+                if (Temporal_B != "" & Warn_User & !Is_In_Selected_Xml(Combo_Box_Entity_Name.Text) 
                     & Match_Without_Emptyspace(The_Settings, "Show_Changed_Files = true"))
                 {
                     Line_Count = (Temporal_B.Split('\n').Count() * 30) + 90;
@@ -446,7 +446,7 @@ namespace Log_Compactor
                     
                     // ===================== Opening Xml File =====================
 
-                    if (Entity_Name == "Multi") // Select Multiple by Name
+                    if (Is_In_Selected_Xml(Entity_Name)) // Select Multiple by Name
                     {
                         Selected_Xml = Properties.Settings.Default.Last_File; // Overwride what ever xml this loop selected before
                         Xml_File = XDocument.Load(Selected_Xml, LoadOptions.PreserveWhitespace);
@@ -514,7 +514,7 @@ namespace Log_Compactor
                     }
 
                     if (Apply_Changes) { Xml_File.Save(Selected_Xml); } // MessageBox.Show("Saving to " + Xml); }
-                    if (Entity_Name == "Multi") { return Changed_Xmls; } // Exiting after the first (and only) Xml File.
+                    if (Is_In_Selected_Xml(Entity_Name)) { return Changed_Xmls; } // Exiting after the first (and only) Xml File.
       
                 } catch {}
             }
@@ -529,6 +529,13 @@ namespace Log_Compactor
         { return Regex.Replace(The_String, "[\n\r\t ]", ""); }
 
 
+        //===========================//
+        public bool Is_In_Selected_Xml(string Entry) 
+        {   if (Entry == "Multi") { return true; } 
+            else if (List_View_Matches(List_View_Selection, Entry)) { return true; }
+            return false;
+        }
+      
         //===========================//
         private void Button_Toggle_Settings_Click(object sender, EventArgs e)
         {
@@ -641,8 +648,6 @@ namespace Log_Compactor
         //===========================//
         public Bitmap Get_Start_Image()
         {        
-            Bitmap Result = null;
-
             if (Properties.Settings.Default.Star_Wars_Theme == false)
             {  return Properties.Resources.Shadow_Clone_01; }
             else {  return Properties.Resources.Starting_01; }
