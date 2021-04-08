@@ -68,6 +68,7 @@
             this.Drop_Zone.Size = new System.Drawing.Size(430, 190);
             this.Drop_Zone.TabIndex = 1;
             this.Drop_Zone.TabStop = false;
+            this.Drop_Zone.Click += new System.EventHandler(this.Drop_Zone_Click);
             this.Drop_Zone.DragDrop += new System.Windows.Forms.DragEventHandler(this.Drop_Zone_DragDrop);
             this.Drop_Zone.DragEnter += new System.Windows.Forms.DragEventHandler(this.Drop_Zone_DragEnter);
             this.Drop_Zone.DragOver += new System.Windows.Forms.DragEventHandler(this.Drop_Zone_DragOver);
@@ -199,6 +200,7 @@
             "Planet",
             "Faction",
             "HardPoint",
+            "Projectile",
             "",
             "StarBase",
             "SpaceBuildable",
@@ -287,6 +289,7 @@
             this.Text_Box_Description.Size = new System.Drawing.Size(394, 164);
             this.Text_Box_Description.TabIndex = 29;
             this.Text_Box_Description.Text = "";
+            this.Text_Box_Description.Click += new System.EventHandler(this.Text_Box_Description_Click);
             // 
             // Check_Box_All_Occurances
             // 
@@ -341,7 +344,6 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.ClientSize = new System.Drawing.Size(428, 532);
-            this.Controls.Add(this.Text_Box_Tags);
             this.Controls.Add(this.Text_Box_Description);
             this.Controls.Add(this.Button_Run_Game);
             this.Controls.Add(this.List_View_Selection);
@@ -361,6 +363,7 @@
             this.Controls.Add(this.Track_Bar_Tag_Value);
             this.Controls.Add(this.Text_Box_Original_Path);
             this.Controls.Add(this.Drop_Zone);
+            this.Controls.Add(this.Text_Box_Tags);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximumSize = new System.Drawing.Size(444, 570);
             this.MinimumSize = new System.Drawing.Size(444, 570);

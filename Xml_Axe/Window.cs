@@ -50,6 +50,7 @@ namespace Log_Compactor
         {
             Drop_Zone.AllowDrop = true;
             List_View_Selection.AllowDrop = true;
+            Text_Box_Description.AllowDrop = true;
             
 
             Set_Resource_Button(Drop_Zone, Get_Start_Image());
@@ -121,8 +122,17 @@ namespace Log_Compactor
         { e.Effect = DragDropEffects.Move; }
 
 
+        private void Drop_Zone_Click(object sender, EventArgs e)
+        { Text_Box_Description.Visible = false; } // Hiding
 
 
+
+
+        private void Text_Box_Description_Click(object sender, EventArgs e)
+        {
+            Text_Box_Description.Text = "";
+            Text_Box_Description.Visible = false;
+        }
 
         //===========================// 
 
@@ -214,7 +224,16 @@ namespace Log_Compactor
                 }
             }
 
+
+            Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit);
             Set_Checker(List_View_Selection);
+
+            if (Text_Box_Description.Visible) // Hide
+            {
+                Text_Box_Description.Text = "";
+                Text_Box_Description.Visible = false;
+            }
+
          
             Properties.Settings.Default.Save();
         }
@@ -260,9 +279,15 @@ namespace Log_Compactor
 
         //===========================//
         private void Button_Start_Click(object sender, EventArgs e)
-        {
-            if (List_View_Selection.Visible) { List_View_Selection.Visible = false; }
-            else { Load_Xml_Content(Properties.Settings.Default.Last_File); } // Auto toggles to visible          
+        {   if (List_View_Selection.Visible) { List_View_Selection.Visible = false; }
+            else 
+            {   Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible 
+             
+                if (Text_Box_Description.Visible)
+                {   Text_Box_Description.Text = "";
+                    Text_Box_Description.Visible = false;
+                }
+            }                            
         }
 
         private void Button_Start_MouseHover(object sender, EventArgs e)
@@ -280,44 +305,38 @@ namespace Log_Compactor
 
         private void Button_Run_Game_Click(object sender, EventArgs e)
         {
-            if (Combo_Box_Tag_Name.Text != "")
+            if (Combo_Box_Tag_Name.Text == "") { return; }
+            
+            int Line_Count = 0;
+            bool Warn_User = true;
+            string The_Settings = Properties.Settings.Default.Tags;
+            List<string> Related_Xmls = new List<string>();
+
+
+            // if (The_Settings.Contains("Show_Files_That_Would_Change = true") | The_Settings.Contains("Show_Files_That_Would_Change=true"))
+            if (Match_Without_Emptyspace(The_Settings, "Show_Files_That_Would_Change = true") & !In_Selected_Xml(Combo_Box_Entity_Name.Text))
             {
-                int Line_Count = 0;
-                bool Warn_User = true;
-                string The_Settings = Properties.Settings.Default.Tags;
+                Warn_User = false;                  
+                Related_Xmls = Slice(false); // Means don't apply any changes
+                Line_Count = (Related_Xmls.Count() * 30) + 160;
+                if (Line_Count > 800) { Line_Count = 800; }
 
-
-                // List_View_Info  string.Join("\n", Changed_Xmls)
-
-                // if (The_Settings.Contains("Show_Files_That_Would_Change = true") | The_Settings.Contains("Show_Files_That_Would_Change=true"))
-                if (Match_Without_Emptyspace(The_Settings, "Show_Files_That_Would_Change = true") & !Is_In_Selected_Xml(Combo_Box_Entity_Name.Text))
-                {
-                    Warn_User = false;
-                    //Temporal_B = Slice(false); // Don't apply any changes
-                    // Line_Count = (Temporal_B.Split('\n').Count() * 30) + 160;
-                    Line_Count = (10 * 30) + 160;
-                    if (Line_Count > 800) { Line_Count = 800; }
-
-                   
-                    iDialogue(560, Line_Count, "Yes", "Cancel", "Ignore", "Are you sure you wish to apply changes to:", Slice(false));
+                iDialogue(580, Line_Count, "Yes", "Cancel", "Ignore", "Are you sure you wish to apply changes to:", Related_Xmls);
                  
   
-                    if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }          
-                }
-
-               
-                Slice(true); // This line does the actual Job!
-
-                return;
-                if (Temporal_B != "" & Warn_User & !Is_In_Selected_Xml(Combo_Box_Entity_Name.Text) 
-                    & Match_Without_Emptyspace(The_Settings, "Show_Changed_Files = true"))
-                {
-                    Line_Count = (Temporal_B.Split('\n').Count() * 30) + 90;
-                    if (Line_Count > 800) { Line_Count = 800; }
-                    iConsole(560, Line_Count, "\nApplied Changes to the following files: \n\n" + Temporal_B);
-                }
+                if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }          
             }
 
+
+            Related_Xmls = Slice(true); // This line does the actual Job!
+
+            if (Related_Xmls.Count() > 0 & Warn_User & !In_Selected_Xml(Combo_Box_Entity_Name.Text) 
+              & Match_Without_Emptyspace(The_Settings, "Show_Changed_Files = true"))
+            {
+                Line_Count = (Related_Xmls.Count() * 30) + 90;
+                if (Line_Count > 800) { Line_Count = 800; }
+                iConsole(560, Line_Count, "\nApplied Changes to the following files: \n\n" + Temporal_B);
+            }         
         }
 
         private void Button_Run_Game_MouseHover(object sender, EventArgs e)
@@ -422,7 +441,7 @@ namespace Log_Compactor
 
 
 
-
+            
             if (!Directory.Exists(Xml_Directory))
             { MessageBox.Show("Can't find the Xml Directory."); return null; }
 
@@ -438,15 +457,12 @@ namespace Log_Compactor
             foreach (var Xml in File_Collection)
             {   try
                 {
-                    Selected_Xml = Xml;
-                    if (Apply_Changes) { Selected_Xml = Properties.Settings.Default.Last_File; iConsole(560, 600, Selected_Xml); }
-         
-           
+                    Selected_Xml = Xml;      
                     XDocument Xml_File = XDocument.Load(Selected_Xml, LoadOptions.PreserveWhitespace);
                     
                     // ===================== Opening Xml File =====================
 
-                    if (Is_In_Selected_Xml(Entity_Name)) // Select Multiple by Name
+                    if (In_Selected_Xml(Entity_Name)) // Select Multiple by Name
                     {
                         Selected_Xml = Properties.Settings.Default.Last_File; // Overwride what ever xml this loop selected before
                         Xml_File = XDocument.Load(Selected_Xml, LoadOptions.PreserveWhitespace);
@@ -514,7 +530,7 @@ namespace Log_Compactor
                     }
 
                     if (Apply_Changes) { Xml_File.Save(Selected_Xml); } // MessageBox.Show("Saving to " + Xml); }
-                    if (Is_In_Selected_Xml(Entity_Name)) { return Changed_Xmls; } // Exiting after the first (and only) Xml File.
+                    if (In_Selected_Xml(Entity_Name)) { return Changed_Xmls; } // Exiting after the first (and only) Xml File.
       
                 } catch {}
             }
@@ -530,7 +546,7 @@ namespace Log_Compactor
 
 
         //===========================//
-        public bool Is_In_Selected_Xml(string Entry) 
+        public bool In_Selected_Xml(string Entry) 
         {   if (Entry == "Multi") { return true; } 
             else if (List_View_Matches(List_View_Selection, Entry)) { return true; }
             return false;
@@ -730,6 +746,12 @@ Is_Destroyable # Defines whether or not all Hardpoints in the Mod can be destroy
 
 Is_Named_Hero # Set to No and no more heroes will respawn.
 
+Projectile_Does_Shield_Damage # Set to Yes and apply to the whole mod, to disable all shield piercing effects.
+
+Projectile_Does_Energy_Damage # Careful, if set to yes Hitpoint damage will start once enemy energy level reaches 0.
+
+Projectile_Does_Hitpoint_Damage
+
 # ==================== Unit Values ====================
 
 Tactical_Health
@@ -740,7 +762,9 @@ Shield_Refresh_Rate # Usually about 30 for capital ships and less for weaker cla
 
 Select_Box_Scale # Set to 0 and all Ships and Troops will have their select box deactiated.
 
-Space_Tactical_Unit_Cap # Sets Unit cap in tactical Battles, for all Factions in the Mod.
+Layer_Z_Adjust
+
+Space_Tactical_Unit_Cap # Sets Unit cap in space tactical battles, for all Factions in the Mod. Don't put too high or it will cause laggs.
 
 Build_Cost_Credits # Set the price to 1, then you can build as many units as the population cap allows.
 
@@ -774,6 +798,8 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
         //===========================//
         private void Combo_Box_Entity_Name_TextChanged(object sender, EventArgs e)
         { Text_Box_Description.Visible = false; }
+
+
 
  
         //===========================//
@@ -854,17 +880,36 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
                     Reset_Type_Filter = true;
                     break;
 
+
+                case "Projectile_Does_Shield_Damage":
+                    Expects_Bool = true;
+                    Combo_Box_Type_Filter.Text = "Projectile";
+                    break;
+                case "Projectile_Does_Energy_Damage":
+                    Expects_Bool = true;
+                    Combo_Box_Type_Filter.Text = "Projectile";
+                    break;
+                case "Projectile_Does_Hitpoint_Damage":
+                    Expects_Bool = true;
+                    Combo_Box_Type_Filter.Text = "Projectile";
+                    break;
+
+
                 case "Tactical_Health":
                     Scale_Factor = 100;
+                    Reset_Type_Filter = true;
                     break;
                 case "Shield_Points":
                     Scale_Factor = 100;
+                    Reset_Type_Filter = true;
                     break;
                 case "Shield_Refresh_Rate":
                     Scale_Factor = 5;
+                    Reset_Type_Filter = true;
                     break;
                 case "Select_Box_Scale":
                     Scale_Factor = 100;
+                    Reset_Type_Filter = true;
                     break;
 
                 case "Space_Tactical_Unit_Cap":
@@ -896,7 +941,7 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
 
             if (Reset_Type_Filter) 
             {
-                string Probably_Wrong = "Planet,HardPoint,Faction";
+                string Probably_Wrong = "Planet,HardPoint,Faction,Projectile";
 
                 foreach (string Entry in Probably_Wrong.Split(','))
                 {   if (Entry == Combo_Box_Type_Filter.Text)
@@ -909,21 +954,24 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
             // ===============================================
             string Info = "";
 
-            foreach (string Phrase in Tag_List.Split('\n'))
+            // The + " #" makes sure the last entry comment stays empty
+            foreach (string Phrase in (Tag_List + " #").Split('\n'))
             {
                 if (Phrase.StartsWith("//") || Phrase.StartsWith("#") || Phrase == "") { continue; } // Skip commented Lines
+                else if (Phrase.Contains("#"))
+                {   
+                    try
+                    {   Tag_Info = Phrase.Split('#');
+                        Info = Tag_Info[1];
 
-                try
-                {   Tag_Info = Phrase.Split('#');
-                    Info = Tag_Info[1]; 
-                    
 
-                    if (Tag_Info[0].Replace(" ", "") == Combo_Box_Tag_Name.Text)
-                    {
-                        // Removing empty space
-                        if (Info[0] == ' ') { Info = Info.Substring(1, Info.Length - 1); } break;
-                    }
-                } catch {}         
+                        if (Tag_Info[0].Replace(" ", "") == Combo_Box_Tag_Name.Text)
+                        {
+                            // Removing empty space
+                            if (Info[0] == ' ') { Info = Info.Substring(1, Info.Length - 1); } break;
+                        }
+                    } catch { Info = ""; }
+                }
             }
 
                  
@@ -936,9 +984,7 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
                 Text_Box_Description.Visible = true;
             }  
         }
-
    
-
 
         private void Combo_Box_Tag_Value_TextChanged(object sender, EventArgs e)
         {
@@ -1034,6 +1080,8 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
 
                 foreach (string Entry in The_List)
                 { Display.List_View_Info.Items.Add(Entry); }
+
+                Set_Checker(Display.List_View_Info);
             }
 
 
@@ -1114,7 +1162,7 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
 
 
         //===========================//
-        void Set_Checker(ListView The_Box)
+        public void Set_Checker(ListView The_Box)
         {
             // Sorting here instead of the default property because of timing issues with the loop below
             The_Box.Sort();
@@ -1124,17 +1172,15 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
                 if (Item.Index % 2 == 0)
                 {
                     Item.ForeColor = Color.White;
-                    Item.BackColor = Color.DarkBlue; ;
+                    Item.BackColor = Color.CadetBlue; ;
                 }
                 else
                 {
                     Item.ForeColor = Color.Black;
-                    Item.BackColor = Color.White;
+                    Item.BackColor = Color.LightGray;
                 }
             }
         }
-
-   
 
     
         //===========================//

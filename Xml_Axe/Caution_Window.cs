@@ -36,7 +36,7 @@ namespace Log_Compactor
             Active_Window = (Window)The_Window;
             Passed_Value_A.Text_Data = "false";
 
-            List_View_Info.Size = new Size(this.Size.Width - 10, this.Size.Height - 10);
+            Caution_Window_Resize(null, null);
         }
       
     
@@ -86,6 +86,8 @@ namespace Log_Compactor
                         { List_View_Info.Items.Remove(Item); }
                     }                  
                 }
+
+                Active_Window.Set_Checker(List_View_Info);
             }    
   
         }
@@ -93,7 +95,8 @@ namespace Log_Compactor
 
         private void Caution_Window_Resize(object sender, EventArgs e)
         {
-            List_View_Info.Size = new Size(this.Size.Width - 10, this.Size.Height - 10);
+            List_View_Info.Size = new Size(this.Size.Width - 10, this.Size.Height - 93);
+            List_View_Info.Columns[0].Width = this.Size.Width - 18;
         }
 
 
