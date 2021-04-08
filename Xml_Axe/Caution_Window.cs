@@ -100,6 +100,34 @@ namespace Log_Compactor
         }
 
 
+        private void Button_Caution_Box_4_Click(object sender, EventArgs e)
+        {
+            List<string> The_Blacklist = new List<string>();
+
+            Passed_Value_A.Text_Data = "other";
+
+            if (!List_Exclusion_Mode) { this.Close(); }
+            else
+            {
+                foreach (string Selection in Active_Window.Select_List_View_Items(List_View_Info))
+                {
+                    foreach (ListViewItem Item in List_View_Info.Items)
+                    {   if (Item.Text == Selection)
+                        {   The_Blacklist.Add(Item.Text); // Putting on my Hat ;)
+                            List_View_Info.Items.Remove(Item); 
+                        }
+                    }
+                }
+
+                Active_Window.Set_Checker(List_View_Info);
+                Active_Window.Blacklisted_Xmls = The_Blacklist; // Refreshing
+
+                string Blacklist = string.Join("\n", The_Blacklist);          
+                File.WriteAllText(Active_Window.Xml_Directory + "Axe_Blacklist.txt", Blacklist);
+            }                  
+        }
+
+
       
       
        

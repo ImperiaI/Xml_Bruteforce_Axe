@@ -44,14 +44,14 @@ namespace Log_Compactor
         string Temporal_A, Temporal_B = "";
         public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
         public List<string> File_Collection = new List<string>();
+        public List<string> Blacklisted_Xmls = null;
         string[] Tag_Info;
 
         private void Window_Load(object sender, EventArgs e)
         {
             Drop_Zone.AllowDrop = true;
             List_View_Selection.AllowDrop = true;
-            Text_Box_Description.AllowDrop = true;
-            
+  
 
             Set_Resource_Button(Drop_Zone, Get_Start_Image());
             Set_Resource_Button(Button_Browse, Properties.Resources.Button_File);
@@ -73,6 +73,8 @@ namespace Log_Compactor
             Text_Box_Original_Path.Text = Properties.Settings.Default.Last_File;
             Track_Bar_Tag_Value.Value = Properties.Settings.Default.Trackbar_Value;
 
+            if (File.Exists(Xml_Directory + "Axe_Blacklist.txt"))
+            { Blacklisted_Xmls = File.ReadAllLines(Xml_Directory + "Axe_Blacklist.txt").ToList(); }
 
 
             Tag_List = Properties.Settings.Default.Tags;
@@ -319,9 +321,9 @@ namespace Log_Compactor
                 Warn_User = false;                  
                 Related_Xmls = Slice(false); // Means don't apply any changes
                 Line_Count = (Related_Xmls.Count() * 30) + 160;
-                if (Line_Count > 800) { Line_Count = 800; }
+                if (Line_Count > 680) { Line_Count = 680; }
 
-                iDialogue(580, Line_Count, "Yes", "Cancel", "Ignore", "Are you sure you wish to apply changes to:", Related_Xmls);
+                iDialogue(680, Line_Count, "Yes", "Cancel", "Ignore", "Blacklist", "Are you sure you wish to apply changes to:", Related_Xmls);
                  
   
                 if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }          
@@ -334,7 +336,7 @@ namespace Log_Compactor
               & Match_Without_Emptyspace(The_Settings, "Show_Changed_Files = true"))
             {
                 Line_Count = (Related_Xmls.Count() * 30) + 90;
-                if (Line_Count > 800) { Line_Count = 800; }
+                if (Line_Count > 680) { Line_Count = 680; }
                 iConsole(560, Line_Count, "\nApplied Changes to the following files: \n\n" + Temporal_B);
             }         
         }
@@ -439,7 +441,7 @@ namespace Log_Compactor
             IEnumerable<XElement> Instances = null;
             List <string> Changed_Xmls = new List<string>();
 
-
+          
 
             
             if (!Directory.Exists(Xml_Directory))
@@ -457,7 +459,12 @@ namespace Log_Compactor
             foreach (var Xml in File_Collection)
             {   try
                 {
-                    Selected_Xml = Xml;      
+                    Selected_Xml = Xml;
+                    // Ignoring blacklisted Xmls
+                    if (Blacklisted_Xmls != null) { if (Blacklisted_Xmls.Contains(Selected_Xml.Replace(Xml_Directory, ""))) { continue; } }
+                    
+                    
+
                     XDocument Xml_File = XDocument.Load(Selected_Xml, LoadOptions.PreserveWhitespace);
                     
                     // ===================== Opening Xml File =====================
@@ -1018,7 +1025,7 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
 
         //===========================//
 
-        public void iDialogue(int Window_Size_X, int Window_Size_Y, string Button_A_Text, string Button_B_Text, string Button_C_Text, string Text, List<string> The_List = null)
+        public void iDialogue(int Window_Size_X, int Window_Size_Y, string Button_A_Text, string Button_B_Text, string Button_C_Text, string Button_D_Text, string Text, List<string> The_List = null)
         {
             //========== Displaying Error Messages to User   
             // Innitiating new Form
@@ -1030,21 +1037,27 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
             Display.Text_Box_Caution_Window.ForeColor = Color.White;
 
 
-            if (Button_A_Text != "false" & Button_C_Text == "false")
+               
+
+            if (Button_D_Text != "false")
             {
+                // The first 2 buttons moves aside to free space for this one
                 Display.Button_Caution_Box_1.Visible = true;
                 Display.Button_Caution_Box_1.Text = Button_A_Text;
-                Display.Button_Caution_Box_1.Location = new Point(120, Display.Size.Height - 96);
-            }
+                Display.Button_Caution_Box_1.Location = new Point(30, Display.Size.Height - 96);
 
-
-            if (Button_B_Text != "false" & Button_C_Text == "false")
-            {
                 Display.Button_Caution_Box_2.Visible = true;
                 Display.Button_Caution_Box_2.Text = Button_B_Text;
-                Display.Button_Caution_Box_2.Location = new Point(280, Display.Size.Height - 96);
-            }
+                Display.Button_Caution_Box_2.Location = new Point(350, Display.Size.Height - 96);
 
+                Display.Button_Caution_Box_3.Visible = true;
+                Display.Button_Caution_Box_3.Text = Button_C_Text;
+                Display.Button_Caution_Box_3.Location = new Point(190, Display.Size.Height - 96);
+
+                Display.Button_Caution_Box_4.Visible = true;
+                Display.Button_Caution_Box_4.Text = Button_D_Text;
+                Display.Button_Caution_Box_4.Location = new Point(510, Display.Size.Height - 96);
+            }
             else if (Button_C_Text != "false")
             {
                 // The first 2 buttons moves aside to free space for this one
@@ -1059,6 +1072,21 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
                 Display.Button_Caution_Box_3.Visible = true;
                 Display.Button_Caution_Box_3.Text = Button_C_Text;
                 Display.Button_Caution_Box_3.Location = new Point(220, Display.Size.Height - 96);
+            }
+
+            else if (Button_B_Text != "false")
+            {
+                Display.Button_Caution_Box_2.Visible = true;
+                Display.Button_Caution_Box_2.Text = Button_B_Text;
+                Display.Button_Caution_Box_2.Location = new Point(280, Display.Size.Height - 96);
+            }
+
+
+            if (Button_A_Text != "false" & Button_C_Text == "false")
+            {
+                Display.Button_Caution_Box_1.Visible = true;
+                Display.Button_Caution_Box_1.Text = Button_A_Text;
+                Display.Button_Caution_Box_1.Location = new Point(120, Display.Size.Height - 96);
             }
 
 

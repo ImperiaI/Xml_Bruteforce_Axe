@@ -35,6 +35,7 @@
             this.Button_Caution_Box_3 = new System.Windows.Forms.Button();
             this.List_View_Info = new System.Windows.Forms.ListView();
             this.Columns = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.Button_Caution_Box_4 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // Text_Box_Caution_Window
@@ -50,7 +51,7 @@
             this.Text_Box_Caution_Window.Name = "Text_Box_Caution_Window";
             this.Text_Box_Caution_Window.ReadOnly = true;
             this.Text_Box_Caution_Window.ShowSelectionMargin = true;
-            this.Text_Box_Caution_Window.Size = new System.Drawing.Size(510, 320);
+            this.Text_Box_Caution_Window.Size = new System.Drawing.Size(758, 320);
             this.Text_Box_Caution_Window.TabIndex = 0;
             this.Text_Box_Caution_Window.Text = "";
             this.Text_Box_Caution_Window.WordWrap = false;
@@ -59,7 +60,7 @@
             // 
             this.Button_Caution_Box_2.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.Button_Caution_Box_2.Font = new System.Drawing.Font("Georgia", 14F);
-            this.Button_Caution_Box_2.Location = new System.Drawing.Point(400, 256);
+            this.Button_Caution_Box_2.Location = new System.Drawing.Point(397, 260);
             this.Button_Caution_Box_2.Name = "Button_Caution_Box_2";
             this.Button_Caution_Box_2.Size = new System.Drawing.Size(126, 40);
             this.Button_Caution_Box_2.TabIndex = 96;
@@ -72,7 +73,7 @@
             // 
             this.Button_Caution_Box_1.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.Button_Caution_Box_1.Font = new System.Drawing.Font("Georgia", 14F);
-            this.Button_Caution_Box_1.Location = new System.Drawing.Point(112, 256);
+            this.Button_Caution_Box_1.Location = new System.Drawing.Point(109, 260);
             this.Button_Caution_Box_1.Name = "Button_Caution_Box_1";
             this.Button_Caution_Box_1.Size = new System.Drawing.Size(126, 40);
             this.Button_Caution_Box_1.TabIndex = 97;
@@ -85,7 +86,7 @@
             // 
             this.Button_Caution_Box_3.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.Button_Caution_Box_3.Font = new System.Drawing.Font("Georgia", 14F);
-            this.Button_Caution_Box_3.Location = new System.Drawing.Point(256, 256);
+            this.Button_Caution_Box_3.Location = new System.Drawing.Point(253, 260);
             this.Button_Caution_Box_3.Name = "Button_Caution_Box_3";
             this.Button_Caution_Box_3.Size = new System.Drawing.Size(126, 40);
             this.Button_Caution_Box_3.TabIndex = 98;
@@ -105,7 +106,7 @@
             this.List_View_Info.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
             this.List_View_Info.Location = new System.Drawing.Point(-5, -5);
             this.List_View_Info.Name = "List_View_Info";
-            this.List_View_Info.Size = new System.Drawing.Size(510, 320);
+            this.List_View_Info.Size = new System.Drawing.Size(758, 320);
             this.List_View_Info.TabIndex = 99;
             this.List_View_Info.UseCompatibleStateImageBehavior = false;
             this.List_View_Info.View = System.Windows.Forms.View.Details;
@@ -115,11 +116,25 @@
             // 
             this.Columns.Width = 502;
             // 
+            // Button_Caution_Box_4
+            // 
+            this.Button_Caution_Box_4.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
+            this.Button_Caution_Box_4.Font = new System.Drawing.Font("Georgia", 14F);
+            this.Button_Caution_Box_4.Location = new System.Drawing.Point(541, 260);
+            this.Button_Caution_Box_4.Name = "Button_Caution_Box_4";
+            this.Button_Caution_Box_4.Size = new System.Drawing.Size(126, 40);
+            this.Button_Caution_Box_4.TabIndex = 100;
+            this.Button_Caution_Box_4.Text = "Other";
+            this.Button_Caution_Box_4.UseVisualStyleBackColor = true;
+            this.Button_Caution_Box_4.Visible = false;
+            this.Button_Caution_Box_4.Click += new System.EventHandler(this.Button_Caution_Box_4_Click);
+            // 
             // Caution_Window
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(500, 312);
+            this.ClientSize = new System.Drawing.Size(748, 312);
+            this.Controls.Add(this.Button_Caution_Box_4);
             this.Controls.Add(this.Button_Caution_Box_3);
             this.Controls.Add(this.Button_Caution_Box_1);
             this.Controls.Add(this.Button_Caution_Box_2);
@@ -147,6 +162,7 @@
         public System.Windows.Forms.Button Button_Caution_Box_3;
         private System.Windows.Forms.ColumnHeader Columns;
         public System.Windows.Forms.ListView List_View_Info;
+        public System.Windows.Forms.Button Button_Caution_Box_4;
 
     }
 }
