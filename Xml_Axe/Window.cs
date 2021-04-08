@@ -41,11 +41,12 @@ namespace Log_Compactor
 
         int Scale_Factor = 10;
         string Tag_List = "";
+        bool User_Input = false;
         string Temporal_A, Temporal_B = "";
         public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
         public List<string> File_Collection = new List<string>();
         public List<string> Blacklisted_Xmls = null;
-        string[] Tag_Info;
+
 
         private void Window_Load(object sender, EventArgs e)
         {
@@ -81,7 +82,9 @@ namespace Log_Compactor
             if (Tag_List == null | Tag_List == "") { Reset_Tag_List(); }
             Text_Box_Tags.Text = Tag_List;
             Reset_Tag_Box();
-         
+
+
+            User_Input = true;
         }
 
 
@@ -125,12 +128,15 @@ namespace Log_Compactor
 
 
         private void Drop_Zone_Click(object sender, EventArgs e)
-        { Text_Box_Description.Visible = false; } // Hiding
+        { Disable_Description(); } // Hiding
 
 
 
 
         private void Text_Box_Description_Click(object sender, EventArgs e)
+        { Disable_Description(); }
+
+        private void Disable_Description()
         {
             Text_Box_Description.Text = "";
             Text_Box_Description.Visible = false;
@@ -230,11 +236,7 @@ namespace Log_Compactor
             Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit);
             Set_Checker(List_View_Selection);
 
-            if (Text_Box_Description.Visible) // Hide
-            {
-                Text_Box_Description.Text = "";
-                Text_Box_Description.Visible = false;
-            }
+            if (Text_Box_Description.Visible) { Disable_Description(); }
 
          
             Properties.Settings.Default.Save();
@@ -285,10 +287,7 @@ namespace Log_Compactor
             else 
             {   Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible 
              
-                if (Text_Box_Description.Visible)
-                {   Text_Box_Description.Text = "";
-                    Text_Box_Description.Visible = false;
-                }
+                if (Text_Box_Description.Visible) { Disable_Description(); }
             }                            
         }
 
@@ -306,7 +305,7 @@ namespace Log_Compactor
         //===========================//
 
         private void Button_Run_Game_Click(object sender, EventArgs e)
-        {
+        {        
             if (Combo_Box_Tag_Name.Text == "") { return; }
             
             int Line_Count = 0;
@@ -353,6 +352,13 @@ namespace Log_Compactor
         private bool Match_Without_Emptyspace(string Entry_1, string Entry_2)
         {
             if (Regex.IsMatch(Entry_1.Replace(" ", ""), "(?i)" + Entry_2.Replace(" ", ""))) { return true; }
+            return false;
+        }
+
+
+        private bool Is_Match(string Entry_1, string Entry_2)
+        {
+            if (Regex.IsMatch(Entry_1, "(?i)" + Entry_2)) { return true; }
             return false;
         }
 
@@ -740,71 +746,65 @@ namespace Log_Compactor
         public void Reset_Tag_List()
         {
             Tag_List = @"# I am a Setting (as parameter 1) or Comment (as parameter 2)
+# The optional @ sign introduces the expected type for a tag: bool, string or a int number as scrollbar factor
+
+
 # Show_Tooltip = true
 # Show_Files_That_Would_Change = true
 # Show_Changed_Files = true
 
 
-Planet_Surface_Accessible # Set to No and it will turn all GCs to space only because it sets all Planets to unaccessible.
+Planet_Surface_Accessible @ bool # Set to No and it will turn all GCs to space only because it sets all Planets to unaccessible.
 
-Is_Targetable # Defines whether or not all Hardpoints in the Mod can be targeted.
+Is_Targetable @ bool # Defines whether or not all Hardpoints in the Mod can be targeted.
 
-Is_Destroyable # Defines whether or not all Hardpoints in the Mod can be destroyed.
+Is_Destroyable @ bool # Defines whether or not all Hardpoints in the Mod can be destroyed.
 
-Is_Named_Hero # Set to No and no more heroes will respawn.
+Is_Named_Hero @ bool # Set to No and no more heroes will respawn.
 
-Projectile_Does_Shield_Damage # Set to Yes and apply to the whole mod, to disable all shield piercing effects.
+Projectile_Does_Shield_Damage @ bool # Set to Yes and apply to the whole mod, to disable all shield piercing effects.
 
-Projectile_Does_Energy_Damage # Careful, if set to yes Hitpoint damage will start once enemy energy level reaches 0.
+Projectile_Does_Energy_Damage @ bool # Careful, if set to yes Hitpoint damage will start once enemy energy level reaches 0.
 
-Projectile_Does_Hitpoint_Damage
+Projectile_Does_Hitpoint_Damage @ bool 
 
-# ==================== Unit Values ====================
+# ==================== Int Values ====================
 
-Tactical_Health
+Tactical_Health @ 100
 
-Shield_Points
+Shield_Points @ 100
 
-Shield_Refresh_Rate # Usually about 30 for capital ships and less for weaker classes.
+Shield_Refresh_Rate @ 5 # Usually about 30 for capital ships and less for weaker classes.
 
-Select_Box_Scale # Set to 0 and all Ships and Troops will have their select box deactiated.
+Select_Box_Scale @ 100 # Set to 0 and all Ships and Troops will have their select box deactivated.
 
-Layer_Z_Adjust
+Layer_Z_Adjust @ 100
 
-Space_Tactical_Unit_Cap # Sets Unit cap in space tactical battles, for all Factions in the Mod. Don't put too high or it will cause laggs.
+Space_Tactical_Unit_Cap @ 10 # Sets Unit cap in space tactical battles, for all Factions in the Mod. Don't put too high or it will cause laggs.
 
-Build_Cost_Credits # Set the price to 1, then you can build as many units as the population cap allows.
+Build_Cost_Credits @ 100 # Set the price to 1, then you can build as many units as the population cap allows.
 
-Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
+Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish units.
 ";
         }
 
-     
-      
+  
         //===========================//
         public void Reset_Tag_Box()
-        {
-            string[] Current_Tags = Text_Box_Tags.Text.Split('\n');
-           
+        {                
             Combo_Box_Tag_Name.Items.Clear();
             Combo_Box_Tag_Name.Text = "";
-            Text_Box_Description.Text = "";
-            Text_Box_Description.Visible = false;
+            Disable_Description();
 
-            foreach (string Phrase in Current_Tags)
-            {
-                if (Phrase.StartsWith("//") || Phrase.StartsWith("#") || Phrase == "") { continue; } // Skip commented Lines
-                Tag_Info = Phrase.Split('#');
-
-                Combo_Box_Tag_Name.Items.Add(Tag_Info[0].Replace(" ", ""));                                                              
-            }
+            foreach (string Tag in Process_Tags(Text_Box_Tags.Text))
+            { Combo_Box_Tag_Name.Items.Add(Tag); }
         }
 
 
 
         //===========================//
         private void Combo_Box_Entity_Name_TextChanged(object sender, EventArgs e)
-        { Text_Box_Description.Visible = false; }
+        { Disable_Description(); }
 
 
 
@@ -826,16 +826,15 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
                 case "Planet":
                     Scale_Factor = 1;
                     break;
-                case "Faction":
-                    Scale_Factor = 1;
-                    break;
+                //case "Faction":
+                //    Scale_Factor = 1;
+                //    break;
                     
-                default:
-                    Scale_Factor = 10;
-                    break;
+                //default:
+                //    Scale_Factor = 10;
+                //    break;
             }
 
-            Text_Box_Description.Visible = false;
 
 
             if (Combo_Box_Type_Filter.Text == "All in loaded Xml")
@@ -864,58 +863,49 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
 
         //===========================//
         private void Combo_Box_Tag_Name_TextChanged(object sender, EventArgs e)
-        {   bool Expects_Bool = false;
+        {   
+            if (!User_Input) { return; }      
             bool Reset_Type_Filter = false;
+
 
 
             switch (Combo_Box_Tag_Name.Text)
             {
                 case "Planet_Surface_Accessible":
-                    Combo_Box_Type_Filter.Text = "Planet";
-                    Expects_Bool = true;
+                    Combo_Box_Type_Filter.Text = "Planet";                 
                     break;
                 case "Is_Targetable":
-                    Expects_Bool = true;
                     Combo_Box_Type_Filter.Text = "HardPoint";
                     break;
                 case "Is_Destroyable":
-                    Expects_Bool = true;
                     Combo_Box_Type_Filter.Text = "HardPoint";
                     break;
                 case "Is_Named_Hero":
-                    Expects_Bool = true;
                     Reset_Type_Filter = true;
                     break;
 
 
                 case "Projectile_Does_Shield_Damage":
-                    Expects_Bool = true;
                     Combo_Box_Type_Filter.Text = "Projectile";
                     break;
                 case "Projectile_Does_Energy_Damage":
-                    Expects_Bool = true;
                     Combo_Box_Type_Filter.Text = "Projectile";
                     break;
                 case "Projectile_Does_Hitpoint_Damage":
-                    Expects_Bool = true;
                     Combo_Box_Type_Filter.Text = "Projectile";
                     break;
 
 
                 case "Tactical_Health":
-                    Scale_Factor = 100;
                     Reset_Type_Filter = true;
                     break;
                 case "Shield_Points":
-                    Scale_Factor = 100;
                     Reset_Type_Filter = true;
                     break;
                 case "Shield_Refresh_Rate":
-                    Scale_Factor = 5;
                     Reset_Type_Filter = true;
                     break;
                 case "Select_Box_Scale":
-                    Scale_Factor = 100;
                     Reset_Type_Filter = true;
                     break;
 
@@ -923,28 +913,17 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
                     Combo_Box_Type_Filter.Text = "Faction";
                     break;                 
                 case "Build_Cost_Credits":
-                    Scale_Factor = 100;
                     Reset_Type_Filter = true;
                     break;
                 case "Tactical_Build_Cost_Multiplayer":
-                    Scale_Factor = 100;
                     Reset_Type_Filter = true;
                     break;
 
-                default:                  
-                    Expects_Bool = false;
+                default:                
+                    Reset_Type_Filter = true;
                     break;
             }
-        
-
-            // Resetting the right scale factor
-            if (Scale_Factor == 10) { Combo_Box_Type_Filter_TextChanged(null, null); }
-
-
-
-            if (Expects_Bool) { Track_Bar_Tag_Value.Visible = false; }
-            else { Track_Bar_Tag_Value.Visible = true; }
-
+              
 
             if (Reset_Type_Filter) 
             {
@@ -957,46 +936,113 @@ Tactical_Build_Cost_Multiplayer # Set the price to 1 for all Skirmish units.
             }
 
 
+            Process_Tags(Text_Box_Tags.Text);
+            
+        }
 
-            // ===============================================
-            string Info = "";
+
+
+        private List<string> Process_Tags(string Input)
+        {
+            User_Input = false;
+
+            string Tag_Format = "";
+            string[] Tag_Info = new string[] { };
+            List<string> List_Of_Tags = new List<string>();
+
 
             // The + " #" makes sure the last entry comment stays empty
-            foreach (string Phrase in (Tag_List + " #").Split('\n'))
+            foreach (string Phrase in (Input + " #").Split('\n'))
             {
                 if (Phrase.StartsWith("//") || Phrase.StartsWith("#") || Phrase == "") { continue; } // Skip commented Lines
-                else if (Phrase.Contains("#"))
-                {   
+                else 
+                {
+                    string Tag_Name = Phrase.Replace(" ", "");
+                    string Tag_Comment = ""; // Reset
+
                     try
-                    {   Tag_Info = Phrase.Split('#');
-                        Info = Tag_Info[1];
-
-
-                        if (Tag_Info[0].Replace(" ", "") == Combo_Box_Tag_Name.Text)
-                        {
-                            // Removing empty space
-                            if (Info[0] == ' ') { Info = Info.Substring(1, Info.Length - 1); } break;
+                    {
+                        if (Phrase.Contains("#"))
+                        {   Tag_Info = Phrase.Split('#');
+                            Tag_Name = Tag_Info[0].Replace(" ", "");
+                            Tag_Comment = Tag_Info[1];
                         }
-                    } catch { Info = ""; }
+
+                        if (Tag_Name.Contains("@")) // Seperating the tag name and its expected format (int, bool or string)
+                        {
+                            Tag_Info = Tag_Name.Split('@');
+                            Tag_Name = Tag_Info[0];
+                            Tag_Format = Tag_Info[1];
+                            // iConsole(400, 200, Tag_Name + " + " + Tag_Format);
+                        }
+
+                        if (Tag_Name != "") { List_Of_Tags.Add(Tag_Name); };
+
+                        if (Tag_Name == Combo_Box_Tag_Name.Text)
+                        {
+                            // iConsole(400, 200, Tag_Name + " + " + Tag_Comment);
+                          
+                            if (Tag_Comment == "") { Disable_Description(); }
+                            else if (Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Show_Tooltip = true"))
+                            {
+                                // Removing empty space
+                                if (Tag_Comment[0] == ' ') { Tag_Comment = Tag_Comment.Substring(1, Tag_Comment.Length - 1); }
+
+                                Text_Box_Description.Text = Tag_Comment;
+                                Text_Box_Description.Visible = true;
+                            }
+                            break;                          
+                        }
+                    } catch {}
                 }
             }
 
-                 
-            if (Info == "")
-            {   Text_Box_Description.Text = "";
-                Text_Box_Description.Visible = false;              
+
+
+
+            if (Tag_Format == "" | Is_Match(Tag_Format, "string"))
+            {
+                Track_Bar_Tag_Value.Visible = false;
+                Combo_Box_Tag_Value.Items.Clear();
             }
-            else if (Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Show_Tooltip = true"))           
-            {   Text_Box_Description.Text = Info;
-                Text_Box_Description.Visible = true;
-            }  
+            else if (Is_Match(Tag_Format, "bool"))
+            {
+                Track_Bar_Tag_Value.Visible = false;
+                
+                if (Combo_Box_Tag_Value.Items.Count == 0)
+                {   Combo_Box_Tag_Value.Items.Add("True");
+                    Combo_Box_Tag_Value.Items.Add("False");
+                    Combo_Box_Tag_Value.Items.Add("");
+                    Combo_Box_Tag_Value.Items.Add("Yes");
+                    Combo_Box_Tag_Value.Items.Add("No");
+                }
+
+
+                string It = Combo_Box_Tag_Value.Text;
+
+                if (!Is_Match(It, "True") & !Is_Match(It, "False") & !Is_Match(It, "Yes") & !Is_Match(It, "No"))
+                { Combo_Box_Tag_Value.Text = ""; }
+
+            }       
+            else // It will probably be bool
+            {
+                int.TryParse(Tag_Format, out Scale_Factor);
+                // iConsole(400, 200, "Scale is " + Scale_Factor);
+
+                // Resetting the right scale factor
+                if (Scale_Factor == 10) { Combo_Box_Type_Filter_TextChanged(null, null); }
+                Track_Bar_Tag_Value.Visible = true;
+                Combo_Box_Tag_Value.Items.Clear();
+            }
+
+            User_Input = true;
+            return List_Of_Tags;
         }
    
 
+
         private void Combo_Box_Tag_Value_TextChanged(object sender, EventArgs e)
-        {
-            Text_Box_Description.Visible = false;
-        }
+        { if (User_Input) { Disable_Description(); } }
 
 
 
