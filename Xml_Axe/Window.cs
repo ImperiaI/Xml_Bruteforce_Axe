@@ -43,6 +43,7 @@ namespace Log_Compactor
         string Tag_List = "";
         bool User_Input = false;
         string Temporal_A, Temporal_B = "";
+        public Color Theme_Color = Color.CadetBlue;
         public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
         public List<string> File_Collection = new List<string>();
         public List<string> Blacklisted_Xmls = null;
@@ -77,12 +78,14 @@ namespace Log_Compactor
             if (File.Exists(Xml_Directory + "Axe_Blacklist.txt"))
             { Blacklisted_Xmls = File.ReadAllLines(Xml_Directory + "Axe_Blacklist.txt").ToList(); }
 
+          
+
 
             Tag_List = Properties.Settings.Default.Tags;
             if (Tag_List == null | Tag_List == "") { Reset_Tag_List(); }
             Text_Box_Tags.Text = Tag_List;
             Reset_Tag_Box();
-
+        
 
             User_Input = true;
         }
@@ -109,7 +112,7 @@ namespace Log_Compactor
                     {                      
                         if (!System.Text.RegularExpressions.Regex.IsMatch(File_Names[0], "(?i).*?" + ".xml$")
                            & !File.GetAttributes(File_Names[0]).HasFlag(FileAttributes.Directory)) // Check whether it is a file or a directory                                                     
-                        { MessageBox.Show("Error: the file needs to either be a folder or of .xml format."); }
+                        { iConsole(600, 200, "\nError: the file needs to either be a folder or of .xml format."); }
                         else { Set_Paths(File_Names[0]); }
 
                     } catch {}
@@ -169,7 +172,7 @@ namespace Log_Compactor
                     {
                         if (!System.Text.RegularExpressions.Regex.IsMatch(File_Names[0], "(?i).*?" + ".xml$")
                            & !File.GetAttributes(File_Names[0]).HasFlag(FileAttributes.Directory)) // Check whether it is a file or a directory                                                     
-                        { MessageBox.Show("Error: the file needs to either be a folder or of .xml format."); }
+                        { iConsole(600, 200, "\nError: the file needs to either be a folder or of .xml format."); }
                         else { Set_Paths(File_Names[0]); }
 
                     }
@@ -214,7 +217,7 @@ namespace Log_Compactor
                     // Leaping back for a directy, to get the name of the Modpath
                     Properties.Settings.Default.Mod_Directory = Path.GetDirectoryName(Temporal_A); ;
 
-                    // MessageBox.Show(Path.GetDirectoryName(Path.GetDirectoryName(Temporal_A)));
+                    // iConsole(600, 100, Path.GetDirectoryName(Path.GetDirectoryName(Temporal_A)));
                     break;
                 }
 
@@ -227,7 +230,7 @@ namespace Log_Compactor
                     // Leaping back by 2 directoies, to get the name of the Modpath
                     Properties.Settings.Default.Mod_Directory = Path.GetDirectoryName(Path.GetDirectoryName(Temporal_A)); ;
 
-                    // MessageBox.Show(Path.GetDirectoryName(Path.GetDirectoryName(Temporal_A)));
+                    // iConsole(600, 100, Path.GetDirectoryName(Path.GetDirectoryName(Temporal_A)));
                     break;
                 }
             }
@@ -283,7 +286,8 @@ namespace Log_Compactor
 
         //===========================//
         private void Button_Start_Click(object sender, EventArgs e)
-        {   if (List_View_Selection.Visible) { List_View_Selection.Visible = false; }
+        {         
+            if (List_View_Selection.Visible) { List_View_Selection.Visible = false; }
             else 
             {   Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible 
              
@@ -309,15 +313,15 @@ namespace Log_Compactor
             if (Combo_Box_Tag_Name.Text == "") { return; }
             
             int Line_Count = 0;
-            bool Warn_User = true;
+            // bool Warn_User = true;
             string The_Settings = Properties.Settings.Default.Tags;
             List<string> Related_Xmls = new List<string>();
 
 
-            // if (The_Settings.Contains("Show_Files_That_Would_Change = true") | The_Settings.Contains("Show_Files_That_Would_Change=true"))
-            if (Match_Without_Emptyspace(The_Settings, "Show_Files_That_Would_Change = true") & !In_Selected_Xml(Combo_Box_Entity_Name.Text))
+            // if (The_Settings.Contains("Show_Files_That_Would_Change = true") | The_Settings.Contains("Request_Approval=true"))
+            if (Match_Without_Emptyspace(The_Settings, "Request_File_Approval = true") & !In_Selected_Xml(Combo_Box_Entity_Name.Text))
             {
-                Warn_User = false;                  
+                // Warn_User = false;                  
                 Related_Xmls = Slice(false); // Means don't apply any changes
                 Line_Count = (Related_Xmls.Count() * 30) + 160;
                 if (Line_Count > 680) { Line_Count = 680; }
@@ -331,13 +335,15 @@ namespace Log_Compactor
 
             Related_Xmls = Slice(true); // This line does the actual Job!
 
-            if (Related_Xmls.Count() > 0 & Warn_User & !In_Selected_Xml(Combo_Box_Entity_Name.Text) 
+
+            // Disabled Feature, quite obsolete
+            /*if (Related_Xmls.Count() > 0 & Warn_User & !In_Selected_Xml(Combo_Box_Entity_Name.Text) 
               & Match_Without_Emptyspace(The_Settings, "Show_Changed_Files = true"))
             {
                 Line_Count = (Related_Xmls.Count() * 30) + 90;
                 if (Line_Count > 680) { Line_Count = 680; }
-                iConsole(560, Line_Count, "\nApplied Changes to the following files: \n\n" + Temporal_B);
-            }         
+                iConsole(560, Line_Count, "\nApplied Changes to the following files: \n\n" + string.Join("\n", Related_Xmls));
+            }*/
         }
 
         private void Button_Run_Game_MouseHover(object sender, EventArgs e)
@@ -367,8 +373,8 @@ namespace Log_Compactor
         public void Load_Xml_Content(string Xml_Path)
         {       
             // List<string> Found_Entities = null;
-            IEnumerable<XElement> Instances = null;          
-            if (!File.Exists(Xml_Path)) { MessageBox.Show("Can't find the Xml."); return; }
+            IEnumerable<XElement> Instances = null;
+            if (!File.Exists(Xml_Path)) { iConsole(200, 100, "\nCan't find the Xml."); return; }
             List_View_Selection.Items.Clear();
             List_View_Selection.Visible = true;
 
@@ -432,9 +438,9 @@ namespace Log_Compactor
         //-----------------------------------------------------------------------------
       
         private List<string> Slice(bool Apply_Changes = true)
-        { 
-            //MessageBox.Show(Properties.Settings.Default.Xml_Directory);
-            //MessageBox.Show(Properties.Settings.Default.Mod_Directory);
+        {
+            // iConsole(500, 100, Properties.Settings.Default.Xml_Directory);
+            // iConsole(500, 100, Properties.Settings.Default.Mod_Directory);
             int Changed_Entities = 0;
 
             string Selected_Xml = "";
@@ -451,7 +457,7 @@ namespace Log_Compactor
 
             
             if (!Directory.Exists(Xml_Directory))
-            { MessageBox.Show("Can't find the Xml Directory."); return null; }
+            { iConsole(200, 100, "\nCan't find the Xml."); return null; }
 
 
 
@@ -542,7 +548,7 @@ namespace Log_Compactor
                         }
                     }
 
-                    if (Apply_Changes) { Xml_File.Save(Selected_Xml); } // MessageBox.Show("Saving to " + Xml); }
+                    if (Apply_Changes) { Xml_File.Save(Selected_Xml); } //  iConsole(500, 100, "\nSaving to " + Xml); }
                     if (In_Selected_Xml(Entity_Name)) { return Changed_Xmls; } // Exiting after the first (and only) Xml File.
       
                 } catch {}
@@ -570,18 +576,22 @@ namespace Log_Compactor
         {
             if (Text_Box_Tags.Visible == true)
             {   Text_Box_Tags.Visible = false;
+                Button_Run_Game.Visible = true; 
                 Label_Type_Filter.Visible = true;
                 Label_Entity_Name.Text = "Entity Name";
 
                 if (Tag_List != Text_Box_Tags.Text) // Then needs to update
-                { Properties.Settings.Default.Tags = Text_Box_Tags.Text; }
-                Properties.Settings.Default.Save();
+                {   Properties.Settings.Default.Tags = Text_Box_Tags.Text;
+                    Tag_List = Text_Box_Tags.Text;
+                }
+                Properties.Settings.Default.Save();               
                 Reset_Tag_Box();
 
                 return;
             }
             else
             {   Text_Box_Tags.Visible = true;
+                Button_Run_Game.Visible = false;
                 Label_Type_Filter.Visible = false;
                 Label_Entity_Name.Text = "List of Tags";            
                 Text_Box_Tags.Focus(); // So the user can scroll
@@ -604,12 +614,14 @@ namespace Log_Compactor
         //===========================//
         private void Button_Reset_Blacklist_Click(object sender, EventArgs e)
         {
+            iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nAre you sure you wish reset the List of Tags?");
+            if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }    
+
             Reset_Tag_List();
             Reset_Tag_Box();
             Text_Box_Tags.Text = Tag_List;
             if (Text_Box_Tags.Visible == false)
-            { Text_Box_Tags.Visible = true; }
-            MessageBox.Show("Resetted the List of Tags.");        
+            { Text_Box_Tags.Visible = true; }              
         }
 
         private void Button_Reset_Blacklist_MouseHover(object sender, EventArgs e)
@@ -741,17 +753,17 @@ namespace Log_Compactor
 
         }
 
-      
-        //===========================//
+
+        //===========================// # Show_Changed_Files = true
         public void Reset_Tag_List()
         {
-            Tag_List = @"# I am a Setting (as parameter 1) or Comment (as parameter 2)
+            Tag_List = @"# I am a Setting (as parameter 1) or Comment (as parameter 2 or 3)
 # The optional @ sign introduces the expected type for a tag: bool, string or a int number as scrollbar factor
 
 
 # Show_Tooltip = true
-# Show_Files_That_Would_Change = true
-# Show_Changed_Files = true
+# Request_File_Approval = true
+# RGBA_Color = 100, 170, 170, 255 # Marine Blue
 
 
 Planet_Surface_Accessible @ bool # Set to No and it will turn all GCs to space only because it sets all Planets to unaccessible.
@@ -798,6 +810,42 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
 
             foreach (string Tag in Process_Tags(Text_Box_Tags.Text))
             { Combo_Box_Tag_Name.Items.Add(Tag); }
+
+
+            // Set Color
+            foreach (string Phrase in Tag_List.Split('\n'))
+            {   if (Phrase.StartsWith("//") || Phrase == "") { continue; }
+                else if (Phrase.Contains("RGBA_Color"))
+                {   try
+                    {
+                        // .Split('#') to get rid of comments after
+                        string Setting = (Phrase.Replace(" ", "")).Split('#')[1].Split('=')[1];
+                        // iConsole(400, 200, Setting);
+
+                        string[] RGBA = Setting.Split(','); // Split the 4 RGBA values into int
+
+                        int R = 0;
+                        int G = 0;
+                        int B = 0;
+                        int A = 0;
+
+                        Int32.TryParse(RGBA[0], out R);
+                        Int32.TryParse(RGBA[1], out G);
+                        Int32.TryParse(RGBA[2], out B);
+                        Int32.TryParse(RGBA[3], out A);
+
+                        Theme_Color = Color.FromArgb(A, R, G, B);
+
+
+                        Control[] Controls = { Label_Entity_Name,Label_Type_Filter,Label_Tag_Name,Check_Box_All_Occurances,Label_Tag_Value };
+                        foreach (Control The_Control in Controls)
+                        { The_Control.ForeColor = Theme_Color; }
+
+                        Set_Checker(List_View_Selection);
+                        break;
+                    } catch {}
+                }
+            }
         }
 
 
@@ -1166,17 +1214,17 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
         public List<string> Get_Xmls()
         {
             List<string> All_Xmls = new List<string>();          
-            string Error = "Please dragg and drop any target Xml, \nor the Xml directory of your mod into the Dropzone.";
+            string Error = "\nPlease dragg and drop any target Xml, \nor the Xml directory of your mod into the Dropzone.";
 
             if (Xml_Directory == "" | Xml_Directory == null)
-            { MessageBox.Show(Error); return null; }
+            { iConsole(600, 100, Error); return null; }
 
-
+            
             try
             {   if (Directory.Exists(Xml_Directory))
                 {   foreach (string The_File in Directory.GetFiles(Xml_Directory, "*.xml", System.IO.SearchOption.AllDirectories))
-                    { All_Xmls.Add(The_File); }                   
-                } else { MessageBox.Show(Error); return null; }
+                    { All_Xmls.Add(The_File); }
+                } else { iConsole(600, 100, Error); return null; }
                 
             } catch {}
 
@@ -1246,7 +1294,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                 if (Item.Index % 2 == 0)
                 {
                     Item.ForeColor = Color.White;
-                    Item.BackColor = Color.CadetBlue; ;
+                    Item.BackColor = Theme_Color; 
                 }
                 else
                 {
