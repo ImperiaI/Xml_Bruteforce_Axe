@@ -44,6 +44,7 @@ namespace Log_Compactor
         bool User_Input = false;
         bool Percent_Mode = false;
         string Temporal_A, Temporal_B = "";
+        string[] Balancing_Tags = null; // new string[] { };
         public Color Theme_Color = Color.CadetBlue;
         public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
         public List<string> File_Collection = new List<string>();
@@ -147,6 +148,14 @@ namespace Log_Compactor
         }
 
         //===========================// 
+        private void List_View_Selection_DoubleClick(object sender, EventArgs e)
+        {
+            if (List_View_Selection.Items.Count > 0)
+            {
+                for (int i = List_View_Selection.Items.Count - 1; i >= 0; --i)
+                { List_View_Selection.Items[i].Selected = true; }
+            }
+        }
 
         private void List_View_Selection_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -538,8 +547,6 @@ namespace Log_Compactor
 
 
 
-
-
                     // =================== Checking Xml Instance ===================
                     foreach (XElement Instance in Instances)
                     {   if (Instance.Descendants().Any())
@@ -548,9 +555,9 @@ namespace Log_Compactor
                             {
                                 Set_Tag(Changed_Xmls, Instance, Selected_Xml, Selected_Tag, Apply_Changes);
                             }
-                            else
-                            {   string[] Balancing_Tags = new string[] { "Tactical_Health", "Shield_Points", "Shield_Refresh_Rate"};
-                                foreach (string Current_Tag in Balancing_Tags)
+                            else if (Balancing_Tags != null)
+                            {   // string[] Balancing_Tags = new string[] { "Tactical_Health", "Shield_Points", "Shield_Refresh_Rate"};
+                                foreach (string Current_Tag in Balancing_Tags) // Balancing_Tags is a global variable that is loaded from the Tags setting.
                                 {
                                     Set_Tag(Changed_Xmls, Instance, Selected_Xml, Current_Tag, Apply_Changes);
                                 }
@@ -901,7 +908,7 @@ namespace Log_Compactor
 
 Planet_Surface_Accessible @ bool # Set to No and it will turn all GCs to space only because it sets all Planets to unaccessible.
 
-Rebalance_Everything @ 10 # This balances the most important aspects of the Game: Tactical_Health, Shield, Shield_Refresh_Rate, Projectile Damage
+Rebalance_Everything @ Tactical_Health, Shield_Points, Shield_Refresh_Rate # This balances the most important aspects of the Game: Tactical_Health, Shield, Shield_Refresh_Rate, Projectile Damage
 
 Is_Targetable @ bool # Defines whether or not all Hardpoints in the Mod can be targeted.
 
@@ -1033,10 +1040,12 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                     Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit);
                 }
 
-                for (int i = List_View_Selection.Items.Count - 1; i >= 0; --i)
-                {   // Selecting everything
-                    if (List_View_Selection.Items[i].Text != "")
-                    { List_View_Selection.Items[i].Selected = true; }
+                if (List_View_Selection.Items.Count > 0)
+                {   for (int i = List_View_Selection.Items.Count - 1; i >= 0; --i)
+                    {   // Selecting everything
+                        if (List_View_Selection.Items[i].Text != "")
+                        { List_View_Selection.Items[i].Selected = true; }
+                    }
                 }
                 List_View_Selection.Focus();
             }
@@ -1135,7 +1144,6 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
         private List<string> Process_Tags(string Input)
         {
             User_Input = false;
-
             string Tag_Format = "";
             string[] Tag_Info = new string[] { };
             List<string> List_Of_Tags = new List<string>();
@@ -1168,6 +1176,11 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
 
                         if (Tag_Name != "") { List_Of_Tags.Add(Tag_Name); };
 
+                        // Loading the list of Tags, the values of all these tags are going to be scalled as group.
+                        if (Tag_Name == "Rebalance_Everything") { Balancing_Tags = Tag_Format.Split(','); }
+
+
+                        // Show description of the active tab
                         if (Tag_Name == Combo_Box_Tag_Name.Text)
                         {
                             // iConsole(400, 200, Tag_Name + " + " + Tag_Comment);
@@ -1217,8 +1230,8 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                 if (!Is_Match(It, "True") & !Is_Match(It, "False") & !Is_Match(It, "Yes") & !Is_Match(It, "No"))
                 { Combo_Box_Tag_Value.Text = ""; }
 
-            }       
-            else // It will probably be bool
+            }
+            else // It will probably be int
             {
                 if (Percent_Mode) { Scale_Factor = 10; }
                 else { int.TryParse(Tag_Format, out Scale_Factor); }

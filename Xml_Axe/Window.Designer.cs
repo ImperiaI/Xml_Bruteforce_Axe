@@ -278,9 +278,9 @@
             // Text_Box_Tags
             // 
             this.Text_Box_Tags.BackColor = System.Drawing.SystemColors.ScrollBar;
-            this.Text_Box_Tags.Location = new System.Drawing.Point(34, 272);
+            this.Text_Box_Tags.Location = new System.Drawing.Point(31, 272);
             this.Text_Box_Tags.Name = "Text_Box_Tags";
-            this.Text_Box_Tags.Size = new System.Drawing.Size(364, 247);
+            this.Text_Box_Tags.Size = new System.Drawing.Size(367, 239);
             this.Text_Box_Tags.TabIndex = 27;
             this.Text_Box_Tags.Text = "";
             this.Text_Box_Tags.Visible = false;
@@ -292,7 +292,7 @@
             this.Text_Box_Description.ForeColor = System.Drawing.SystemColors.Info;
             this.Text_Box_Description.Location = new System.Drawing.Point(12, 12);
             this.Text_Box_Description.Name = "Text_Box_Description";
-            this.Text_Box_Description.Size = new System.Drawing.Size(404, 164);
+            this.Text_Box_Description.Size = new System.Drawing.Size(386, 164);
             this.Text_Box_Description.TabIndex = 29;
             this.Text_Box_Description.Text = "";
             this.Text_Box_Description.Click += new System.EventHandler(this.Text_Box_Description_Click);
@@ -327,6 +327,7 @@
             this.List_View_Selection.DragDrop += new System.Windows.Forms.DragEventHandler(this.List_View_Selection_DragDrop);
             this.List_View_Selection.DragEnter += new System.Windows.Forms.DragEventHandler(this.List_View_Selection_DragEnter);
             this.List_View_Selection.DragOver += new System.Windows.Forms.DragEventHandler(this.List_View_Selection_DragOver);
+            this.List_View_Selection.DoubleClick += new System.EventHandler(this.List_View_Selection_DoubleClick);
             // 
             // Entries
             // 
@@ -376,6 +377,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.ClientSize = new System.Drawing.Size(428, 542);
+            this.Controls.Add(this.Text_Box_Tags);
             this.Controls.Add(this.Button_Operator);
             this.Controls.Add(this.Button_Percentage);
             this.Controls.Add(this.Text_Box_Description);
@@ -397,7 +399,6 @@
             this.Controls.Add(this.Track_Bar_Tag_Value);
             this.Controls.Add(this.Text_Box_Original_Path);
             this.Controls.Add(this.Drop_Zone);
-            this.Controls.Add(this.Text_Box_Tags);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximumSize = new System.Drawing.Size(444, 580);
             this.MinimumSize = new System.Drawing.Size(444, 570);
