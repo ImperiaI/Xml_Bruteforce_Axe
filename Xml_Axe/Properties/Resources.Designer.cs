@@ -171,46 +171,6 @@ namespace Log_Compactor.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap Compacted_01 {
-            get {
-                object obj = ResourceManager.GetObject("Compacted_01", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap Compacted_02 {
-            get {
-                object obj = ResourceManager.GetObject("Compacted_02", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap Compacted_03 {
-            get {
-                object obj = ResourceManager.GetObject("Compacted_03", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap Compacted_04 {
-            get {
-                object obj = ResourceManager.GetObject("Compacted_04", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to // I am a Comment # too
         ///CRC:
         ///Program:
@@ -260,26 +220,6 @@ namespace Log_Compactor.Properties {
         internal static System.Drawing.Bitmap Shadow_Clone_01 {
             get {
                 object obj = ResourceManager.GetObject("Shadow_Clone_01", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap Shadow_Clone_02 {
-            get {
-                object obj = ResourceManager.GetObject("Shadow_Clone_02", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap Starting_01 {
-            get {
-                object obj = ResourceManager.GetObject("Starting_01", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

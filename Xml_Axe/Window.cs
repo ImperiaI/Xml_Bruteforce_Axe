@@ -450,8 +450,7 @@ namespace Log_Compactor
         private List<string> Slice(bool Apply_Changes = true)
         {
             // iConsole(500, 100, Properties.Settings.Default.Xml_Directory);
-            // iConsole(500, 100, Properties.Settings.Default.Mod_Directory);
-            int Changed_Entities = 0;
+            // iConsole(500, 100, Properties.Settings.Default.Mod_Directory);         
 
             string Selected_Xml = "";
             string Xml_Directory = Properties.Settings.Default.Xml_Directory;
@@ -543,44 +542,21 @@ namespace Log_Compactor
 
                     // =================== Checking Xml Instance ===================
                     foreach (XElement Instance in Instances)
-                    { 
-                        if (Instance.Descendants().Any())
-                        {   try
-                            {   // Selected_Instance = Instance;                         
-                                if (Instance.Descendants(Selected_Tag).Any()) // Set the new tag value(s)
+                    {   if (Instance.Descendants().Any())
+                        {
+                            if (Combo_Box_Tag_Name.Text != "Rebalance_Everything")
+                            {
+                                Set_Tag(Changed_Xmls, Instance, Selected_Xml, Selected_Tag, Apply_Changes);
+                            }
+                            else
+                            {   string[] Balancing_Tags = new string[] { "Tactical_Health", "Shield_Points", "Shield_Refresh_Rate"};
+                                foreach (string Current_Tag in Balancing_Tags)
                                 {
-                                    Temporal_A = Selected_Xml.Replace(Xml_Directory, ""); // Removing Path
-                                    if (!Changed_Xmls.Contains(Temporal_A))
-                                    { Changed_Xmls.Add(Temporal_A); }
-
-
-                                    if (Apply_Changes)
-                                    {   Changed_Entities++;                                    
-                                        foreach (XElement Target in Instance.Descendants(Selected_Tag))
-                                        {   
-                                            if (!Percent_Mode) { Target.Value = Combo_Box_Tag_Value.Text.Replace("+", ""); } 
-
-                                            else try // Refactoring the old value!
-                                            {   int Percentage = 0; 
-                                                decimal Original_Value = 0;                                              
-
-                                                Decimal.TryParse(Target.Value, out Original_Value);
-                                                Int32.TryParse(Remove_Percentage(Combo_Box_Tag_Value.Text), out Percentage);
-
-                                                if (Combo_Box_Tag_Value.Text.Contains("-")) // Shrink Value
-                                                { Target.Value = (Original_Value - ((Original_Value / 100) * Percentage)).ToString(); }
-
-                                                else // if (Combo_Box_Tag_Value.Text.Contains("+")) // Grow Value
-                                                { Target.Value = (Original_Value + ((Original_Value / 100) * Percentage)).ToString(); }
-
-                                            } catch {}
-
-                                            if (!Check_Box_All_Occurances.Checked) { break; } // Stop after first occurance
-                                        }  
-                                
-                                    }
+                                    Set_Tag(Changed_Xmls, Instance, Selected_Xml, Current_Tag, Apply_Changes);
                                 }
-                            } catch {}
+                            }
+
+
                         }
                     }
 
@@ -592,6 +568,50 @@ namespace Log_Compactor
 
             File_Collection = new List<string>(); // Clearing for the next time
             return Changed_Xmls;      
+        }
+
+
+        //===========================//
+        // I need to pass in quite a lot of parameters here ...
+        public void Set_Tag(List<string> Changed_Xmls, XElement Instance, string Selected_Xml, string Selected_Tag, bool Apply_Changes)
+        {   int Changed_Entities = 0;
+   
+
+            try
+            {   // Selected_Instance = Instance;                         
+                if (Instance.Descendants(Selected_Tag).Any()) // Set the new tag value(s)
+                {
+                    Temporal_A = Selected_Xml.Replace(Xml_Directory, ""); // Removing Path
+                    if (!Changed_Xmls.Contains(Temporal_A))
+                    { Changed_Xmls.Add(Temporal_A); }
+
+
+                    if (Apply_Changes)
+                    {
+                        Changed_Entities++;
+                        foreach (XElement Target in Instance.Descendants(Selected_Tag))
+                        {
+                            if (!Percent_Mode) { Target.Value = Combo_Box_Tag_Value.Text.Replace("+", ""); }
+
+                            else try // Refactoring the old value!
+                            {   int Percentage = 0;
+                                decimal Original_Value = 0;
+
+                                Decimal.TryParse(Target.Value, out Original_Value);
+                                Int32.TryParse(Remove_Percentage(Combo_Box_Tag_Value.Text), out Percentage);
+
+                                if (Combo_Box_Tag_Value.Text.Contains("-")) // Shrink Value
+                                { Target.Value = (Original_Value - ((Original_Value / 100) * Percentage)).ToString(); }
+
+                                else // if (Combo_Box_Tag_Value.Text.Contains("+")) // Grow Value
+                                { Target.Value = (Original_Value + ((Original_Value / 100) * Percentage)).ToString(); }
+                            }  catch {}
+
+                            if (!Check_Box_All_Occurances.Checked) { break; } // Stop after first occurance
+                        }
+                    }
+                }
+            } catch {}         
         }
 
         //===========================//
@@ -798,10 +818,12 @@ namespace Log_Compactor
 
         //===========================//
         public Bitmap Get_Start_Image()
-        {        
-            if (Properties.Settings.Default.Star_Wars_Theme == false)
-            {  return Properties.Resources.Shadow_Clone_01; }
-            else {  return Properties.Resources.Starting_01; }
+        {
+            return Properties.Resources.Shadow_Clone_01;
+
+            // if (Properties.Settings.Default.Star_Wars_Theme == false)
+            // {  return Properties.Resources.Shadow_Clone_01; }
+            // else {  return Properties.Resources.Starting_01; }
               
         }
 
@@ -822,9 +844,9 @@ namespace Log_Compactor
                     case 1:
                         Result = Properties.Resources.Rasengan_01;
                         break;
-                    case 2:
-                        Result = Properties.Resources.Shadow_Clone_02;
-                        break;                
+                    //case 2:
+                    //    Result = Properties.Resources.Shadow_Clone_02;
+                    //    break;                
 
                     default:
                         Result = Properties.Resources.Rasengan_01;
@@ -835,7 +857,7 @@ namespace Log_Compactor
             }
 
 
-
+            /*
             Value = rnd.Next(1, 4);  // creates a number between 1 and 4
             
             // Otherwise return a Star Wars based image:
@@ -858,6 +880,7 @@ namespace Log_Compactor
                     Result = Properties.Resources.Compacted_01;
                     break;
             }
+            */
 
             return Result;
 

@@ -150,7 +150,7 @@
             // Button_Toggle_Settings
             // 
             this.Button_Toggle_Settings.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.Button_Toggle_Settings.Location = new System.Drawing.Point(1, 500);
+            this.Button_Toggle_Settings.Location = new System.Drawing.Point(1, 510);
             this.Button_Toggle_Settings.Name = "Button_Toggle_Settings";
             this.Button_Toggle_Settings.Size = new System.Drawing.Size(30, 30);
             this.Button_Toggle_Settings.TabIndex = 15;
@@ -162,7 +162,7 @@
             // Button_Reset_Blacklist
             // 
             this.Button_Reset_Blacklist.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.Button_Reset_Blacklist.Location = new System.Drawing.Point(399, 500);
+            this.Button_Reset_Blacklist.Location = new System.Drawing.Point(399, 510);
             this.Button_Reset_Blacklist.Name = "Button_Reset_Blacklist";
             this.Button_Reset_Blacklist.Size = new System.Drawing.Size(30, 30);
             this.Button_Reset_Blacklist.TabIndex = 16;
@@ -375,7 +375,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.ClientSize = new System.Drawing.Size(428, 532);
+            this.ClientSize = new System.Drawing.Size(428, 542);
             this.Controls.Add(this.Button_Operator);
             this.Controls.Add(this.Button_Percentage);
             this.Controls.Add(this.Text_Box_Description);
@@ -399,7 +399,7 @@
             this.Controls.Add(this.Drop_Zone);
             this.Controls.Add(this.Text_Box_Tags);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MaximumSize = new System.Drawing.Size(444, 570);
+            this.MaximumSize = new System.Drawing.Size(444, 580);
             this.MinimumSize = new System.Drawing.Size(444, 570);
             this.Name = "Window";
             this.Text = "Imperialware                    Bruteforce Axe v0.1";
