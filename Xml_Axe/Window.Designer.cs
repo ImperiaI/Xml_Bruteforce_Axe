@@ -51,6 +51,8 @@
             this.List_View_Selection = new System.Windows.Forms.ListView();
             this.Entries = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.Button_Run_Game = new System.Windows.Forms.PictureBox();
+            this.Button_Percentage = new System.Windows.Forms.PictureBox();
+            this.Button_Operator = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.Drop_Zone)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Track_Bar_Tag_Value)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Start)).BeginInit();
@@ -58,6 +60,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.Button_Toggle_Settings)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Reset_Blacklist)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Run_Game)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Percentage)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Operator)).BeginInit();
             this.SuspendLayout();
             // 
             // Drop_Zone
@@ -186,6 +190,7 @@
             this.Combo_Box_Type_Filter.Items.AddRange(new object[] {
             "All Types",
             "All in loaded Xml",
+            "Faction Name Filter",
             "",
             "SpaceUnit",
             "UniqueUnit",
@@ -213,6 +218,7 @@
             this.Combo_Box_Type_Filter.Name = "Combo_Box_Type_Filter";
             this.Combo_Box_Type_Filter.Size = new System.Drawing.Size(178, 26);
             this.Combo_Box_Type_Filter.TabIndex = 24;
+            this.Combo_Box_Type_Filter.Text = "All Types";
             this.Combo_Box_Type_Filter.TextChanged += new System.EventHandler(this.Combo_Box_Type_Filter_TextChanged);
             // 
             // Label_Type_Filter
@@ -286,7 +292,7 @@
             this.Text_Box_Description.ForeColor = System.Drawing.SystemColors.Info;
             this.Text_Box_Description.Location = new System.Drawing.Point(12, 12);
             this.Text_Box_Description.Name = "Text_Box_Description";
-            this.Text_Box_Description.Size = new System.Drawing.Size(394, 164);
+            this.Text_Box_Description.Size = new System.Drawing.Size(404, 164);
             this.Text_Box_Description.TabIndex = 29;
             this.Text_Box_Description.Text = "";
             this.Text_Box_Description.Click += new System.EventHandler(this.Text_Box_Description_Click);
@@ -338,13 +344,40 @@
             this.Button_Run_Game.MouseLeave += new System.EventHandler(this.Button_Run_Game_MouseLeave);
             this.Button_Run_Game.MouseHover += new System.EventHandler(this.Button_Run_Game_MouseHover);
             // 
+            // Button_Percentage
+            // 
+            this.Button_Percentage.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.Button_Percentage.Location = new System.Drawing.Point(1, 350);
+            this.Button_Percentage.Name = "Button_Percentage";
+            this.Button_Percentage.Size = new System.Drawing.Size(30, 30);
+            this.Button_Percentage.TabIndex = 33;
+            this.Button_Percentage.TabStop = false;
+            this.Button_Percentage.Visible = false;
+            this.Button_Percentage.Click += new System.EventHandler(this.Button_Percentage_Click);
+            this.Button_Percentage.MouseLeave += new System.EventHandler(this.Button_Percentage_MouseLeave);
+            this.Button_Percentage.MouseHover += new System.EventHandler(this.Button_Percentage_MouseHover);
+            // 
+            // Button_Operator
+            // 
+            this.Button_Operator.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.Button_Operator.Location = new System.Drawing.Point(1, 430);
+            this.Button_Operator.Name = "Button_Operator";
+            this.Button_Operator.Size = new System.Drawing.Size(30, 30);
+            this.Button_Operator.TabIndex = 34;
+            this.Button_Operator.TabStop = false;
+            this.Button_Operator.Visible = false;
+            this.Button_Operator.Click += new System.EventHandler(this.Button_Operator_Click);
+            this.Button_Operator.MouseLeave += new System.EventHandler(this.Button_Operator_MouseLeave);
+            this.Button_Operator.MouseHover += new System.EventHandler(this.Button_Operator_MouseHover);
+            // 
             // Window
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.ClientSize = new System.Drawing.Size(428, 532);
-            this.Controls.Add(this.Text_Box_Tags);
+            this.Controls.Add(this.Button_Operator);
+            this.Controls.Add(this.Button_Percentage);
             this.Controls.Add(this.Text_Box_Description);
             this.Controls.Add(this.Button_Run_Game);
             this.Controls.Add(this.List_View_Selection);
@@ -364,6 +397,7 @@
             this.Controls.Add(this.Track_Bar_Tag_Value);
             this.Controls.Add(this.Text_Box_Original_Path);
             this.Controls.Add(this.Drop_Zone);
+            this.Controls.Add(this.Text_Box_Tags);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximumSize = new System.Drawing.Size(444, 570);
             this.MinimumSize = new System.Drawing.Size(444, 570);
@@ -377,6 +411,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.Button_Toggle_Settings)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Reset_Blacklist)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Run_Game)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Percentage)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Operator)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -406,6 +442,8 @@
         private System.Windows.Forms.ListView List_View_Selection;
         private System.Windows.Forms.ColumnHeader Entries;
         private System.Windows.Forms.PictureBox Button_Run_Game;
+        private System.Windows.Forms.PictureBox Button_Percentage;
+        private System.Windows.Forms.PictureBox Button_Operator;
     }
 }
 

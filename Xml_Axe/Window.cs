@@ -42,6 +42,7 @@ namespace Log_Compactor
         int Scale_Factor = 10;
         string Tag_List = "";
         bool User_Input = false;
+        bool Percent_Mode = false;
         string Temporal_A, Temporal_B = "";
         public Color Theme_Color = Color.CadetBlue;
         public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
@@ -248,10 +249,19 @@ namespace Log_Compactor
 
         //===========================//
 
-
         private void Track_Bar_Tag_Value_Scroll(object sender, EventArgs e)
-        {
-            Combo_Box_Tag_Value.Text = (Track_Bar_Tag_Value.Value * Scale_Factor).ToString();
+        {   User_Input = false;
+            string Operator = "";
+            string Percentage = "";
+
+            if (Percent_Mode) 
+            {   if (Combo_Box_Tag_Value.Text.StartsWith("-")) { Operator = "-"; } // Remain -
+                else { Operator = "+"; } // Otherwise defaulting Prefix to + 
+                Percentage = "%";
+            }
+
+            Combo_Box_Tag_Value.Text = Operator + (Track_Bar_Tag_Value.Value * Scale_Factor) + Percentage;
+            User_Input = true;
         }
 
 
@@ -494,7 +504,13 @@ namespace Log_Compactor
                     }
 
 
-
+                    else if (Combo_Box_Type_Filter.Text == "Faction Name Filter")
+                    {
+                        Instances =
+                           from All_Tags in Xml_File.Root.Descendants() // Entity_Name means the Faction name here
+                           where All_Tags.Descendants("Affiliation").Last().Value.Contains(Entity_Name)
+                           select All_Tags; // Last() because it overwrites the first occurances ingame
+                    }
                     else if (Entity_Name != "" & Entity_Name != "None") // Select a single Entity by Name
                     {
                         Instances =
@@ -522,13 +538,15 @@ namespace Log_Compactor
 
 
 
+
+
+
                     // =================== Checking Xml Instance ===================
                     foreach (XElement Instance in Instances)
                     { 
                         if (Instance.Descendants().Any())
                         {   try
-                            {   // Selected_Instance = Instance;
-
+                            {   // Selected_Instance = Instance;                         
                                 if (Instance.Descendants(Selected_Tag).Any()) // Set the new tag value(s)
                                 {
                                     Temporal_A = Selected_Xml.Replace(Xml_Directory, ""); // Removing Path
@@ -537,11 +555,29 @@ namespace Log_Compactor
 
 
                                     if (Apply_Changes)
-                                    {   Changed_Entities++;
+                                    {   Changed_Entities++;                                    
                                         foreach (XElement Target in Instance.Descendants(Selected_Tag))
-                                        {   Target.Value = Combo_Box_Tag_Value.Text;
+                                        {   
+                                            if (!Percent_Mode) { Target.Value = Combo_Box_Tag_Value.Text.Replace("+", ""); } 
+
+                                            else try // Refactoring the old value!
+                                            {   int Percentage = 0; 
+                                                decimal Original_Value = 0;                                              
+
+                                                Decimal.TryParse(Target.Value, out Original_Value);
+                                                Int32.TryParse(Remove_Percentage(Combo_Box_Tag_Value.Text), out Percentage);
+
+                                                if (Combo_Box_Tag_Value.Text.Contains("-")) // Shrink Value
+                                                { Target.Value = (Original_Value - ((Original_Value / 100) * Percentage)).ToString(); }
+
+                                                else // if (Combo_Box_Tag_Value.Text.Contains("+")) // Grow Value
+                                                { Target.Value = (Original_Value + ((Original_Value / 100) * Percentage)).ToString(); }
+
+                                            } catch {}
+
                                             if (!Check_Box_All_Occurances.Checked) { break; } // Stop after first occurance
-                                        }                                  
+                                        }  
+                                
                                     }
                                 }
                             } catch {}
@@ -577,8 +613,12 @@ namespace Log_Compactor
             if (Text_Box_Tags.Visible == true)
             {   Text_Box_Tags.Visible = false;
                 Button_Run_Game.Visible = true; 
+                Button_Percentage.Visible = true;
+                Button_Operator.Visible = true; 
                 Label_Type_Filter.Visible = true;
-                Label_Entity_Name.Text = "Entity Name";
+
+                if (Combo_Box_Type_Filter.Text == "Faction Name Filter") { Label_Entity_Name.Text = "Faction Name"; }
+                else { Label_Entity_Name.Text = "Entity Name"; }
 
                 if (Tag_List != Text_Box_Tags.Text) // Then needs to update
                 {   Properties.Settings.Default.Tags = Text_Box_Tags.Text;
@@ -592,6 +632,8 @@ namespace Log_Compactor
             else
             {   Text_Box_Tags.Visible = true;
                 Button_Run_Game.Visible = false;
+                Button_Percentage.Visible = false;
+                Button_Operator.Visible = false; 
                 Label_Type_Filter.Visible = false;
                 Label_Entity_Name.Text = "List of Tags";            
                 Text_Box_Tags.Focus(); // So the user can scroll
@@ -614,14 +656,82 @@ namespace Log_Compactor
         //===========================//
         private void Button_Reset_Blacklist_Click(object sender, EventArgs e)
         {
-            iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nAre you sure you wish reset the List of Tags?");
-            if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }    
+            if (Text_Box_Tags.Visible)
+            {
+                iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nAre you sure you wish reset the List of Tags?");
+                if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
 
-            Reset_Tag_List();
-            Reset_Tag_Box();
-            Text_Box_Tags.Text = Tag_List;
-            if (Text_Box_Tags.Visible == false)
-            { Text_Box_Tags.Visible = true; }              
+                Reset_Tag_List();
+                Reset_Tag_Box();
+                Text_Box_Tags.Text = Tag_List;
+                if (Text_Box_Tags.Visible == false)
+                { Text_Box_Tags.Visible = true; }
+            }
+            else // Otherwised this button is used to launch the game
+            {   string Affinity_Value = "";
+                int Logical_Processors = Environment.ProcessorCount;
+                
+                // string Program_Path = @"C:\Program Files (x86)\Steam\steamapps\common\Star Wars Empire at War\corruption\StarWarsG.exe";
+                string Mod_Path = Path.GetFileName(Properties.Settings.Default.Mod_Directory);
+                // string Start_Parameter = "/High " + Program_Path + @" modpath=Mods\" + Mod_Path + " Ignoreasserts";
+
+                string Program_Path = @"C:\Program Files (x86)\Steam\steam.exe";                        
+                // string Mod_Path = Properties.Settings.Default.Mod_Directory;              
+                string Start_Parameter = "/High " + Program_Path + @" STEAMMOD=Mods\" + Mod_Path + " Ignoreasserts";
+
+
+                switch (Logical_Processors)
+                {
+                    case 3:
+                        Affinity_Value = "6";
+                        break;
+                    case 4:
+                        Affinity_Value = "C";
+                        break;
+                    case 6:
+                        Affinity_Value = "30";
+                        break;
+                    case 8:
+                        Affinity_Value = "C0";
+                        break;
+                    case 10:
+                        Affinity_Value = "300";
+                        break;
+                    case 12:
+                        Affinity_Value = "C00";
+                        break;
+
+                    case 14:
+                        Affinity_Value = "3000";
+                        break;
+                    case 16:
+                        Affinity_Value = "C000";
+                        break;
+                    case 32:
+                        Affinity_Value = "C0000000";
+                        break;
+                    case 64:
+                        Affinity_Value = "C000000000000000";
+                        break;
+                  
+
+                    default:
+                        Affinity_Value = "";
+                        break;
+                }
+
+                // If more then 2 logical cores are available
+                if (Affinity_Value != "") { Start_Parameter = "/affinity " + Affinity_Value + " " + Start_Parameter; }
+
+                iConsole(60, 100, Start_Parameter);
+
+                try { System.Diagnostics.Process.Start(Start_Parameter); }
+                catch { } // iConsole(60, 100, "\nCould not find the path of either the Game or the Mod."); }
+
+            }
+
+
+
         }
 
         private void Button_Reset_Blacklist_MouseHover(object sender, EventArgs e)
@@ -768,6 +878,8 @@ namespace Log_Compactor
 
 Planet_Surface_Accessible @ bool # Set to No and it will turn all GCs to space only because it sets all Planets to unaccessible.
 
+Rebalance_Everything @ 10 # This balances the most important aspects of the Game: Tactical_Health, Shield, Shield_Refresh_Rate, Projectile Damage
+
 Is_Targetable @ bool # Defines whether or not all Hardpoints in the Mod can be targeted.
 
 Is_Destroyable @ bool # Defines whether or not all Hardpoints in the Mod can be destroyed.
@@ -874,18 +986,21 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                 case "Planet":
                     Scale_Factor = 1;
                     break;
+                         
                 //case "Faction":
                 //    Scale_Factor = 1;
                 //    break;
                     
-                //default:
-                //    Scale_Factor = 10;
-                //    break;
             }
 
+            if (Percent_Mode) { Scale_Factor = 10; } // Percentage Override
 
 
-            if (Combo_Box_Type_Filter.Text == "All in loaded Xml")
+            if (Combo_Box_Type_Filter.Text == "Faction Name Filter") { Label_Entity_Name.Text = "Faction Name"; }
+            else { Label_Entity_Name.Text = "Entity Name"; }
+
+
+            if (Combo_Box_Type_Filter.Text == "All in loaded Xml") // Don't use elseif here
             {   Combo_Box_Entity_Name.Text = "Multi";
                 Combo_Box_Type_Filter.Text = ""; // Because then this can trigger a 2nd time in a row
 
@@ -922,6 +1037,10 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                 case "Planet_Surface_Accessible":
                     Combo_Box_Type_Filter.Text = "Planet";                 
                     break;
+                case "Rebalance_Everything":
+                    if (!Percent_Mode) { Button_Percentage_Click(null, null); }               
+                    break;
+                  
                 case "Is_Targetable":
                     Combo_Box_Type_Filter.Text = "HardPoint";
                     break;
@@ -1050,11 +1169,15 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
 
             if (Tag_Format == "" | Is_Match(Tag_Format, "string"))
             {
+                // Button_Operator.Visible = false;
+                // Button_Percentage.Visible = false;
                 Track_Bar_Tag_Value.Visible = false;
                 Combo_Box_Tag_Value.Items.Clear();
             }
             else if (Is_Match(Tag_Format, "bool"))
             {
+                Button_Operator.Visible = false;
+                Button_Percentage.Visible = false;
                 Track_Bar_Tag_Value.Visible = false;
                 
                 if (Combo_Box_Tag_Value.Items.Count == 0)
@@ -1074,11 +1197,15 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
             }       
             else // It will probably be bool
             {
-                int.TryParse(Tag_Format, out Scale_Factor);
+                if (Percent_Mode) { Scale_Factor = 10; }
+                else { int.TryParse(Tag_Format, out Scale_Factor); }
                 // iConsole(400, 200, "Scale is " + Scale_Factor);
 
                 // Resetting the right scale factor
                 if (Scale_Factor == 10) { Combo_Box_Type_Filter_TextChanged(null, null); }
+
+                Button_Operator.Visible = true;
+                Button_Percentage.Visible = true;
                 Track_Bar_Tag_Value.Visible = true;
                 Combo_Box_Tag_Value.Items.Clear();
             }
@@ -1090,7 +1217,12 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
 
 
         private void Combo_Box_Tag_Value_TextChanged(object sender, EventArgs e)
-        { if (User_Input) { Disable_Description(); } }
+        { 
+            if (User_Input) 
+            {   Disable_Description();
+                if (Percent_Mode & !Combo_Box_Tag_Value.Text.Contains("%")) { Combo_Box_Tag_Value.Text += "%"; }
+            } 
+        }
 
 
 
@@ -1292,16 +1424,77 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
             foreach (ListViewItem Item in The_Box.Items)
             {   // Every second Tag should have this value in order to create a checkmate pattern with good contrast
                 if (Item.Index % 2 == 0)
-                {
-                    Item.ForeColor = Color.White;
+                {   Item.ForeColor = Color.White;
                     Item.BackColor = Theme_Color; 
                 }
                 else
-                {
-                    Item.ForeColor = Color.Black;
+                {   Item.ForeColor = Color.Black;
                     Item.BackColor = Color.LightGray;
                 }
             }
+        }
+
+
+
+        private void Button_Percentage_Click(object sender, EventArgs e)
+        {
+            if (Percent_Mode) 
+            {   Percent_Mode = false;
+                User_Input = false; // Un-Percenting
+                Combo_Box_Tag_Value.Text = Remove_Percentage(Combo_Box_Tag_Value.Text);
+                User_Input = true;
+            }
+            else 
+            {   Percent_Mode = true; // Needs to be set BEFORE Process_Tags()
+                Combo_Box_Tag_Value.Text = ""; // Prepare for percent input
+                Process_Tags(Text_Box_Tags.Text);
+
+                if (sender != null & Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Show_Tooltip = true"))
+                {   Text_Box_Description.Visible = true;
+
+                    // Special Tooltip, that describes the Percent Mode                   
+                    Text_Box_Description.Text = "While in Percent Mode, Xml Axe gets the original values of the selected tag.\n" +
+                    "And it scales them either UP or DOWN by the specified amount of %.\n\n" +
+                    "If no certain unit is selected, and no Type Filter is set, this percent balancing will be applied to all entities that posess the selected tag.";                   
+                }
+            }
+        }
+
+        private string Remove_Percentage(string The_Text)
+        { return The_Text.Replace("+", "").Replace("-", "").Replace("%", ""); }
+
+        private void Button_Percentage_MouseHover(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Button_Percentage_MouseLeave(object sender, EventArgs e)
+        {
+
+        }
+
+
+
+
+        private void Button_Operator_Click(object sender, EventArgs e)
+        {
+            if (Combo_Box_Tag_Value.Text != "") // & Percent_Mode)  // Toggle
+            {   string The_Value = Combo_Box_Tag_Value.Text;
+
+                if (The_Value.Contains("-")) { Combo_Box_Tag_Value.Text = The_Value.Replace("-", "+"); }
+                else if (The_Value.Contains("+")) { Combo_Box_Tag_Value.Text = The_Value.Replace("+", "-"); }
+                else { Combo_Box_Tag_Value.Text = "-" + The_Value; }
+            }
+        }
+
+        private void Button_Operator_MouseHover(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Button_Operator_MouseLeave(object sender, EventArgs e)
+        {
+
         }
 
     
