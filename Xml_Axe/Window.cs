@@ -622,6 +622,16 @@ namespace Log_Compactor
 
                     if (Apply_Changes)
                     {
+                        string New_Value = Combo_Box_Tag_Value.Text.Replace("+", "");
+                        
+                        if (Selected_Tag == "Planet_Surface_Accessible")
+                        {   if (Match_Without_Emptyspace(New_Value, "True") | Match_Without_Emptyspace(New_Value, "Yes"))
+                            {   if (!Instance.Descendants("Land_Tactical_Map").Any() | !Is_Match(Instance.Descendants("Land_Tactical_Map").First().Value, ".ted"))
+                                { return; } // Failsafe, we must not apply "true" to planets that have no ground maps - or the game will crash!
+                            }
+                        } 
+
+
                         Changed_Entities++;
                         foreach (XElement Target in Instance.Descendants(Selected_Tag))
                         {
@@ -942,7 +952,7 @@ namespace Log_Compactor
 # RGBA_Color = 100, 170, 170, 255 # Marine Blue
 
 
-Planet_Surface_Accessible @ bool # Set to No and it will turn all GCs to space only because it sets all Planets to unaccessible.
+Planet_Surface_Accessible @ bool # Set to No and it will turn all GCs to space only because it sets all Planets to unaccessible. This operation is revertable: it checks if a planet has a ground.ted map to determine whether it is safe to set surface back to accessible.
 
 Rebalance_Everything @ Tactical_Health, Shield_Points, Shield_Refresh_Rate # This balances the most important aspects of the Game: Tactical_Health, Shield, Shield_Refresh_Rate, Projectile Damage
 
@@ -1618,7 +1628,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                           select All_Tags;
 
 
-                        if (Instances.Any()) { Set_Paths(Xml); Combo_Box_Entity_Name.Text = Entity_Name; break; }
+                        if (Instances.Any()) { Set_Paths(Xml); break; } // Don't select Entity_Name here because its spelled wrong 
                     } catch {}
                 }
             }
