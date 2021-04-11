@@ -61,7 +61,7 @@ namespace Log_Compactor.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("30")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string Xml_Directory {
             get {
                 return ((string)(this["Xml_Directory"]));
@@ -73,13 +73,13 @@ namespace Log_Compactor.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool Create_Removed_File {
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Entity_Name {
             get {
-                return ((bool)(this["Create_Removed_File"]));
+                return ((string)(this["Entity_Name"]));
             }
             set {
-                this["Create_Removed_File"] = value;
+                this["Entity_Name"] = value;
             }
         }
         
@@ -97,25 +97,37 @@ namespace Log_Compactor.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
-        public bool Skip_Menu_Battle {
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Type_Filter {
             get {
-                return ((bool)(this["Skip_Menu_Battle"]));
+                return ((string)(this["Type_Filter"]));
             }
             set {
-                this["Skip_Menu_Battle"] = value;
+                this["Type_Filter"] = value;
             }
         }
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("False")]
-        public bool Star_Wars_Theme {
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Tag_Name {
             get {
-                return ((bool)(this["Star_Wars_Theme"]));
+                return ((string)(this["Tag_Name"]));
             }
             set {
-                this["Star_Wars_Theme"] = value;
+                this["Tag_Name"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Tag_Value {
+            get {
+                return ((string)(this["Tag_Value"]));
+            }
+            set {
+                this["Tag_Value"] = value;
             }
         }
     }

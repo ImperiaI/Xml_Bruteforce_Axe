@@ -61,6 +61,56 @@ namespace Log_Compactor.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
+        /// </summary>
+        internal static System.Drawing.Icon Axe_Icon {
+            get {
+                object obj = ResourceManager.GetObject("Axe_Icon", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Axe {
+            get {
+                object obj = ResourceManager.GetObject("Button_Axe", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Axe_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_Axe_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Controller {
+            get {
+                object obj = ResourceManager.GetObject("Button_Controller", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Controller_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_Controller_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap Button_File {
@@ -81,16 +131,6 @@ namespace Log_Compactor.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
-        /// </summary>
-        internal static System.Drawing.Icon Button_Jutsu {
-            get {
-                object obj = ResourceManager.GetObject("Button_Jutsu", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap Button_Logs {
@@ -106,6 +146,66 @@ namespace Log_Compactor.Properties {
         internal static System.Drawing.Bitmap Button_Logs_Lit {
             get {
                 object obj = ResourceManager.GetObject("Button_Logs_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Minus {
+            get {
+                object obj = ResourceManager.GetObject("Button_Minus", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Minus_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_Minus_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Percent {
+            get {
+                object obj = ResourceManager.GetObject("Button_Percent", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Percent_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_Percent_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Plus {
+            get {
+                object obj = ResourceManager.GetObject("Button_Plus", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Plus_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_Plus_Lit", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -153,6 +253,26 @@ namespace Log_Compactor.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Button_Search {
+            get {
+                object obj = ResourceManager.GetObject("Button_Search", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Search_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_Search_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Button_Settings {
             get {
                 object obj = ResourceManager.GetObject("Button_Settings", resourceCulture);
@@ -166,6 +286,16 @@ namespace Log_Compactor.Properties {
         internal static System.Drawing.Bitmap Button_Settings_Lit {
             get {
                 object obj = ResourceManager.GetObject("Button_Settings_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Done_01 {
+            get {
+                object obj = ResourceManager.GetObject("Done_01", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -207,19 +337,9 @@ namespace Log_Compactor.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Rasengan_01 {
+        internal static System.Drawing.Bitmap Idle_01 {
             get {
-                object obj = ResourceManager.GetObject("Rasengan_01", resourceCulture);
-                return ((System.Drawing.Bitmap)(obj));
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Drawing.Bitmap.
-        /// </summary>
-        internal static System.Drawing.Bitmap Shadow_Clone_01 {
-            get {
-                object obj = ResourceManager.GetObject("Shadow_Clone_01", resourceCulture);
+                object obj = ResourceManager.GetObject("Idle_01", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

@@ -53,6 +53,7 @@
             this.Button_Run_Game = new System.Windows.Forms.PictureBox();
             this.Button_Percentage = new System.Windows.Forms.PictureBox();
             this.Button_Operator = new System.Windows.Forms.PictureBox();
+            this.Button_Search = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.Drop_Zone)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Track_Bar_Tag_Value)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Start)).BeginInit();
@@ -62,6 +63,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.Button_Run_Game)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Percentage)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Operator)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Search)).BeginInit();
             this.SuspendLayout();
             // 
             // Drop_Zone
@@ -176,9 +178,9 @@
             this.Combo_Box_Tag_Name.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.Combo_Box_Tag_Name.Font = new System.Drawing.Font("Georgia", 12F);
             this.Combo_Box_Tag_Name.FormattingEnabled = true;
-            this.Combo_Box_Tag_Name.Location = new System.Drawing.Point(34, 352);
+            this.Combo_Box_Tag_Name.Location = new System.Drawing.Point(31, 352);
             this.Combo_Box_Tag_Name.Name = "Combo_Box_Tag_Name";
-            this.Combo_Box_Tag_Name.Size = new System.Drawing.Size(364, 26);
+            this.Combo_Box_Tag_Name.Size = new System.Drawing.Size(367, 26);
             this.Combo_Box_Tag_Name.TabIndex = 18;
             this.Combo_Box_Tag_Name.TextChanged += new System.EventHandler(this.Combo_Box_Tag_Name_TextChanged);
             // 
@@ -256,9 +258,9 @@
             "",
             "Yes",
             "No"});
-            this.Combo_Box_Tag_Value.Location = new System.Drawing.Point(34, 432);
+            this.Combo_Box_Tag_Value.Location = new System.Drawing.Point(31, 432);
             this.Combo_Box_Tag_Value.Name = "Combo_Box_Tag_Value";
-            this.Combo_Box_Tag_Value.Size = new System.Drawing.Size(364, 26);
+            this.Combo_Box_Tag_Value.Size = new System.Drawing.Size(367, 26);
             this.Combo_Box_Tag_Value.TabIndex = 25;
             this.Combo_Box_Tag_Value.TextChanged += new System.EventHandler(this.Combo_Box_Tag_Value_TextChanged);
             // 
@@ -269,11 +271,12 @@
             this.Combo_Box_Entity_Name.FormattingEnabled = true;
             this.Combo_Box_Entity_Name.Items.AddRange(new object[] {
             "None"});
-            this.Combo_Box_Entity_Name.Location = new System.Drawing.Point(34, 272);
+            this.Combo_Box_Entity_Name.Location = new System.Drawing.Point(31, 272);
             this.Combo_Box_Entity_Name.Name = "Combo_Box_Entity_Name";
             this.Combo_Box_Entity_Name.Size = new System.Drawing.Size(178, 26);
             this.Combo_Box_Entity_Name.TabIndex = 26;
             this.Combo_Box_Entity_Name.TextChanged += new System.EventHandler(this.Combo_Box_Entity_Name_TextChanged);
+            this.Combo_Box_Entity_Name.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.Combo_Box_Entity_Name_KeyPress);
             // 
             // Text_Box_Tags
             // 
@@ -292,7 +295,7 @@
             this.Text_Box_Description.ForeColor = System.Drawing.SystemColors.Info;
             this.Text_Box_Description.Location = new System.Drawing.Point(12, 12);
             this.Text_Box_Description.Name = "Text_Box_Description";
-            this.Text_Box_Description.Size = new System.Drawing.Size(386, 164);
+            this.Text_Box_Description.Size = new System.Drawing.Size(368, 164);
             this.Text_Box_Description.TabIndex = 29;
             this.Text_Box_Description.Text = "";
             this.Text_Box_Description.Click += new System.EventHandler(this.Text_Box_Description_Click);
@@ -311,6 +314,7 @@
             // 
             // List_View_Selection
             // 
+            this.List_View_Selection.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.List_View_Selection.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.Entries});
             this.List_View_Selection.Font = new System.Drawing.Font("Georgia", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -371,6 +375,18 @@
             this.Button_Operator.MouseLeave += new System.EventHandler(this.Button_Operator_MouseLeave);
             this.Button_Operator.MouseHover += new System.EventHandler(this.Button_Operator_MouseHover);
             // 
+            // Button_Search
+            // 
+            this.Button_Search.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.Button_Search.Location = new System.Drawing.Point(1, 270);
+            this.Button_Search.Name = "Button_Search";
+            this.Button_Search.Size = new System.Drawing.Size(30, 30);
+            this.Button_Search.TabIndex = 35;
+            this.Button_Search.TabStop = false;
+            this.Button_Search.Click += new System.EventHandler(this.Button_Search_Click);
+            this.Button_Search.MouseLeave += new System.EventHandler(this.Button_Search_MouseLeave);
+            this.Button_Search.MouseHover += new System.EventHandler(this.Button_Search_MouseHover);
+            // 
             // Window
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -378,6 +394,7 @@
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.ClientSize = new System.Drawing.Size(428, 542);
             this.Controls.Add(this.Text_Box_Tags);
+            this.Controls.Add(this.Button_Search);
             this.Controls.Add(this.Button_Operator);
             this.Controls.Add(this.Button_Percentage);
             this.Controls.Add(this.Text_Box_Description);
@@ -414,6 +431,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.Button_Run_Game)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Percentage)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Operator)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Search)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -445,6 +463,7 @@
         private System.Windows.Forms.PictureBox Button_Run_Game;
         private System.Windows.Forms.PictureBox Button_Percentage;
         private System.Windows.Forms.PictureBox Button_Operator;
+        private System.Windows.Forms.PictureBox Button_Search;
     }
 }
 

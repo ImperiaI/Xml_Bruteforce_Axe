@@ -29,6 +29,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Caution_Window));
             this.Text_Box_Caution_Window = new System.Windows.Forms.RichTextBox();
             this.Button_Caution_Box_2 = new System.Windows.Forms.Button();
             this.Button_Caution_Box_1 = new System.Windows.Forms.Button();
@@ -141,6 +142,7 @@
             this.Controls.Add(this.List_View_Info);
             this.Controls.Add(this.Text_Box_Caution_Window);
             this.Font = new System.Drawing.Font("Georgia", 10F);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(4);
             this.MinimumSize = new System.Drawing.Size(516, 150);
             this.Name = "Caution_Window";

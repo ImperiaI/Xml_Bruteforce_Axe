@@ -32,7 +32,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>Resources\Button_Jutsu.ico</ApplicationIcon>
+    <ApplicationIcon>Axe_Icon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -149,6 +149,53 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Button_Logs_Lit.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Axe.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Axe_Lit.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Controller.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Controller2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Controller_Lit.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Idle_01.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Done_01.jpg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Plus.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Plus_Lit.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Minus.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Minus_Lit.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Percent.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Button_Percent_Lit.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Axe_Icon.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Axe_Icon.ico" />
+    <None Include="Resources\Button_Search_Lit.png" />
+    <None Include="Resources\Button_Search.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

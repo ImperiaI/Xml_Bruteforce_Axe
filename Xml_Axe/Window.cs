@@ -57,25 +57,26 @@ namespace Log_Compactor
             List_View_Selection.AllowDrop = true;
   
 
-            Set_Resource_Button(Drop_Zone, Get_Start_Image());
+            Set_Resource_Button(Drop_Zone, Get_Start_Image()); 
             Set_Resource_Button(Button_Browse, Properties.Resources.Button_File);
             Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs);
-            Set_Resource_Button(Button_Run_Game, Properties.Resources.Button_Run);
+            Set_Resource_Button(Button_Search, Properties.Resources.Button_Search);
+            Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent);
+            Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus);
+            Set_Resource_Button(Button_Run_Game, Properties.Resources.Button_Axe);
             Set_Resource_Button(Button_Toggle_Settings, Properties.Resources.Button_Settings);
-            Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Refresh);
+            Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller);
 
             Button_Browse.BackColor = Color.Transparent;
             Button_Start.BackColor = Color.Transparent;
-            Button_Run_Game.BackColor = Color.Transparent;           
+            Button_Run_Game.BackColor = Color.Transparent;
+            Button_Search.BackColor = Color.Transparent;
+            Button_Percentage.BackColor = Color.Transparent; 
+            Button_Operator.BackColor = Color.Transparent; 
             Button_Reset_Blacklist.BackColor = Color.Transparent;
             Button_Toggle_Settings.BackColor = Color.Transparent;
     
      
-
-
-            // Loading Values
-            Text_Box_Original_Path.Text = Properties.Settings.Default.Last_File;
-            Track_Bar_Tag_Value.Value = Properties.Settings.Default.Trackbar_Value;
 
             if (File.Exists(Xml_Directory + "Axe_Blacklist.txt"))
             { Blacklisted_Xmls = File.ReadAllLines(Xml_Directory + "Axe_Blacklist.txt").ToList(); }
@@ -87,6 +88,20 @@ namespace Log_Compactor
             if (Tag_List == null | Tag_List == "") { Reset_Tag_List(); }
             Text_Box_Tags.Text = Tag_List;
             Reset_Tag_Box();
+
+
+
+            // Loading Values, this needs to happen AFTER Reset_Tag_Box() or it will cause errors
+            Text_Box_Original_Path.Text = Properties.Settings.Default.Last_File;
+
+            if (Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Store_Last_Settings = true"))
+            {
+                Combo_Box_Entity_Name.Text = Properties.Settings.Default.Entity_Name;
+                Combo_Box_Type_Filter.Text = Properties.Settings.Default.Type_Filter;
+                Combo_Box_Tag_Name.Text = Properties.Settings.Default.Tag_Name;
+                Combo_Box_Tag_Value.Text = Properties.Settings.Default.Tag_Value;
+                Track_Bar_Tag_Value.Value = Properties.Settings.Default.Trackbar_Value;
+            }
         
 
             User_Input = true;
@@ -203,7 +218,7 @@ namespace Log_Compactor
         //===========================// 
 
         private void Set_Paths(string The_Path)
-        {
+        {         
             Combo_Box_Entity_Name.Text = ""; // Resetting
             Text_Box_Original_Path.Text = The_Path;
             Properties.Settings.Default.Last_File = The_Path;
@@ -263,9 +278,10 @@ namespace Log_Compactor
             string Operator = "";
             string Percentage = "";
 
+            if (Combo_Box_Tag_Value.Text.StartsWith("-")) { Operator = "-"; } // Remain -
+
             if (Percent_Mode) 
-            {   if (Combo_Box_Tag_Value.Text.StartsWith("-")) { Operator = "-"; } // Remain -
-                else { Operator = "+"; } // Otherwise defaulting Prefix to + 
+            {   if (!Combo_Box_Tag_Value.Text.StartsWith("-")) { Operator = "+"; } // Defaulting Prefix to + 
                 Percentage = "%";
             }
 
@@ -302,7 +318,7 @@ namespace Log_Compactor
         private void Button_Browse_MouseLeave(object sender, EventArgs e)
         { Set_Resource_Button(Button_Browse, Properties.Resources.Button_File); }
 
-
+       
         //===========================//
         private void Button_Start_Click(object sender, EventArgs e)
         {         
@@ -353,6 +369,17 @@ namespace Log_Compactor
 
 
             Related_Xmls = Slice(true); // This line does the actual Job!
+            Set_Resource_Button(Drop_Zone, Get_Compacted_Image());
+            if (List_View_Selection.Visible) { Button_Start_Click(null, null); } // Hiding open Xml
+
+
+            Properties.Settings.Default.Entity_Name = Wash_String(Combo_Box_Entity_Name.Text);
+            Properties.Settings.Default.Type_Filter = Combo_Box_Type_Filter.Text;
+            Properties.Settings.Default.Tag_Name = Combo_Box_Tag_Name.Text;
+            Properties.Settings.Default.Tag_Value = Combo_Box_Tag_Value.Text;                                
+            Properties.Settings.Default.Trackbar_Value = Track_Bar_Tag_Value.Value;
+            Properties.Settings.Default.Save(); // Storing last usage
+
 
 
             // Disabled Feature, quite obsolete
@@ -366,10 +393,10 @@ namespace Log_Compactor
         }
 
         private void Button_Run_Game_MouseHover(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Run_Game, Properties.Resources.Button_Run_Lit); }
+        { Set_Resource_Button(Button_Run_Game, Properties.Resources.Button_Axe_Lit); }
 
         private void Button_Run_Game_MouseLeave(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Run_Game, Properties.Resources.Button_Run); }
+        { Set_Resource_Button(Button_Run_Game, Properties.Resources.Button_Axe); }
 
 
 
@@ -573,7 +600,7 @@ namespace Log_Compactor
                 } catch {}
             }
 
-            File_Collection = new List<string>(); // Clearing for the next time
+            File_Collection = new List<string>(); // Clearing for the next time          
             return Changed_Xmls;      
         }
 
@@ -638,11 +665,13 @@ namespace Log_Compactor
         private void Button_Toggle_Settings_Click(object sender, EventArgs e)
         {
             if (Text_Box_Tags.Visible == true)
-            {   Text_Box_Tags.Visible = false;
+            {   if (Combo_Box_Type_Filter.Text != "Faction Name Filter") { Button_Search.Visible = true; }
+                Text_Box_Tags.Visible = false;              
                 Button_Run_Game.Visible = true; 
                 Button_Percentage.Visible = true;
                 Button_Operator.Visible = true; 
                 Label_Type_Filter.Visible = true;
+                Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller);
 
                 if (Combo_Box_Type_Filter.Text == "Faction Name Filter") { Label_Entity_Name.Text = "Faction Name"; }
                 else { Label_Entity_Name.Text = "Entity Name"; }
@@ -653,15 +682,16 @@ namespace Log_Compactor
                 }
                 Properties.Settings.Default.Save();               
                 Reset_Tag_Box();
-
                 return;
             }
             else
-            {   Text_Box_Tags.Visible = true;
+            {   Button_Search.Visible = false; 
+                Text_Box_Tags.Visible = true;                             
                 Button_Run_Game.Visible = false;
                 Button_Percentage.Visible = false;
                 Button_Operator.Visible = false; 
                 Label_Type_Filter.Visible = false;
+                Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Refresh);
                 Label_Entity_Name.Text = "List of Tags";            
                 Text_Box_Tags.Focus(); // So the user can scroll
                 return;
@@ -762,10 +792,16 @@ namespace Log_Compactor
         }
 
         private void Button_Reset_Blacklist_MouseHover(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Refresh_Lit); }
+        {   if (Text_Box_Tags.Visible == true)
+            { Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Refresh_Lit); }
+            else { Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller_Lit); }
+        }
 
         private void Button_Reset_Blacklist_MouseLeave(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Refresh); }
+        {   if (Text_Box_Tags.Visible == true)
+            { Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Refresh); }
+            else { Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller); } 
+        }
 
       
 
@@ -826,12 +862,7 @@ namespace Log_Compactor
         //===========================//
         public Bitmap Get_Start_Image()
         {
-            return Properties.Resources.Shadow_Clone_01;
-
-            // if (Properties.Settings.Default.Star_Wars_Theme == false)
-            // {  return Properties.Resources.Shadow_Clone_01; }
-            // else {  return Properties.Resources.Starting_01; }
-              
+            return Properties.Resources.Idle_01;              
         }
 
         //===========================//
@@ -839,6 +870,9 @@ namespace Log_Compactor
 
         public Bitmap Get_Compacted_Image()
         {
+            return Properties.Resources.Done_01;
+
+           /*
            Bitmap Result = null;
            Random rnd = new Random();
            int Value = rnd.Next(1, 2);  // creates a number between 1 and 4
@@ -849,19 +883,20 @@ namespace Log_Compactor
                 switch (Value)
                 {
                     case 1:
-                        Result = Properties.Resources.Rasengan_01;
+                        Result = Properties.Resources.Done_01;
                         break;
                     //case 2:
                     //    Result = Properties.Resources.Shadow_Clone_02;
                     //    break;                
 
                     default:
-                        Result = Properties.Resources.Rasengan_01;
+                        Result = Properties.Resources.Done_01;
                         break;
                 }
 
                 return Result;
             }
+            */
 
 
             /*
@@ -889,7 +924,7 @@ namespace Log_Compactor
             }
             */
 
-            return Result;
+            // return Result;
 
         }
 
@@ -902,6 +937,7 @@ namespace Log_Compactor
 
 
 # Show_Tooltip = true
+# Store_Last_Settings = true
 # Request_File_Approval = true
 # RGBA_Color = 100, 170, 170, 255 # Marine Blue
 
@@ -947,7 +983,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
         public void Reset_Tag_Box()
         {                
             Combo_Box_Tag_Name.Items.Clear();
-            Combo_Box_Tag_Name.Text = "";
+            if (User_Input) { Combo_Box_Tag_Name.Text = ""; }
             Disable_Description();
 
             foreach (string Tag in Process_Tags(Text_Box_Tags.Text))
@@ -997,6 +1033,11 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
         { Disable_Description(); }
 
 
+        private void Combo_Box_Entity_Name_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (e.KeyChar == Convert.ToChar(Keys.Return))
+            { Button_Search_Click(null, null); }
+        }
 
  
         //===========================//
@@ -1026,8 +1067,14 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
             if (Percent_Mode) { Scale_Factor = 10; } // Percentage Override
 
 
-            if (Combo_Box_Type_Filter.Text == "Faction Name Filter") { Label_Entity_Name.Text = "Faction Name"; }
-            else { Label_Entity_Name.Text = "Entity Name"; }
+            if (Combo_Box_Type_Filter.Text == "Faction Name Filter") 
+            {   Label_Entity_Name.Text = "Faction Name";
+                Button_Search.Visible = false;
+            }
+            else 
+            {   Label_Entity_Name.Text = "Entity Name";
+                Button_Search.Visible = true;
+            }
 
 
             if (Combo_Box_Type_Filter.Text == "All in loaded Xml") // Don't use elseif here
@@ -1500,13 +1547,11 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
         { return The_Text.Replace("+", "").Replace("-", "").Replace("%", ""); }
 
         private void Button_Percentage_MouseHover(object sender, EventArgs e)
-        {
-
-        }
+        { Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent_Lit); }
 
         private void Button_Percentage_MouseLeave(object sender, EventArgs e)
-        {
-
+        {   if (Percent_Mode) { Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent_Lit);  }
+            else { Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent); }
         }
 
 
@@ -1524,14 +1569,75 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
         }
 
         private void Button_Operator_MouseHover(object sender, EventArgs e)
-        {
-
+        {    if (Combo_Box_Tag_Value.Text.Contains("-")) { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Plus_Lit); }
+             else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus_Lit); }
         }
 
         private void Button_Operator_MouseLeave(object sender, EventArgs e)
-        {
-
+        {   if (Combo_Box_Tag_Value.Text.Contains("-")) { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Plus); }
+            else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus); }
         }
+
+
+
+
+        private void Button_Search_Click(object sender, EventArgs e)
+        {
+            string Entity_Name = Wash_String(Combo_Box_Entity_Name.Text);
+            if (Entity_Name == "" | Entity_Name == "None") { return; }
+
+           
+            IEnumerable<XElement> Instances = null;
+  
+            
+            foreach (var Xml in Get_Xmls())
+            {   try
+                {   // ===================== Opening Xml File =====================                            
+                    XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
+                                                      
+                    Instances =
+                      from All_Tags in Xml_File.Root.Descendants()
+                        where (string)All_Tags.Attribute("Name") == Entity_Name // Fast Search                    
+                          select All_Tags;
+
+
+                    if (Instances.Any()) { Set_Paths(Xml); Combo_Box_Entity_Name.Text = Entity_Name; break; } 
+                } catch {}
+            }
+
+
+            if (!Instances.Any())
+            {   foreach (var Xml in Get_Xmls())
+                {   try
+                    {   XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
+
+                        Instances =
+                          from All_Tags in Xml_File.Root.Descendants()
+                          // Regex; This is damn slow - but it delivers results
+                          where Is_Match((string)All_Tags.Attribute("Name"), Entity_Name)
+                          select All_Tags;
+
+
+                        if (Instances.Any()) { Set_Paths(Xml); Combo_Box_Entity_Name.Text = Entity_Name; break; }
+                    } catch {}
+                }
+            }
+
+
+              
+        }
+
+
+        private void Button_Search_MouseHover(object sender, EventArgs e)
+        {
+            Set_Resource_Button(Button_Search, Properties.Resources.Button_Search_Lit);
+        }
+
+        private void Button_Search_MouseLeave(object sender, EventArgs e)
+        { Set_Resource_Button(Button_Search, Properties.Resources.Button_Search); }
+
+
+
 
     
         //===========================//
