@@ -295,7 +295,7 @@
             this.Text_Box_Description.ForeColor = System.Drawing.SystemColors.Info;
             this.Text_Box_Description.Location = new System.Drawing.Point(12, 12);
             this.Text_Box_Description.Name = "Text_Box_Description";
-            this.Text_Box_Description.Size = new System.Drawing.Size(368, 164);
+            this.Text_Box_Description.Size = new System.Drawing.Size(404, 164);
             this.Text_Box_Description.TabIndex = 29;
             this.Text_Box_Description.Text = "";
             this.Text_Box_Description.Click += new System.EventHandler(this.Text_Box_Description_Click);
@@ -418,7 +418,7 @@
             this.Controls.Add(this.Text_Box_Tags);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximumSize = new System.Drawing.Size(444, 580);
-            this.MinimumSize = new System.Drawing.Size(444, 570);
+            this.MinimumSize = new System.Drawing.Size(444, 580);
             this.Name = "Window";
             this.Text = "Imperialware                    Bruteforce Axe v0.1";
             this.Load += new System.EventHandler(this.Window_Load);

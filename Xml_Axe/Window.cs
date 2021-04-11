@@ -217,47 +217,58 @@ namespace Log_Compactor
 
         //===========================// 
 
-        private void Set_Paths(string The_Path)
-        {         
-            Combo_Box_Entity_Name.Text = ""; // Resetting
+        private void Set_Paths(string The_Path, bool Refresh_Dir = true)
+        {
             Text_Box_Original_Path.Text = The_Path;
             Properties.Settings.Default.Last_File = The_Path;
             Temporal_A = Path.GetDirectoryName(The_Path);
 
-            for (int i = 0; i < 10; i++)
+
+            if (Refresh_Dir)
             {
-                // Keep removing the last directory in the path,
-                if (Regex.IsMatch(Temporal_A, "(?i).*?" + "xml$")) 
-                {   List_View_Selection.Visible = true;
-                    Load_Xml_Content(The_Path);
-                }
-
-
-                // Don't use else if here!
-                if (!Regex.IsMatch(Temporal_A, "(?i).*?" + "xml$")) { Temporal_A = Path.GetDirectoryName(Temporal_A); }
-                else if (Regex.IsMatch(Temporal_A, "(?i).*?" + "data$"))
+                Combo_Box_Entity_Name.Text = ""; // Resetting         
+                
+                for (int i = 0; i < 10; i++)
                 {
-                    Xml_Directory = Temporal_A + @"\xml\"; // Updating 
-                    Properties.Settings.Default.Xml_Directory = Temporal_A + @"\xml\";                 
-                    // Leaping back for a directy, to get the name of the Modpath
-                    Properties.Settings.Default.Mod_Directory = Path.GetDirectoryName(Temporal_A); ;
+                    // Keep removing the last directory in the path,
+                    if (Is_Match(Temporal_A, "xml$"))
+                    {
+                        List_View_Selection.Visible = true;
+                        Load_Xml_Content(The_Path);
+                    }
 
-                    // iConsole(600, 100, Path.GetDirectoryName(Path.GetDirectoryName(Temporal_A)));
-                    break;
+
+                    // Don't use else if here!
+                    if (!Is_Match(Temporal_A, "xml$")) { Temporal_A = Path.GetDirectoryName(Temporal_A); }
+                    else if (Is_Match(Temporal_A, "data$"))
+                    {
+                        Xml_Directory = Temporal_A + @"\xml\"; // Updating 
+                        Properties.Settings.Default.Xml_Directory = Xml_Directory;
+                        // Leaping back for a directy, to get the name of the Modpath
+                        Properties.Settings.Default.Mod_Directory = Path.GetDirectoryName(Temporal_A); ;
+
+                        // iConsole(600, 100, Path.GetDirectoryName(Path.GetDirectoryName(Temporal_A)));
+                        break;
+                    }
+
+                    else //Until we got to the Xml directory
+                    {
+                        Xml_Directory = Temporal_A + @"\"; // Updating 
+                        Properties.Settings.Default.Xml_Directory = Xml_Directory;
+
+
+                        // Leaping back by 2 directoies, to get the name of the Modpath
+                        Properties.Settings.Default.Mod_Directory = Path.GetDirectoryName(Path.GetDirectoryName(Temporal_A)); ;
+
+                        // iConsole(600, 100, Path.GetDirectoryName(Path.GetDirectoryName(Temporal_A)));
+                        break;
+                    }
                 }
+            }
 
-                else //Until we got to the Xml directory
-                {
-                    Xml_Directory = Temporal_A + @"\"; // Updating 
-                    Properties.Settings.Default.Xml_Directory = Temporal_A + @"\";
-
-
-                    // Leaping back by 2 directoies, to get the name of the Modpath
-                    Properties.Settings.Default.Mod_Directory = Path.GetDirectoryName(Path.GetDirectoryName(Temporal_A)); ;
-
-                    // iConsole(600, 100, Path.GetDirectoryName(Path.GetDirectoryName(Temporal_A)));
-                    break;
-                }
+            else // If not Refresh_Dir, we trust that the selected file is a xml
+            {   Load_Xml_Content(The_Path);
+                List_View_Selection.Visible = true;                             
             }
 
 
@@ -372,15 +383,16 @@ namespace Log_Compactor
             Set_Resource_Button(Drop_Zone, Get_Compacted_Image());
             if (List_View_Selection.Visible) { Button_Start_Click(null, null); } // Hiding open Xml
 
+            if (Combo_Box_Entity_Name.Text == "None") { Properties.Settings.Default.Entity_Name = ""; }
+            else { Properties.Settings.Default.Entity_Name = Wash_String(Combo_Box_Entity_Name.Text); }
 
-            Properties.Settings.Default.Entity_Name = Wash_String(Combo_Box_Entity_Name.Text);
             Properties.Settings.Default.Type_Filter = Combo_Box_Type_Filter.Text;
             Properties.Settings.Default.Tag_Name = Combo_Box_Tag_Name.Text;
             Properties.Settings.Default.Tag_Value = Combo_Box_Tag_Value.Text;                                
             Properties.Settings.Default.Trackbar_Value = Track_Bar_Tag_Value.Value;
             Properties.Settings.Default.Save(); // Storing last usage
 
-
+            if (Text_Box_Description.Visible) { Disable_Description(); }
 
             // Disabled Feature, quite obsolete
             /*if (Related_Xmls.Count() > 0 & Warn_User & !In_Selected_Xml(Combo_Box_Entity_Name.Text) 
@@ -1611,7 +1623,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                           select All_Tags;
 
 
-                    if (Instances.Any()) { Set_Paths(Xml); Combo_Box_Entity_Name.Text = Entity_Name; break; } 
+                    if (Instances.Any() & File.Exists(Xml)) { Set_Paths(Xml, false); Combo_Box_Entity_Name.Text = Entity_Name; break; } 
                 } catch {}
             }
 
@@ -1628,7 +1640,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                           select All_Tags;
 
 
-                        if (Instances.Any()) { Set_Paths(Xml); break; } // Don't select Entity_Name here because its spelled wrong 
+                        if (Instances.Any() & File.Exists(Xml)) { Set_Paths(Xml); break; } // Don't select Entity_Name here because its spelled wrong 
                     } catch {}
                 }
             }
