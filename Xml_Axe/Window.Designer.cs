@@ -370,7 +370,6 @@
             this.Button_Operator.Size = new System.Drawing.Size(30, 30);
             this.Button_Operator.TabIndex = 34;
             this.Button_Operator.TabStop = false;
-            this.Button_Operator.Visible = false;
             this.Button_Operator.Click += new System.EventHandler(this.Button_Operator_Click);
             this.Button_Operator.MouseLeave += new System.EventHandler(this.Button_Operator_MouseLeave);
             this.Button_Operator.MouseHover += new System.EventHandler(this.Button_Operator_MouseHover);

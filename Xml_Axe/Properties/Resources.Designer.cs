@@ -93,6 +93,26 @@ namespace Log_Compactor.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Button_Bool {
+            get {
+                object obj = ResourceManager.GetObject("Button_Bool", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Bool_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_Bool_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Button_Controller {
             get {
                 object obj = ResourceManager.GetObject("Button_Controller", resourceCulture);

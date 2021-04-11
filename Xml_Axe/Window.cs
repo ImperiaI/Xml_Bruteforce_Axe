@@ -43,6 +43,7 @@ namespace Log_Compactor
         string Tag_List = "";
         bool User_Input = false;
         bool Percent_Mode = false;
+        bool Bool_Mode = false;
         string Temporal_A, Temporal_B = "";
         string[] Balancing_Tags = null; // new string[] { };
         public Color Theme_Color = Color.CadetBlue;
@@ -968,9 +969,9 @@ Planet_Surface_Accessible @ bool # Set to No and it will turn all GCs to space o
 
 Rebalance_Everything @ Tactical_Health, Shield_Points, Shield_Refresh_Rate # This balances the most important aspects of the Game: Tactical_Health, Shield, Shield_Refresh_Rate, Projectile Damage
 
-Is_Targetable @ bool # Defines whether or not all Hardpoints in the Mod can be targeted.
+Is_Targetable @ bool # Defines whether or not all Hardpoints in current selection or the Mod can be targeted.
 
-Is_Destroyable @ bool # Defines whether or not all Hardpoints in the Mod can be destroyed.
+Is_Destroyable @ bool # Defines whether or not all Hardpoints in current selection or the Mod can be destroyed.
 
 Is_Named_Hero @ bool # Set to No and no more heroes will respawn.
 
@@ -988,9 +989,9 @@ Shield_Points @ 100
 
 Shield_Refresh_Rate @ 5 # Usually about 30 for capital ships and less for weaker classes.
 
-Select_Box_Scale @ 100 # Set to 0 and all Ships and Troops will have their select box deactivated.
+Select_Box_Scale @ 100 # Set to 0 and all Ships and Troops will have their select box deactivated (not revertable). In percent mode this scales the size of all select box circles.
 
-Layer_Z_Adjust @ 100
+Layer_Z_Adjust @ 100 # In percent mode this will scale the distance between all height layer values.
 
 Space_Tactical_Unit_Cap @ 10 # Sets Unit cap in space tactical battles, for all Factions in the Mod. Don't put too high or it will cause laggs.
 
@@ -1139,7 +1140,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                     Combo_Box_Type_Filter.Text = "Planet";                 
                     break;
                 case "Rebalance_Everything":
-                    if (!Percent_Mode) { Button_Percentage_Click(null, null); }               
+                    if (!Percent_Mode) { Button_Percentage_Click(null, null); Button_Percentage_MouseLeave(null, null); }               
                     break;
                   
                 case "Is_Targetable":
@@ -1278,10 +1279,14 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                 // Button_Percentage.Visible = false;
                 Track_Bar_Tag_Value.Visible = false;
                 Combo_Box_Tag_Value.Items.Clear();
+
+                Bool_Mode = false; Percent_Mode = false;
+                Button_Operator_MouseLeave(null, null);
             }
             else if (Is_Match(Tag_Format, "bool"))
             {
-                Button_Operator.Visible = false;
+                Bool_Mode = true; Percent_Mode = false;
+                Button_Operator_MouseLeave(null, null);
                 Button_Percentage.Visible = false;
                 Track_Bar_Tag_Value.Visible = false;
                 
@@ -1306,10 +1311,18 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                 else { int.TryParse(Tag_Format, out Scale_Factor); }
                 // iConsole(400, 200, "Scale is " + Scale_Factor);
 
+
+                Bool_Mode = false;
+                Button_Operator_MouseLeave(null, null);
+
+                if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True")| Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "False") 
+                    | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "Yes") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "No"))
+                { Combo_Box_Tag_Value.Text = ""; }        
+
+
                 // Resetting the right scale factor
                 if (Scale_Factor == 10) { Combo_Box_Type_Filter_TextChanged(null, null); }
 
-                Button_Operator.Visible = true;
                 Button_Percentage.Visible = true;
                 Track_Bar_Tag_Value.Visible = true;
                 Combo_Box_Tag_Value.Items.Clear();
@@ -1326,7 +1339,9 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
             if (User_Input) 
             {   Disable_Description();
                 if (Percent_Mode & !Combo_Box_Tag_Value.Text.Contains("%")) { Combo_Box_Tag_Value.Text += "%"; }
-            } 
+            }
+
+            Button_Operator_MouseLeave(null, null); // Check if bool and refresh
         }
 
 
@@ -1580,24 +1595,64 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
 
 
         private void Button_Operator_Click(object sender, EventArgs e)
-        {
-            if (Combo_Box_Tag_Value.Text != "") // & Percent_Mode)  // Toggle
-            {   string The_Value = Combo_Box_Tag_Value.Text;
+        {   
+            if (Bool_Mode)
+            {   if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True"))
+                {   Combo_Box_Tag_Value.Text = "False";
+                    Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool);
+                }
+                else if (Combo_Box_Tag_Value.Text == "" | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "False"))
+                {
+                    Combo_Box_Tag_Value.Text = "True";
+                    Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool_Lit);
+                }
+          
+                else if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "Yes"))
+                {   Combo_Box_Tag_Value.Text = "No";
+                    Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool);
+                }
+                else if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "No"))
+                {
+                    Combo_Box_Tag_Value.Text = "Yes";
+                    Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool_Lit);
+                }        
+            }
+            else if (Combo_Box_Tag_Value.Text != "") // & Percent_Mode)  // Toggle
+            {
+                string The_Value = Combo_Box_Tag_Value.Text;
 
                 if (The_Value.Contains("-")) { Combo_Box_Tag_Value.Text = The_Value.Replace("-", "+"); }
                 else if (The_Value.Contains("+")) { Combo_Box_Tag_Value.Text = The_Value.Replace("+", "-"); }
-                else { Combo_Box_Tag_Value.Text = "-" + The_Value; }
+                else { Combo_Box_Tag_Value.Text = "-" + The_Value; }               
             }
+
         }
 
         private void Button_Operator_MouseHover(object sender, EventArgs e)
-        {    if (Combo_Box_Tag_Value.Text.Contains("-")) { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Plus_Lit); }
-             else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus_Lit); }
+        {
+            if (Bool_Mode)
+            {   if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "Yes"))
+                { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool_Lit); }
+                else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool); }
+            }
+            else
+            {   if (Combo_Box_Tag_Value.Text.Contains("-")) { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Plus_Lit); }
+                else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus_Lit); }
+            }
+
         }
 
         private void Button_Operator_MouseLeave(object sender, EventArgs e)
-        {   if (Combo_Box_Tag_Value.Text.Contains("-")) { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Plus); }
-            else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus); }
+        {
+            if (Bool_Mode)
+            {   if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "Yes")) 
+                { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool_Lit); }
+                else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool); }
+            }
+            else
+            {   if (Combo_Box_Tag_Value.Text.Contains("-")) { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Plus); }
+                else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus); }
+            }
         }
 
 
