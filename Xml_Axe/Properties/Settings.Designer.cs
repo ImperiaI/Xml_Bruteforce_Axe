@@ -130,5 +130,17 @@ namespace Log_Compactor.Properties {
                 this["Tag_Value"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Steam_Exe_Path {
+            get {
+                return ((string)(this["Steam_Exe_Path"]));
+            }
+            set {
+                this["Steam_Exe_Path"] = value;
+            }
+        }
     }
 }

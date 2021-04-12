@@ -12,6 +12,10 @@ using System.Text.RegularExpressions;
 using System.Linq;
 using System.Xml.Linq;
 
+using System.Diagnostics;
+using Microsoft.Win32;
+
+
 
 // ====================================================================================================
 // **************************************** 03.2021 Imperial ******************************************
@@ -94,10 +98,11 @@ namespace Log_Compactor
 
             // Loading Values, this needs to happen AFTER Reset_Tag_Box() or it will cause errors
             Text_Box_Original_Path.Text = Properties.Settings.Default.Last_File;
+            if (Properties.Settings.Default.Steam_Exe_Path == "") { Check_for_Steam_Version(); }
 
-            if (Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Store_Last_Settings = true"))
-            {
-                Combo_Box_Entity_Name.Text = Properties.Settings.Default.Entity_Name;
+
+            if (Match_Setting("Store_Last_Settings"))
+            {   Combo_Box_Entity_Name.Text = Properties.Settings.Default.Entity_Name;
                 Combo_Box_Type_Filter.Text = Properties.Settings.Default.Type_Filter;
                 Combo_Box_Tag_Name.Text = Properties.Settings.Default.Tag_Name;
                 Combo_Box_Tag_Value.Text = Properties.Settings.Default.Tag_Value;
@@ -356,7 +361,9 @@ namespace Log_Compactor
         //===========================//
 
         private void Button_Run_Game_Click(object sender, EventArgs e)
-        {        
+        {
+            iConsole(600, 400, Check_for_Steam_Version());
+
             if (Combo_Box_Tag_Name.Text == "") { return; }
             
             int Line_Count = 0;
@@ -366,7 +373,7 @@ namespace Log_Compactor
 
 
             // if (The_Settings.Contains("Show_Files_That_Would_Change = true") | The_Settings.Contains("Request_Approval=true"))
-            if (Match_Without_Emptyspace(The_Settings, "Request_File_Approval = true") & !In_Selected_Xml(Combo_Box_Entity_Name.Text))
+            if (Match_Setting("Request_File_Approval") & !In_Selected_Xml(Combo_Box_Entity_Name.Text))
             {
                 // Warn_User = false;                  
                 Related_Xmls = Slice(false); // Means don't apply any changes
@@ -397,7 +404,7 @@ namespace Log_Compactor
 
             // Disabled Feature, quite obsolete
             /*if (Related_Xmls.Count() > 0 & Warn_User & !In_Selected_Xml(Combo_Box_Entity_Name.Text) 
-              & Match_Without_Emptyspace(The_Settings, "Show_Changed_Files = true"))
+              & Match_Setting("Show_Changed_Files"))
             {
                 Line_Count = (Related_Xmls.Count() * 30) + 90;
                 if (Line_Count > 680) { Line_Count = 680; }
@@ -413,6 +420,11 @@ namespace Log_Compactor
 
 
 
+        private bool Match_Setting(string Entry)
+        {   if (Match_Without_Emptyspace(Properties.Settings.Default.Tags, Entry + " = true")) { return true; }
+            return false;
+        }
+
 
         private bool Match_Without_Emptyspace(string Entry_1, string Entry_2)
         {
@@ -420,7 +432,7 @@ namespace Log_Compactor
             return false;
         }
 
-
+      
         private bool Is_Match(string Entry_1, string Entry_2)
         {
             if (Regex.IsMatch(Entry_1, "(?i)" + Entry_2)) { return true; }
@@ -748,71 +760,123 @@ namespace Log_Compactor
                 { Text_Box_Tags.Visible = true; }
             }
             else // Otherwised this button is used to launch the game
-            {   string Affinity_Value = "";
-                int Logical_Processors = Environment.ProcessorCount;
-                
-                // string Program_Path = @"C:\Program Files (x86)\Steam\steamapps\common\Star Wars Empire at War\corruption\StarWarsG.exe";
-                string Mod_Path = Path.GetFileName(Properties.Settings.Default.Mod_Directory);
-                // string Start_Parameter = "/High " + Program_Path + @" modpath=Mods\" + Mod_Path + " Ignoreasserts";
-
-                string Program_Path = @"C:\Program Files (x86)\Steam\steam.exe";                        
-                // string Mod_Path = Properties.Settings.Default.Mod_Directory;              
-                string Start_Parameter = "/High " + Program_Path + @" STEAMMOD=Mods\" + Mod_Path + " Ignoreasserts";
+            {                              
+                string Steam_Path = Properties.Settings.Default.Steam_Exe_Path; 
+                string Program_Path = Path.GetDirectoryName(Steam_Path) + @"\steamapps\common\Star Wars Empire at War\corruption\StarWarsG.exe";
+              
+                string Mod_Name = Path.GetFileName(Properties.Settings.Default.Mod_Directory);
+                string Arguments = @"Modpath=Mods\" + Mod_Name + " Ignoreasserts";
 
 
-                switch (Logical_Processors)
+                // Overwride by User Setting
+                if (!Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Custom_Modpath = false"))
                 {
-                    case 3:
-                        Affinity_Value = "6";
-                        break;
-                    case 4:
-                        Affinity_Value = "C";
-                        break;
-                    case 6:
-                        Affinity_Value = "30";
-                        break;
-                    case 8:
-                        Affinity_Value = "C0";
-                        break;
-                    case 10:
-                        Affinity_Value = "300";
-                        break;
-                    case 12:
-                        Affinity_Value = "C00";
-                        break;
+                    string User_Path = "";
 
-                    case 14:
-                        Affinity_Value = "3000";
-                        break;
-                    case 16:
-                        Affinity_Value = "C000";
-                        break;
-                    case 32:
-                        Affinity_Value = "C0000000";
-                        break;
-                    case 64:
-                        Affinity_Value = "C000000000000000";
-                        break;
-                  
+                    foreach (string Line in Properties.Settings.Default.Tags.Split('\n'))
+                    { if (Line != "" & Line.Contains("Custom_Modpath")) { User_Path = Line.Split('=')[1]; } }
 
-                    default:
-                        Affinity_Value = "";
-                        break;
+                    Arguments = "Modpath=" + User_Path + " Ignoreasserts";
+                }
+                else if (Mod_Name.All(char.IsDigit)) // If all characters are numbers, that means we target a Workshop mod
+                {   // So argument 1 targets now the Workshop dir            
+                    // Arguments = @"Modpath=..\..\..\workshop\content\32470\" + Mod_Name; 
+                    Arguments = @"Steammod=" + Mod_Name + " Ignoreasserts";              
                 }
 
-                // If more then 2 logical cores are available
-                if (Affinity_Value != "") { Start_Parameter = "/affinity " + Affinity_Value + " " + Start_Parameter; }
+        
 
-                iConsole(60, 100, Start_Parameter);
+                bool Affinity = false;
+                bool Priority = false;
 
-                try { System.Diagnostics.Process.Start(Start_Parameter); }
-                catch { } // iConsole(60, 100, "\nCould not find the path of either the Game or the Mod."); }
+                if (Match_Setting("Set_Launch_Affinity")) {Affinity = true; }
+                if (Match_Setting("High_Launch_Priority")) { Priority = true; }
+                          
+                // Now, that we made sure Steam is running, we can launch the game           
+                if (Check_Process(Steam_Path)) { Check_Process(Program_Path, Arguments, Affinity, Priority); }        
+            }
 
+        }
+
+
+
+        public bool Check_Process(string Program_Path, string Arguments = "", bool Set_Affinity = false, bool High_Priority = false)
+        {   
+            string Program_Name = Path.GetFileNameWithoutExtension(Program_Path);
+            Process[] The_Process = Process.GetProcessesByName(Program_Name);
+
+            // Make sure there is an instance of the app is running
+            if (The_Process.Length == 0)
+            {   try
+                {
+                    ProcessStartInfo Process_Info = new ProcessStartInfo();
+                    Process_Info.FileName = Program_Path;
+                    Process_Info.Arguments = Arguments;
+
+                    iConsole(60, 100, Program_Path + " " + Arguments); // return true;
+                    //The_Process[0] = Process.Start(Process_Info);
+                    Process.Start(Process_Info);
+
+                    The_Process = Process.GetProcessesByName(Program_Name); // Retrieve the app processes. 
+                } catch { iConsole(60, 100, "\nFailed to find and launch " + Program_Name); return false; }
+            }
+
+            
+
+
+            if (Set_Affinity | High_Priority) //Process[] The_Processes; 
+            {   // Get the ProcessThread collection for the first instance
+                ProcessThreadCollection The_Threads = The_Process[0].Threads;
+
+                if (Set_Affinity)
+                {
+                    int Logical_Processors = Environment.ProcessorCount;
+
+                    // Set the properties on the first ProcessThread in the collection
+                    The_Threads[0].IdealProcessor = Logical_Processors -1;                 
+                    The_Threads[0].ProcessorAffinity = (IntPtr)Logical_Processors - 1; // Set to the last thread
+
+                    // The_Threads[0].IdealProcessor = 0; // Former Value
+                    // The_Threads[0].ProcessorAffinity = (IntPtr)1;  // Former Value
+                }
+
+                if (High_Priority) { The_Process[0].PriorityClass = ProcessPriorityClass.High; }               
             }
 
 
-
+            if (The_Process[0] != null) { return true; }
+            return false;
         }
+
+
+
+        // Checks for Steam.exe, Checks Gamepaths for "Steam" and sets "Is Steam Version" UI Toggle to true and patches all Steam User start entries.
+        public string Check_for_Steam_Version()
+        {   string Steam_Exe_Path = "";
+
+            try
+            {   RegistryKey Steam_Reg_Key = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Classes\steam\Shell\Open\Command");
+                if (Steam_Reg_Key == null) { iConsole(600, 100, "\n    Error: Registry Key for Steam was not found."); return ""; }
+
+                // Setting Global Variable
+                Steam_Exe_Path = Steam_Reg_Key.GetValue("") as string;
+                if (Steam_Exe_Path == null | Steam_Exe_Path == "") { iConsole(600, 100, "\n    Value of Registry Key for Steam.exe was not found."); return ""; }
+
+                // "C:\Program Files (x86)\Steam\steam.exe" "%1"
+                try { Steam_Exe_Path = Steam_Exe_Path.Substring(1, Steam_Exe_Path.IndexOf('"', 1)).Replace('"', ' '); }
+                catch { }
+
+                if (File.Exists(Steam_Exe_Path))
+                {   Properties.Settings.Default.Steam_Exe_Path = Steam_Exe_Path;
+                    Properties.Settings.Default.Save();
+                }
+                else { iConsole(600, 100, "\n    Error: Could not find the Steam.exe"); return ""; }
+
+            } catch {}          
+    
+            return Steam_Exe_Path;
+        }
+
 
         private void Button_Reset_Blacklist_MouseHover(object sender, EventArgs e)
         {   if (Text_Box_Tags.Visible == true)
@@ -962,7 +1026,10 @@ namespace Log_Compactor
 # Show_Tooltip = true
 # Store_Last_Settings = true
 # Request_File_Approval = true
+# Set_Launch_Affinity = true
+# High_Launch_Priority = true
 # RGBA_Color = 100, 170, 170, 255 # Marine Blue
+# Custom_Modpath = false
 
 
 Planet_Surface_Accessible @ bool # Set to No and it will turn all GCs to space only because it sets all Planets to unaccessible. This operation is revertable: it checks if a planet has a ground.ted map to determine whether it is safe to set surface back to accessible.
@@ -1256,7 +1323,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                             // iConsole(400, 200, Tag_Name + " + " + Tag_Comment);
                           
                             if (Tag_Comment == "") { Disable_Description(); }
-                            else if (Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Show_Tooltip = true"))
+                            else if (Match_Setting("Show_Tooltip"))
                             {
                                 // Removing empty space
                                 if (Tag_Comment[0] == ' ') { Tag_Comment = Tag_Comment.Substring(1, Tag_Comment.Length - 1); }
@@ -1273,7 +1340,11 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
 
 
 
-            if (Tag_Format == "" | Is_Match(Tag_Format, "string"))
+            if (Text_Box_Tags.Visible) // Not doing the stuff below while in Settings mode
+            {   User_Input = true;
+                return List_Of_Tags;
+            }
+            else if (Tag_Format == "" | Is_Match(Tag_Format, "string"))
             {
                 // Button_Operator.Visible = false;
                 // Button_Percentage.Visible = false;
@@ -1569,7 +1640,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                 Combo_Box_Tag_Value.Text = ""; // Prepare for percent input
                 Process_Tags(Text_Box_Tags.Text);
 
-                if (sender != null & Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Show_Tooltip = true"))
+                if (sender != null & Match_Setting("Show_Tooltip"))
                 {   Text_Box_Description.Visible = true;
 
                     // Special Tooltip, that describes the Percent Mode                   
