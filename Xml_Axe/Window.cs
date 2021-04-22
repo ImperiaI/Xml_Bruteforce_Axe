@@ -48,12 +48,15 @@ namespace Log_Compactor
         bool User_Input = false;
         bool Percent_Mode = false;
         bool Bool_Mode = false;
+        bool Script_Mode = false;
         string Temporal_A, Temporal_B = "";
         string[] Balancing_Tags = null; // new string[] { };
         public Color Theme_Color = Color.CadetBlue;
         public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
+        public List<string> Found_Scripts = new List<string>();
         public List<string> File_Collection = new List<string>();
         public List<string> Blacklisted_Xmls = null;
+     
 
 
         private void Window_Load(object sender, EventArgs e)
@@ -67,19 +70,16 @@ namespace Log_Compactor
             Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs);
             Set_Resource_Button(Button_Search, Properties.Resources.Button_Search);
             Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent);
+            Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Search);
             Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus);
             Set_Resource_Button(Button_Run_Game, Properties.Resources.Button_Axe);
             Set_Resource_Button(Button_Toggle_Settings, Properties.Resources.Button_Settings);
             Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller);
 
-            Button_Browse.BackColor = Color.Transparent;
-            Button_Start.BackColor = Color.Transparent;
-            Button_Run_Game.BackColor = Color.Transparent;
-            Button_Search.BackColor = Color.Transparent;
-            Button_Percentage.BackColor = Color.Transparent; 
-            Button_Operator.BackColor = Color.Transparent; 
-            Button_Reset_Blacklist.BackColor = Color.Transparent;
-            Button_Toggle_Settings.BackColor = Color.Transparent;
+
+            Control[] Controls = { Button_Browse, Button_Start, Button_Run_Game, Button_Search, Button_Percentage,
+                                   Button_Scripts, Button_Operator, Button_Reset_Blacklist, Button_Toggle_Settings };
+            foreach (Control Selectrion in Controls) { Selectrion.BackColor = Color.Transparent; }   
     
      
 
@@ -432,6 +432,12 @@ namespace Log_Compactor
             return false;
         }
 
+
+        private bool Match_Without_Emptyspace_2(string Entry_1, string Entry_2)
+        {   if (Entry_1.ToLower().Replace(" ", "").Contains(Entry_2.ToLower().Replace(" ", ""))) { return true; }
+            return false;
+        }
+
       
         private bool Is_Match(string Entry_1, string Entry_2)
         {
@@ -503,6 +509,18 @@ namespace Log_Compactor
         }
 
 
+        public bool Combo_Box_Matches(ComboBox The_List, string Item)
+        {
+            bool Is_Match = false;
+            foreach (string Entry in The_List.Items)
+            {
+                if (Entry == Item) { Is_Match = true; }
+            }
+
+            return Is_Match;
+        }
+
+
         
         //-----------------------------------------------------------------------------
         // Main Function
@@ -532,9 +550,10 @@ namespace Log_Compactor
 
 
             if (Apply_Changes) // File_Collection is a global variable, feeded from the remaining filenames in the Caution_Window 
-            {   if (File_Collection == null | File_Collection.Count == 0) { File_Collection = Get_Xmls(); } // Failsafe
+            {   if (File_Collection == null | File_Collection.Count == 0) { File_Collection = Get_All_Files(Xml_Directory, "xml"); } // Failsafe
                 // iConsole(560, 600, Xml_Directory + string.Join("\n", File_Collection)); // return null; // Debug Code
-            } else { File_Collection = Get_Xmls(); }
+            }
+            else { File_Collection = Get_All_Files(Xml_Directory, "xml"); }
 
 
 
@@ -689,6 +708,14 @@ namespace Log_Compactor
         { return Regex.Replace(The_String, "[\n\r\t ]", ""); }
 
 
+        public string Remove_Emptyspace_Prefix(string The_String)
+        { 
+            // Removing empty space
+            while (The_String[0] == ' ') { The_String = The_String.Substring(1, The_String.Length - 1); }
+
+            return The_String;
+        }
+
         //===========================//
         public bool In_Selected_Xml(string Entry) 
         {   if (Entry == "Multi") { return true; } 
@@ -701,11 +728,8 @@ namespace Log_Compactor
         {
             if (Text_Box_Tags.Visible == true)
             {   if (Combo_Box_Type_Filter.Text != "Faction Name Filter") { Button_Search.Visible = true; }
-                Text_Box_Tags.Visible = false;              
-                Button_Run_Game.Visible = true; 
-                Button_Percentage.Visible = true;
-                Button_Operator.Visible = true; 
-                Label_Type_Filter.Visible = true;
+                Text_Box_Tags.Visible = false;
+                Set_UI_Into_Settings_Mode(true);    
                 Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller);
 
                 if (Combo_Box_Type_Filter.Text == "Faction Name Filter") { Label_Entity_Name.Text = "Faction Name"; }
@@ -720,17 +744,20 @@ namespace Log_Compactor
                 return;
             }
             else
-            {   Button_Search.Visible = false; 
-                Text_Box_Tags.Visible = true;                             
-                Button_Run_Game.Visible = false;
-                Button_Percentage.Visible = false;
-                Button_Operator.Visible = false; 
-                Label_Type_Filter.Visible = false;
+            {
+                Text_Box_Tags.Visible = true;
+                Set_UI_Into_Settings_Mode(false);                                     
                 Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Refresh);
                 Label_Entity_Name.Text = "List of Tags";            
                 Text_Box_Tags.Focus(); // So the user can scroll
                 return;
             }
+        }
+
+        private void Set_UI_Into_Settings_Mode(bool Mode)
+        {
+            Control[] Controls = { Button_Search, Button_Run_Game, Button_Percentage, Button_Scripts, Button_Operator, Label_Type_Filter };
+            foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
         }
 
 
@@ -776,7 +803,8 @@ namespace Log_Compactor
                     foreach (string Line in Properties.Settings.Default.Tags.Split('\n'))
                     { if (Line != "" & Line.Contains("Custom_Modpath")) { User_Path = Line.Split('=')[1]; } }
 
-                    Arguments = "Modpath=" + User_Path + " Ignoreasserts";
+                     Arguments = "Modpath=" + User_Path + " Ignoreasserts";
+                   //  Arguments = "Modpath=" + Properties.Settings.Default.Mod_Directory.Replace(" ", "\\ ") + " Ignoreasserts";
                 }
                 else if (Mod_Name.All(char.IsDigit)) // If all characters are numbers, that means we target a Workshop mod
                 {   // So argument 1 targets now the Workshop dir            
@@ -1018,7 +1046,7 @@ namespace Log_Compactor
 
         //===========================// # Show_Changed_Files = true
         public void Reset_Tag_List()
-        {
+        {   
             Tag_List = @"# I am a Setting (as parameter 1) or Comment (as parameter 2 or 3)
 # The optional @ sign introduces the expected type for a tag: bool, string or a int number as scrollbar factor
 
@@ -1030,6 +1058,7 @@ namespace Log_Compactor
 # High_Launch_Priority = true
 # RGBA_Color = 100, 170, 170, 255 # Marine Blue
 # Custom_Modpath = false
+# Script_Directory = %AppData%\Log_Compactor\Scripts
 
 
 Planet_Surface_Accessible @ bool # Set to No and it will turn all GCs to space only because it sets all Planets to unaccessible. This operation is revertable: it checks if a planet has a ground.ted map to determine whether it is safe to set surface back to accessible.
@@ -1116,7 +1145,28 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
             }
         }
 
+        //===========================//
 
+        private void Reset_Script_Box(List<string> Source_List = null)
+        {
+            Combo_Box_Tag_Name.Items.Clear();
+
+            if (Source_List == null) { return; }
+            try
+            {   // foreach (string Entry in Source_List)
+                for (int i = 0; i <= Source_List.Count - 1; i++)
+                {
+                    if (i > 20) { break; } // Size Limit
+
+                    string Source = Source_List[i];
+                    if (Source != "" && !Combo_Box_Matches(Combo_Box_Tag_Name, Source)) { Combo_Box_Tag_Name.Items.Add(Source); }
+                }
+
+                //User_Input = false; // Preventing stack overflow when Combo_Box_Path_TextChanged() triggers.
+                //Combo_Box_Tag_Name.Text = Source_List[0];
+                //User_Input = true;
+            } catch {}
+        }
 
         //===========================//
         private void Combo_Box_Entity_Name_TextChanged(object sender, EventArgs e)
@@ -1195,8 +1245,8 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
 
         //===========================//
         private void Combo_Box_Tag_Name_TextChanged(object sender, EventArgs e)
-        {   
-            if (!User_Input) { return; }      
+        {
+            if (!User_Input | Script_Mode) { return; }      
             bool Reset_Type_Filter = false;
 
 
@@ -1278,7 +1328,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
 
 
 
-        private List<string> Process_Tags(string Input)
+        private List<string> Process_Tags(string Input = "")
         {
             User_Input = false;
             string Tag_Format = "";
@@ -1317,6 +1367,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                         if (Tag_Name == "Rebalance_Everything") { Balancing_Tags = Tag_Format.Split(','); }
 
 
+
                         // Show description of the active tab
                         if (Tag_Name == Combo_Box_Tag_Name.Text)
                         {
@@ -1325,8 +1376,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                             if (Tag_Comment == "") { Disable_Description(); }
                             else if (Match_Setting("Show_Tooltip"))
                             {
-                                // Removing empty space
-                                if (Tag_Comment[0] == ' ') { Tag_Comment = Tag_Comment.Substring(1, Tag_Comment.Length - 1); }
+                                if (Tag_Comment[0] == ' ') { Tag_Comment = Remove_Emptyspace_Prefix(Tag_Comment); }
 
                                 Text_Box_Description.Text = Tag_Comment;
                                 Text_Box_Description.Visible = true;
@@ -1533,27 +1583,32 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
             Display.ShowDialog(this);
         }
 
-        //===========================//
-        public List<string> Get_Xmls()
-        {
-            List<string> All_Xmls = new List<string>();          
-            string Error = "\nPlease dragg and drop any target Xml, \nor the Xml directory of your mod into the Dropzone.";
 
-            if (Xml_Directory == "" | Xml_Directory == null)
+        //===========================//
+        public List<string> Get_All_Files(string Dir_Path, string Extension = "*") // Extension defaults to all files of all types
+        {
+            List<string> All_Files = new List<string>();
+
+            string Error = "\nPlease dragg and drop any target dir, \ninto either of the boxes.";
+            if (Extension == "xml") { Error = "\nPlease dragg and drop any target Xml, \nor the Xml directory of your mod into the Dropzone."; }
+            
+            
+            if (Dir_Path == "" | Dir_Path == null)
             { iConsole(600, 100, Error); return null; }
 
-            
+
             try
-            {   if (Directory.Exists(Xml_Directory))
-                {   foreach (string The_File in Directory.GetFiles(Xml_Directory, "*.xml", System.IO.SearchOption.AllDirectories))
-                    { All_Xmls.Add(The_File); }
-                } else { iConsole(600, 100, Error); return null; }
-                
+            {   if (Directory.Exists(Dir_Path))
+                {   foreach (string The_File in Directory.GetFiles(Dir_Path, "*." + Extension, System.IO.SearchOption.AllDirectories))
+                    { if (!The_File.EndsWith(".config")) { All_Files.Add(The_File); } }
+                }
+                else
+                { iConsole(600, 100, Error); return null;  }
             } catch {}
 
-
-            return All_Xmls;
+            return All_Files;
         }
+
 
         //===========================//
         // This returns all, even the unselected ones
@@ -1627,6 +1682,69 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
 
 
 
+        private void Button_Search_Click(object sender, EventArgs e)
+        {
+            string Entity_Name = Wash_String(Combo_Box_Entity_Name.Text);
+            if (Entity_Name == "" | Entity_Name == "None") { return; }
+
+
+            IEnumerable<XElement> Instances = null;
+
+
+            foreach (var Xml in Get_All_Files(Xml_Directory, "xml"))
+            {
+                try
+                {   // ===================== Opening Xml File =====================                            
+                    XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
+
+                    Instances =
+                      from All_Tags in Xml_File.Root.Descendants()
+                      where (string)All_Tags.Attribute("Name") == Entity_Name // Fast Search                    
+                      select All_Tags;
+
+
+                    if (Instances.Any() & File.Exists(Xml)) { Set_Paths(Xml, false); Combo_Box_Entity_Name.Text = Entity_Name; break; }
+                }
+                catch { }
+            }
+
+
+            if (!Instances.Any())
+            {
+                foreach (var Xml in Get_All_Files(Xml_Directory, "xml"))
+                {   try
+                    {   XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
+
+                        Instances =
+                          from All_Tags in Xml_File.Root.Descendants()
+                          // Regex; This is damn slow - but it delivers results
+                          where Is_Match((string)All_Tags.Attribute("Name"), Entity_Name)
+                          select All_Tags;
+
+
+                        if (Instances.Any() & File.Exists(Xml)) { Set_Paths(Xml); break; } // Don't select Entity_Name here because its spelled wrong 
+                    } catch {}
+                }
+            }
+
+
+        }
+
+
+        private void Button_Search_MouseHover(object sender, EventArgs e)
+        {
+            Set_Resource_Button(Button_Search, Properties.Resources.Button_Search_Lit);
+        }
+
+        private void Button_Search_MouseLeave(object sender, EventArgs e)
+        { Set_Resource_Button(Button_Search, Properties.Resources.Button_Search); }
+
+
+
+
+
+
+
         private void Button_Percentage_Click(object sender, EventArgs e)
         {
             if (Percent_Mode) 
@@ -1662,6 +1780,65 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
             else { Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent); }
         }
 
+
+
+
+        private void Button_Scripts_Click(object sender, EventArgs e)
+        {
+            if (Script_Mode) // Toggle between Script Mode
+            {   Script_Mode = false;
+                Set_UI_Into_Script_Mode(!Script_Mode);
+                Combo_Box_Tag_Name.Text = "";          
+                Label_Tag_Name.Text = "Tag Name";
+                Reset_Tag_Box();
+            }
+            else 
+            {   Script_Mode = true;
+                Set_UI_Into_Script_Mode(!Script_Mode);
+                Combo_Box_Tag_Name.Text = "";
+                Label_Tag_Name.Text = "Run Script";
+
+
+                string Script_Directory = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Log_Compactor\Scripts";
+
+                // Overwride by User Setting
+                if (!Match_Without_Emptyspace_2(Properties.Settings.Default.Tags, @"Script_Directory = %AppData%\Log_Compactor\Scripts"))
+                {   foreach (string Line in Properties.Settings.Default.Tags.Split('\n'))
+                    { if (Line != "" & Line.Contains("Script_Directory")) { Script_Directory = Line.Split('=')[1]; } }
+
+                    // Removing empty space
+                    if (Script_Directory[0] == ' ') { Script_Directory = Remove_Emptyspace_Prefix(Script_Directory); }
+                    // iConsole(600, 200, "\"" + Script_Directory + "\""); return;
+                }
+          
+                Found_Scripts = Get_All_Files(Script_Directory);
+                List<string> Script_Names = new List<string>();
+
+                foreach (string File_Path in Found_Scripts)
+                { Script_Names.Add(Path.GetFileNameWithoutExtension(File_Path)); }
+                Reset_Script_Box(Script_Names);
+            }
+        }
+
+        private void Button_Scripts_MouseHover(object sender, EventArgs e)
+        { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Search_Lit); }
+
+        private void Button_Scripts_MouseLeave(object sender, EventArgs e)
+        {   if (Script_Mode) { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Search_Lit); }
+            else { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Search); }
+        }
+
+
+        private void Set_UI_Into_Script_Mode(bool Mode)
+        {   Control[] Controls = { Button_Percentage, Button_Operator, Label_Tag_Value, Combo_Box_Tag_Value, Check_Box_All_Occurances, 
+                                   Button_Run_Game, Track_Bar_Tag_Value, Button_Toggle_Settings, Button_Reset_Blacklist };
+            foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
+        }
+
+      
+     
+
+    
 
 
 
@@ -1729,62 +1906,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
 
 
 
-        private void Button_Search_Click(object sender, EventArgs e)
-        {
-            string Entity_Name = Wash_String(Combo_Box_Entity_Name.Text);
-            if (Entity_Name == "" | Entity_Name == "None") { return; }
-
-           
-            IEnumerable<XElement> Instances = null;
-  
-            
-            foreach (var Xml in Get_Xmls())
-            {   try
-                {   // ===================== Opening Xml File =====================                            
-                    XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
-                                                      
-                    Instances =
-                      from All_Tags in Xml_File.Root.Descendants()
-                        where (string)All_Tags.Attribute("Name") == Entity_Name // Fast Search                    
-                          select All_Tags;
-
-
-                    if (Instances.Any() & File.Exists(Xml)) { Set_Paths(Xml, false); Combo_Box_Entity_Name.Text = Entity_Name; break; } 
-                } catch {}
-            }
-
-
-            if (!Instances.Any())
-            {   foreach (var Xml in Get_Xmls())
-                {   try
-                    {   XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
-
-                        Instances =
-                          from All_Tags in Xml_File.Root.Descendants()
-                          // Regex; This is damn slow - but it delivers results
-                          where Is_Match((string)All_Tags.Attribute("Name"), Entity_Name)
-                          select All_Tags;
-
-
-                        if (Instances.Any() & File.Exists(Xml)) { Set_Paths(Xml); break; } // Don't select Entity_Name here because its spelled wrong 
-                    } catch {}
-                }
-            }
-
-
-              
-        }
-
-
-        private void Button_Search_MouseHover(object sender, EventArgs e)
-        {
-            Set_Resource_Button(Button_Search, Properties.Resources.Button_Search_Lit);
-        }
-
-        private void Button_Search_MouseLeave(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Search, Properties.Resources.Button_Search); }
-
-
+     
 
 
     

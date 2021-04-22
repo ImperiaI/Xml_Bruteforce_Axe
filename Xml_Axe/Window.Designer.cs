@@ -54,6 +54,7 @@
             this.Button_Percentage = new System.Windows.Forms.PictureBox();
             this.Button_Operator = new System.Windows.Forms.PictureBox();
             this.Button_Search = new System.Windows.Forms.PictureBox();
+            this.Button_Scripts = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.Drop_Zone)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Track_Bar_Tag_Value)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Start)).BeginInit();
@@ -64,6 +65,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.Button_Percentage)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Operator)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Search)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Scripts)).BeginInit();
             this.SuspendLayout();
             // 
             // Drop_Zone
@@ -386,13 +388,25 @@
             this.Button_Search.MouseLeave += new System.EventHandler(this.Button_Search_MouseLeave);
             this.Button_Search.MouseHover += new System.EventHandler(this.Button_Search_MouseHover);
             // 
+            // Button_Scripts
+            // 
+            this.Button_Scripts.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.Button_Scripts.Location = new System.Drawing.Point(399, 350);
+            this.Button_Scripts.Name = "Button_Scripts";
+            this.Button_Scripts.Size = new System.Drawing.Size(30, 30);
+            this.Button_Scripts.TabIndex = 36;
+            this.Button_Scripts.TabStop = false;
+            this.Button_Scripts.Click += new System.EventHandler(this.Button_Scripts_Click);
+            this.Button_Scripts.MouseLeave += new System.EventHandler(this.Button_Scripts_MouseLeave);
+            this.Button_Scripts.MouseHover += new System.EventHandler(this.Button_Scripts_MouseHover);
+            // 
             // Window
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.ClientSize = new System.Drawing.Size(428, 542);
-            this.Controls.Add(this.Text_Box_Tags);
+            this.Controls.Add(this.Button_Scripts);
             this.Controls.Add(this.Button_Search);
             this.Controls.Add(this.Button_Operator);
             this.Controls.Add(this.Button_Percentage);
@@ -415,6 +429,7 @@
             this.Controls.Add(this.Track_Bar_Tag_Value);
             this.Controls.Add(this.Text_Box_Original_Path);
             this.Controls.Add(this.Drop_Zone);
+            this.Controls.Add(this.Text_Box_Tags);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximumSize = new System.Drawing.Size(444, 580);
             this.MinimumSize = new System.Drawing.Size(444, 580);
@@ -431,6 +446,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.Button_Percentage)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Operator)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Search)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Scripts)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -463,6 +479,7 @@
         private System.Windows.Forms.PictureBox Button_Percentage;
         private System.Windows.Forms.PictureBox Button_Operator;
         private System.Windows.Forms.PictureBox Button_Search;
+        private System.Windows.Forms.PictureBox Button_Scripts;
     }
 }
 
