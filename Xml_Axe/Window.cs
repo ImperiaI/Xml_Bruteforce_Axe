@@ -53,7 +53,7 @@ namespace Log_Compactor
         string[] Balancing_Tags = null; // new string[] { };
         public Color Theme_Color = Color.CadetBlue;
         public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
-        public List<string> Found_Scripts = new List<string>();
+        public List<string> Found_Scripts = null;
         public List<string> File_Collection = new List<string>();
         public List<string> Blacklisted_Xmls = null;
      
@@ -443,6 +443,15 @@ namespace Log_Compactor
         {
             if (Regex.IsMatch(Entry_1, "(?i)" + Entry_2)) { return true; }
             return false;
+        }
+
+
+        public string Get_Item_That_Contains(List<string> The_List, string Item)
+        {
+            foreach (string Entry in The_List)
+            { if (Entry.Contains(Item)) { return Entry; } }
+
+            return "";
         }
 
 
@@ -1246,7 +1255,30 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
         //===========================//
         private void Combo_Box_Tag_Name_TextChanged(object sender, EventArgs e)
         {
-            if (!User_Input | Script_Mode) { return; }      
+            if (!User_Input) { return; }
+
+            else if (Script_Mode)
+            {   string Selection = Combo_Box_Tag_Name.Text;
+
+                if (Found_Scripts != null && Selection != "")
+                {   foreach (string File_Path in Found_Scripts)
+                    {   if (File_Path.EndsWith(Selection))                 
+                        {
+                            string[] Possible_Files = new string[] { "Mod_Cleanup.py", "Show_Passed_Arguments.py" };
+
+                            if (!Match_Without_Emptyspace_2(Selection, Possible_Files[0]) & !Match_Without_Emptyspace_2(Selection, Possible_Files[1]))
+                            { Execute(File_Path); break; } // Otherwise append the Modpath to the Cleanup Script
+                            else { Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\""); break; }
+                        }                                                                         
+                    }
+                }
+                return; // Because it isn't supposed to process xml stuff of below in Script_Mode.
+            }
+
+
+
+
+
             bool Reset_Type_Filter = false;
 
 
@@ -1326,8 +1358,25 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
             
         }
 
+        //===========================//
+        private bool Execute(string File_Path, string Arguments = "")
+        {   try
+            {   ProcessStartInfo Process_Info = new ProcessStartInfo();
+                Process_Info.FileName = File_Path;
+                Process_Info.Arguments = Arguments;
+
+                // iConsole(60, 100, Program_Path + " " + Arguments); // return true;
+                Process.Start(Process_Info);
+
+                // The_Process = Process.GetProcessesByName(Program_Name); // Retrieve the app processes. 
+            }
+            catch { iConsole(60, 100, "\nFailed to find and launch " + File_Path); return false; }
+
+            return true;
+        }
 
 
+        //===========================//
         private List<string> Process_Tags(string Input = "")
         {
             User_Input = false;
@@ -1798,7 +1847,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                 Combo_Box_Tag_Name.Text = "";
                 Label_Tag_Name.Text = "Run Script";
 
-
+                       
                 string Script_Directory = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Log_Compactor\Scripts";
 
                 // Overwride by User Setting
@@ -1815,8 +1864,10 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                 List<string> Script_Names = new List<string>();
 
                 foreach (string File_Path in Found_Scripts)
-                { Script_Names.Add(Path.GetFileNameWithoutExtension(File_Path)); }
+                { Script_Names.Add(Path.GetFileName(File_Path)); }
                 Reset_Script_Box(Script_Names);
+
+                Combo_Box_Tag_Name.DroppedDown = true; // Show to the User
             }
         }
 
