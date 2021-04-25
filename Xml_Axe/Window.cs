@@ -70,7 +70,7 @@ namespace Log_Compactor
             Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs);
             Set_Resource_Button(Button_Search, Properties.Resources.Button_Search);
             Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent);
-            Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Search);
+            Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash);
             Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus);
             Set_Resource_Button(Button_Run_Game, Properties.Resources.Button_Axe);
             Set_Resource_Button(Button_Toggle_Settings, Properties.Resources.Button_Settings);
@@ -1872,11 +1872,11 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
         }
 
         private void Button_Scripts_MouseHover(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Search_Lit); }
+        { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash_Lit); }
 
         private void Button_Scripts_MouseLeave(object sender, EventArgs e)
-        {   if (Script_Mode) { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Search_Lit); }
-            else { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Search); }
+        {   if (Script_Mode) { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash_Lit); }
+            else { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash); }
         }
 
 

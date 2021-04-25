@@ -153,6 +153,26 @@ namespace Log_Compactor.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Button_Flash {
+            get {
+                object obj = ResourceManager.GetObject("Button_Flash", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Flash_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_Flash_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Button_Logs {
             get {
                 object obj = ResourceManager.GetObject("Button_Logs", resourceCulture);
