@@ -50,6 +50,7 @@ namespace Xml_Axe
         bool Bool_Mode = false;
         bool Script_Mode = false;
         string Temporal_A, Temporal_B = "";
+        string Queried_Attribute = "Name"; // Preseting
         string[] Balancing_Tags = null; // new string[] { };
         public Color Theme_Color = Color.CadetBlue;
         public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
@@ -98,7 +99,10 @@ namespace Xml_Axe
 
             Text_Box_Tags.Text = Tag_List;
             Reset_Tag_Box();
+            Reset_Root_Tag_Box();
 
+
+            Queried_Attribute = Get_Setting_Value("Queried_Attribute"); // Needs to run after Reset_Tag_List()!
 
 
             // Loading Values, this needs to happen AFTER Reset_Tag_Box() or it will cause errors
@@ -112,7 +116,12 @@ namespace Xml_Axe
                 Combo_Box_Tag_Value.Text = Properties.Settings.Default.Tag_Value;
                 Track_Bar_Tag_Value.Value = Properties.Settings.Default.Trackbar_Value;
             }
-        
+
+
+            if (Match_Setting("Disable_EAW_Mode"))
+            {   Label_Entity_Name.Text = "Attribute";
+                Label_Type_Filter.Text = "Parent Name";
+            }
 
             User_Input = true;
         }
@@ -313,7 +322,7 @@ namespace Xml_Axe
 
         //===========================//
         private void Button_Browse_Click(object sender, EventArgs e)
-        {    
+        {           
             Open_File_Dialog_1.FileName = "";
             if (Properties.Settings.Default.Last_File != null & Properties.Settings.Default.Last_File != "")
             { Open_File_Dialog_1.InitialDirectory = Path.GetDirectoryName(Properties.Settings.Default.Last_File); }
@@ -384,7 +393,21 @@ namespace Xml_Axe
                 Line_Count = (Related_Xmls.Count() * 30) + 160;
                 if (Line_Count > 680) { Line_Count = 680; }
 
-                iDialogue(680, Line_Count, "Yes", "Cancel", "Ignore", "Blacklist", "Are you sure you wish to apply changes to:", Related_Xmls);
+                if (Related_Xmls.Count == 0) 
+                {
+                    string Error_Text = "\nI'm sorry, no entries with Attribute Name \"" + Queried_Attribute
+                    + "\"\nand Attribute Value \"" + Combo_Box_Entity_Name.Text + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
+
+                    if (Combo_Box_Entity_Name.Text == "" | Combo_Box_Entity_Name.Text == "None") // Then the query went by filter, which is name of the Entities root tag
+                    {
+                        Error_Text = "\nI'm sorry, no entries with EntityParent Tag Name \"" + Combo_Box_Type_Filter.Text
+                        + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
+                    }
+
+
+                    iConsole(600, 100, Error_Text); return;
+                }
+                else { iDialogue(680, Line_Count, "Yes", "Cancel", "Ignore", "Blacklist", "Are you sure you wish to apply changes to:", Related_Xmls); }
                  
   
                 if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }          
@@ -427,6 +450,15 @@ namespace Xml_Axe
         private bool Match_Setting(string Entry)
         {   if (Match_Without_Emptyspace(Properties.Settings.Default.Tags, Entry + " = true")) { return true; }
             return false;
+        }
+
+        // Custom_Modpath, Queried_Attribute
+        private string Get_Setting_Value(string Entry)
+        {
+            foreach (string Line in Properties.Settings.Default.Tags.Split('\n'))
+            { if (Line != "" & Line.Contains(Entry)) { return Remove_Emptyspace_Prefix(Line.Split('=')[1]); } }
+
+            return "";
         }
 
 
@@ -484,7 +516,7 @@ namespace Xml_Axe
                 foreach (XElement Instance in Instances)
                 {   if (Instance.Descendants().Any())
                     {
-                        string Entity_Name = (string)Instance.Attribute("Name");
+                        string Entity_Name = (string)Instance.Attribute(Queried_Attribute);
 
                         if (Entity_Name != null)
                         {
@@ -592,7 +624,7 @@ namespace Xml_Axe
 
                        Instances =
                          from All_Tags in Xml_File.Root.Descendants()
-                         where List_Matches(Selected_Entities, (string)All_Tags.Attribute("Name"))
+                         where List_Matches(Selected_Entities, (string)All_Tags.Attribute(Queried_Attribute))
                          select All_Tags;
                     }
 
@@ -608,14 +640,13 @@ namespace Xml_Axe
                     {
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
-                          where (string)All_Tags.Attribute("Name") == Entity_Name
+                          where (string)All_Tags.Attribute(Queried_Attribute) == Entity_Name
                           select All_Tags;
                     }
                     else if (Combo_Box_Type_Filter.Text != "" & Combo_Box_Type_Filter.Text != "All Types") // By Entity Type
                     {
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
-                          // Selecting all non empty tags that have the Attribute "Name", null because we need all selected.
                           where All_Tags.Name == Selected_Type
                           select All_Tags;
                     }
@@ -623,7 +654,7 @@ namespace Xml_Axe
                     {
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
-                          // Selecting all non empty tags that have the Attribute "Name", null because we need all selected.
+                          // Selecting all non empty tags that have the Queried_Attribute "Name", null because we need all selected.
                           where All_Tags != null
                           select All_Tags;
                     }
@@ -723,9 +754,10 @@ namespace Xml_Axe
 
 
         public string Remove_Emptyspace_Prefix(string The_String)
-        { 
-            // Removing empty space
-            while (The_String[0] == ' ') { The_String = The_String.Substring(1, The_String.Length - 1); }
+        {   try
+            {   // Removing empty space
+                while (The_String[0] == ' ') { The_String = The_String.Substring(1, The_String.Length - 1); }
+            } catch {}          
 
             return The_String;
         }
@@ -741,21 +773,36 @@ namespace Xml_Axe
         private void Button_Toggle_Settings_Click(object sender, EventArgs e)
         {
             if (Text_Box_Tags.Visible == true)
-            {   if (Combo_Box_Type_Filter.Text != "Faction Name Filter") { Button_Search.Visible = true; }
+            {   
+                if (Combo_Box_Type_Filter.Text != "Faction Name Filter") { Button_Search.Visible = true; }
                 Text_Box_Tags.Visible = false;
                 Set_UI_Into_Settings_Mode(true);    
                 Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller);
-
-                if (Combo_Box_Type_Filter.Text == "Faction Name Filter") { Label_Entity_Name.Text = "Faction Name"; }
-                else { Label_Entity_Name.Text = "Entity Name"; }
-
+          
+    
                 if (Tag_List != Text_Box_Tags.Text) // Then needs to update
                 {   Properties.Settings.Default.Tags = Text_Box_Tags.Text;
+                    Properties.Settings.Default.Save();
                     Tag_List = Text_Box_Tags.Text;
-                }
-                Properties.Settings.Default.Save();               
+                    Queried_Attribute = Get_Setting_Value("Queried_Attribute"); 
+                }                       
                 Reset_Tag_Box();
-                return;
+                Reset_Root_Tag_Box();
+
+
+                // This Check needs to run AFTER Reset_Tag_Box();
+                if (Combo_Box_Type_Filter.Text == "Faction Name Filter") { Label_Entity_Name.Text = "Faction Name"; }
+
+                else if (Match_Setting("Disable_EAW_Mode"))
+                {
+                    Label_Entity_Name.Text = "Attribute";
+                    Label_Type_Filter.Text = "Parent Name";
+                }
+                else
+                {
+                    Label_Entity_Name.Text = "Entity Name";
+                    Label_Type_Filter.Text = "Filter Type";
+                }
             }
             else
             {
@@ -764,6 +811,17 @@ namespace Xml_Axe
                 Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Refresh);
                 Label_Entity_Name.Text = "List of Tags";            
                 Text_Box_Tags.Focus(); // So the user can scroll
+
+
+                if (Match_Setting("Show_Tooltip"))
+                {
+                    Text_Box_Description.Visible = true;
+
+                    // Special Tooltip, that describes the Settings                   
+                    Text_Box_Description.Text = "Syntax: \nType Tag_Name = Type # Comment\n" + 
+                       "The expected variable type can be:\nbool, string or int\n" +
+                       "You can also set any number after = sign as scale factor for the scrollbar.";
+                 }
                 return;
             }
         }
@@ -796,6 +854,7 @@ namespace Xml_Axe
 
                 Reset_Tag_List();
                 Reset_Tag_Box();
+                Reset_Root_Tag_Box();
                 Text_Box_Tags.Text = Tag_List;
                 if (Text_Box_Tags.Visible == false) { Text_Box_Tags.Visible = true; }
             }
@@ -810,13 +869,7 @@ namespace Xml_Axe
 
                 // Overwride by User Setting
                 if (!Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Custom_Modpath = false"))
-                {
-                    string User_Path = "";
-
-                    foreach (string Line in Properties.Settings.Default.Tags.Split('\n'))
-                    { if (Line != "" & Line.Contains("Custom_Modpath")) { User_Path = Line.Split('=')[1]; } }
-
-                     Arguments = "Modpath=" + User_Path + " Ignoreasserts";
+                {  Arguments = "Modpath=" + Get_Setting_Value("Custom_Modpath") + " Ignoreasserts";
                    //  Arguments = "Modpath=" + Properties.Settings.Default.Mod_Directory.Replace(" ", "\\ ") + " Ignoreasserts";
                 }
                 else if (Mod_Name.All(char.IsDigit)) // If all characters are numbers, that means we target a Workshop mod
@@ -1055,28 +1108,27 @@ namespace Xml_Axe
             // return Result;
 
         }
-
+         
 
         //===========================// # Show_Changed_Files = true
         public void Reset_Tag_List()
-        {   
-            Tag_List = @"# I am a Setting (as parameter 1) or Comment (as parameter 2 or 3)
-# The optional @ sign introduces the expected type for a tag: bool, string or a int number as scrollbar factor
-
-
+        {
+            Tag_List = @"# ====================== Settings ======================
 # Show_Tooltip = true
 # Store_Last_Settings = true
 # Request_File_Approval = true
 # Set_Launch_Affinity = true
 # High_Launch_Priority = true
+# Queried_Attribute = Name
+# Disable_EAW_Mode = false
 # RGBA_Color = 100, 170, 170, 255 # Marine Blue
 # Custom_Modpath = false
-# Script_Directory = %AppData%\Xml_Axe\Scripts
+# Script_Directory = %AppData%\Local\Xml_Axe\Scripts
 
+
+# ===================== Bool Values ======================
 
 bool Planet_Surface_Accessible # Set to No and it will turn all GCs to space only because it sets all Planets to unaccessible. This operation is revertable: it checks if a planet has a ground.ted map to determine whether it is safe to set surface back to accessible.
-
-Rebalance_Everything @ Tactical_Health, Shield_Points, Shield_Refresh_Rate # This balances the most important aspects of the Game: Tactical_Health, Shield, Shield_Refresh_Rate, Projectile Damage
 
 bool Is_Targetable # Defines whether or not all Hardpoints in current selection or the Mod can be targeted.
 
@@ -1084,29 +1136,31 @@ bool Is_Destroyable # Defines whether or not all Hardpoints in current selection
 
 bool Is_Named_Hero # Set to No and no more heroes will respawn.
 
-Projectile_Does_Shield_Damage @ bool # Set to Yes and apply to the whole mod, to disable all shield piercing effects.
+Projectile_Does_Shield_Damage = bool # Set to Yes and apply to the whole mod, to disable all shield piercing effects.
 
-Projectile_Does_Energy_Damage @ bool # Careful, if set to yes Hitpoint damage will start once enemy energy level reaches 0.
+Projectile_Does_Energy_Damage = bool # Careful, if set to yes Hitpoint damage will start once enemy energy level reaches 0.
 
-Projectile_Does_Hitpoint_Damage @ bool 
+Projectile_Does_Hitpoint_Damage = bool 
 
-# ==================== Int Values ====================
+# ====================== Int Values ======================
 
-int Tactical_Health @ 100
+Tactical_Health = 100
 
-int Shield_Points @ 100
+Shield_Points = 100
 
-Shield_Refresh_Rate @ 5 # Usually about 30 for capital ships and less for weaker classes.
+int Shield_Refresh_Rate = 5 # Usually about 30 for capital ships and less for weaker classes.
 
-Select_Box_Scale @ 100 # Set to 0 and all Ships and Troops will have their select box deactivated (not revertable). In percent mode this scales the size of all select box circles.
+Int Select_Box_Scale = 100 # Set to 0 and all Ships and Troops will have their select box deactivated (not revertable). In percent mode this scales the size of all select box circles.
 
-Layer_Z_Adjust @ 100 # In percent mode this will scale the distance between all height layer values.
+Layer_Z_Adjust = 100 # In percent mode this will scale the distance between all height layer values.
 
-Space_Tactical_Unit_Cap @ 10 # Sets Unit cap in space tactical battles, for all Factions in the Mod. Don't put too high or it will cause laggs.
+Space_Tactical_Unit_Cap = 10 # Sets Unit cap in space tactical battles, for all Factions in the Mod. Don't put too high or it will cause laggs.
 
-Build_Cost_Credits @ 100 # Set the price to 1, then you can build as many units as the population cap allows.
+Build_Cost_Credits = 100 # Set the price to 1, then you can build as many units as the population cap allows.
 
-Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish units.
+Tactical_Build_Cost_Multiplayer = 100 # Set the price to 1 for all Skirmish units.
+
+Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate # This balances the most important aspects of the Game: Tactical_Health, Shield, Shield_Refresh_Rate, Projectile Damage
 ";
         }
 
@@ -1120,6 +1174,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
 
             foreach (string Tag in Process_Tags(Text_Box_Tags.Text))
             { Combo_Box_Tag_Name.Items.Add(Tag); }
+            
 
 
             // Set Color
@@ -1155,6 +1210,49 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                         break;
                     } catch {}
                 }
+            }
+        }
+
+
+        //===========================//
+        public void Reset_Root_Tag_Box()
+        {
+            Combo_Box_Type_Filter.Items.Clear();
+            
+            if (Match_Setting("Disable_EAW_Mode")) // Only for EAW Mode
+            { Combo_Box_Type_Filter.Items.Add("All Types"); }
+
+            else
+            {
+                string Entries = @"All Types
+All in loaded Xml
+Faction Name Filter
+
+SpaceUnit
+UniqueUnit
+TransportUnit
+GroundInfantry
+GroundVehicle
+HeroUnit
+
+Squadron
+HeroCompany
+GroundCompany
+Planet
+Faction
+HardPoint
+Projectile
+
+StarBase
+SpaceBuildable
+SpecialStructure				
+TechBuilding					
+GroundBase					
+GroundStructure
+GroundBuildable";
+
+
+                foreach(string Entry in Entries.Split('\n')) { Combo_Box_Type_Filter.Items.Add(Entry); }
             }
         }
 
@@ -1222,14 +1320,22 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
 
             if (Combo_Box_Type_Filter.Text == "Faction Name Filter") 
             {   Label_Entity_Name.Text = "Faction Name";
+                Label_Type_Filter.Text = "Filter Type";
                 Button_Search.Visible = false;
             }
+
+            else if (Match_Setting("Disable_EAW_Mode"))
+            {   Label_Entity_Name.Text = "Attribute";
+                Label_Type_Filter.Text = "Parent Name";
+                Button_Search.Visible = true;
+            } 
             else 
             {   Label_Entity_Name.Text = "Entity Name";
+                Label_Type_Filter.Text = "Filter Type";
                 Button_Search.Visible = true;
             }
 
-
+        
             if (Combo_Box_Type_Filter.Text == "All in loaded Xml") // Don't use elseif here
             {   Combo_Box_Entity_Name.Text = "Multi";
                 Combo_Box_Type_Filter.Text = ""; // Because then this can trigger a 2nd time in a row
@@ -1406,40 +1512,30 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                             Tag_Comment = Tag_Info[1];
                         }
 
+
+
+                        if (Tag_Name.StartsWith("Bool") | Tag_Name.StartsWith("bool"))
+                        {   Tag_Format = "bool";
+                            // Tag_Name = Tag_Name.Replace("Bool", "");
+                            Tag_Name = Tag_Name.Substring(4, Tag_Name.Length - 4);
+                        }
+
+                        else if (Tag_Name.StartsWith("String") | Tag_Name.StartsWith("string"))
+                        {   Tag_Format = "string";
+                            Tag_Name = Tag_Name.Substring(6, Tag_Name.Length - 6);
+                        }
+
+                        else if (Tag_Name.StartsWith("Int") | Tag_Name.StartsWith("int"))
+                        {   Tag_Format = "int";
+                            Tag_Name = Tag_Name.Substring(3, Tag_Name.Length - 3);
+                        }
                    
-                     
-                        if (Tag_Name.StartsWith("Bool"))
-                        {   Tag_Format = "bool";
-                            Tag_Name = Tag_Name.Replace("Bool", "");
-                        }
-                        else if (Tag_Name.StartsWith("bool"))
-                        {   Tag_Format = "bool";
-                            Tag_Name = Tag_Name.Replace("bool", "");
-                        }
-                        if (Tag_Name.StartsWith("String"))
-                        {   Tag_Format = "string";
-                            Tag_Name = Tag_Name.Replace("String", "");
-                        }
-                        else if (Tag_Name.StartsWith("string"))
-                        {   Tag_Format = "string";
-                            Tag_Name = Tag_Name.Replace("string", "");
-                        }                       
-                        if (Tag_Name.StartsWith("Int"))
-                        {
-                            Tag_Format = "int";
-                            Tag_Name = Tag_Name.Replace("Int", "");
-                        }
-                        else if (Tag_Name.StartsWith("int"))
-                        {
-                            Tag_Format = "int";
-                            Tag_Name = Tag_Name.Replace("int", "");
-                        }
 
 
                         // This overwrites the "Tag_Format" from above - which is important for the range of int type Scale_Factor 
-                        if (Tag_Name.Contains("@")) // Seperating the tag name and its expected format (int, bool or string)
+                        if (Tag_Name.Contains("=")) // Seperating the tag name and its expected format (int, bool or string)
                         {
-                            Tag_Info = Tag_Name.Split('@');
+                            Tag_Info = Tag_Name.Split('=');
                             Tag_Name = Tag_Info[0];
                             Tag_Format = Tag_Info[1];
                             // iConsole(400, 200, Tag_Name + " + " + Tag_Format);
@@ -1516,7 +1612,11 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
             else // if (Is_Match(Tag_Format, "int")) // It will probably be int
             {
                 if (Percent_Mode) { Scale_Factor = 10; }
-                else { int.TryParse(Tag_Format, out Scale_Factor); }
+                else 
+                {
+                    int.TryParse(Tag_Format, out Scale_Factor);
+                    if (Scale_Factor == 0) { Scale_Factor = 100; } // Failsafe, default Scale Factor is 100
+                }
                 // iConsole(400, 200, "Scale is " + Scale_Factor);
 
 
@@ -1776,20 +1876,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
 
 
             // Matched in selected XML, so just show that one
-            if (In_Selected_Xml(Entity_Name)) 
-            { 
-                List_View_Selection.Visible = true;
-              
-                if (List_View_Selection.Items.Count > 0) // Auto selecting the item
-                {
-                    for (int i = List_View_Selection.Items.Count - 1; i >= 0; --i)
-                    {   // Selecting everything
-                        if (List_View_Selection.Items[i].Text == Entity_Name)
-                        { List_View_Selection.Items[i].Selected = true; List_View_Selection.Focus(); return; }
-                    }
-                }
-                return; 
-            } 
+            if (Found_In_Xml(Entity_Name)) { return; } 
 
 
 
@@ -1805,7 +1892,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
 
                     Instances =
                       from All_Tags in Xml_File.Root.Descendants()
-                      where (string)All_Tags.Attribute("Name") == Entity_Name // Fast Search                    
+                      where (string)All_Tags.Attribute(Queried_Attribute) == Entity_Name // Fast Search                    
                       select All_Tags;
 
 
@@ -1824,7 +1911,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
                           // Regex; This is damn slow - but it delivers results
-                          where Is_Match((string)All_Tags.Attribute("Name"), Entity_Name)
+                          where Is_Match((string)All_Tags.Attribute(Queried_Attribute), Entity_Name)
                           select All_Tags;
 
 
@@ -1833,7 +1920,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                 }
             }
 
-
+            Found_In_Xml(Entity_Name); // Just to select the found entity
         }
 
 
@@ -1847,6 +1934,27 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
 
 
 
+        private bool Found_In_Xml(string Entity_Name)
+        {
+            if (In_Selected_Xml(Entity_Name))
+            {
+                List_View_Selection.Visible = true;
+
+                if (List_View_Selection.Items.Count > 0) // Auto selecting the item
+                {
+                    for (int i = List_View_Selection.Items.Count - 1; i >= 0; --i)
+                    {   // Selecting everything
+                        if (List_View_Selection.Items[i].Text == Entity_Name)
+                        {   List_View_Selection.Items[i].Selected = true;
+                            List_View_Selection.Focus(); return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            return false;
+        }
 
 
 
@@ -1893,22 +2001,22 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
         {
             if (Script_Mode) // Toggle between Script Mode
             {   Script_Mode = false;
-                Set_UI_Into_Script_Mode(!Script_Mode);
-                Combo_Box_Tag_Name.Text = "";          
                 Label_Tag_Name.Text = "Tag Name";
+                Set_UI_Into_Script_Mode(!Script_Mode);
+                Combo_Box_Tag_Name.Text = "";                          
                 Reset_Tag_Box();
             }
             else 
             {   Script_Mode = true;
-                Set_UI_Into_Script_Mode(!Script_Mode);
-                Combo_Box_Tag_Name.Text = "";
                 Label_Tag_Name.Text = "Run Script";
+                Set_UI_Into_Script_Mode(!Script_Mode);
+                Combo_Box_Tag_Name.Text = "";            
 
 
                 string Script_Directory = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Xml_Axe\Scripts";
 
                 // Overwride by User Setting
-                if (!Match_Without_Emptyspace_2(Properties.Settings.Default.Tags, @"Script_Directory = %AppData%\Xml_Axe\Scripts"))
+                if (!Match_Without_Emptyspace_2(Properties.Settings.Default.Tags, @"Script_Directory = %AppData%\Local\Xml_Axe\Scripts"))
                 {   foreach (string Line in Properties.Settings.Default.Tags.Split('\n'))
                     { if (Line != "" & Line.Contains("Script_Directory")) { Script_Directory = Line.Split('=')[1]; } }
 

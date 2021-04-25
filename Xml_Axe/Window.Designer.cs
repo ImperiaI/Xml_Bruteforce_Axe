@@ -191,33 +191,6 @@
             this.Combo_Box_Type_Filter.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.Combo_Box_Type_Filter.Font = new System.Drawing.Font("Georgia", 12F);
             this.Combo_Box_Type_Filter.FormattingEnabled = true;
-            this.Combo_Box_Type_Filter.Items.AddRange(new object[] {
-            "All Types",
-            "All in loaded Xml",
-            "Faction Name Filter",
-            "",
-            "SpaceUnit",
-            "UniqueUnit",
-            "TransportUnit",
-            "GroundInfantry",
-            "GroundVehicle",
-            "HeroUnit",
-            "",
-            "Squadron",
-            "HeroCompany",
-            "GroundCompany",
-            "Planet",
-            "Faction",
-            "HardPoint",
-            "Projectile",
-            "",
-            "StarBase",
-            "SpaceBuildable",
-            "SpecialStructure\t\t\t\t",
-            "TechBuilding\t\t\t\t\t",
-            "GroundBase\t\t\t\t\t",
-            "GroundStructure",
-            "GroundBuildable"});
             this.Combo_Box_Type_Filter.Location = new System.Drawing.Point(220, 272);
             this.Combo_Box_Type_Filter.Name = "Combo_Box_Type_Filter";
             this.Combo_Box_Type_Filter.Size = new System.Drawing.Size(178, 26);
