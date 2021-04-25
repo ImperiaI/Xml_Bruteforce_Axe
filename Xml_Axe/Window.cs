@@ -1074,15 +1074,15 @@ namespace Xml_Axe
 # Script_Directory = %AppData%\Xml_Axe\Scripts
 
 
-Planet_Surface_Accessible @ bool # Set to No and it will turn all GCs to space only because it sets all Planets to unaccessible. This operation is revertable: it checks if a planet has a ground.ted map to determine whether it is safe to set surface back to accessible.
+bool Planet_Surface_Accessible # Set to No and it will turn all GCs to space only because it sets all Planets to unaccessible. This operation is revertable: it checks if a planet has a ground.ted map to determine whether it is safe to set surface back to accessible.
 
 Rebalance_Everything @ Tactical_Health, Shield_Points, Shield_Refresh_Rate # This balances the most important aspects of the Game: Tactical_Health, Shield, Shield_Refresh_Rate, Projectile Damage
 
-Is_Targetable @ bool # Defines whether or not all Hardpoints in current selection or the Mod can be targeted.
+bool Is_Targetable # Defines whether or not all Hardpoints in current selection or the Mod can be targeted.
 
-Is_Destroyable @ bool # Defines whether or not all Hardpoints in current selection or the Mod can be destroyed.
+bool Is_Destroyable # Defines whether or not all Hardpoints in current selection or the Mod can be destroyed.
 
-Is_Named_Hero @ bool # Set to No and no more heroes will respawn.
+bool Is_Named_Hero # Set to No and no more heroes will respawn.
 
 Projectile_Does_Shield_Damage @ bool # Set to Yes and apply to the whole mod, to disable all shield piercing effects.
 
@@ -1092,9 +1092,9 @@ Projectile_Does_Hitpoint_Damage @ bool
 
 # ==================== Int Values ====================
 
-Tactical_Health @ 100
+int Tactical_Health @ 100
 
-Shield_Points @ 100
+int Shield_Points @ 100
 
 Shield_Refresh_Rate @ 5 # Usually about 30 for capital ships and less for weaker classes.
 
@@ -1406,6 +1406,37 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                             Tag_Comment = Tag_Info[1];
                         }
 
+                   
+                     
+                        if (Tag_Name.StartsWith("Bool"))
+                        {   Tag_Format = "bool";
+                            Tag_Name = Tag_Name.Replace("Bool", "");
+                        }
+                        else if (Tag_Name.StartsWith("bool"))
+                        {   Tag_Format = "bool";
+                            Tag_Name = Tag_Name.Replace("bool", "");
+                        }
+                        if (Tag_Name.StartsWith("String"))
+                        {   Tag_Format = "string";
+                            Tag_Name = Tag_Name.Replace("String", "");
+                        }
+                        else if (Tag_Name.StartsWith("string"))
+                        {   Tag_Format = "string";
+                            Tag_Name = Tag_Name.Replace("string", "");
+                        }                       
+                        if (Tag_Name.StartsWith("Int"))
+                        {
+                            Tag_Format = "int";
+                            Tag_Name = Tag_Name.Replace("Int", "");
+                        }
+                        else if (Tag_Name.StartsWith("int"))
+                        {
+                            Tag_Format = "int";
+                            Tag_Name = Tag_Name.Replace("int", "");
+                        }
+
+
+                        // This overwrites the "Tag_Format" from above - which is important for the range of int type Scale_Factor 
                         if (Tag_Name.Contains("@")) // Seperating the tag name and its expected format (int, bool or string)
                         {
                             Tag_Info = Tag_Name.Split('@');
@@ -1413,6 +1444,9 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                             Tag_Format = Tag_Info[1];
                             // iConsole(400, 200, Tag_Name + " + " + Tag_Format);
                         }
+
+                   
+
 
                         if (Tag_Name != "") { List_Of_Tags.Add(Tag_Name); };
 
@@ -1479,7 +1513,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                 { Combo_Box_Tag_Value.Text = ""; }
 
             }
-            else // It will probably be int
+            else // if (Is_Match(Tag_Format, "int")) // It will probably be int
             {
                 if (Percent_Mode) { Scale_Factor = 10; }
                 else { int.TryParse(Tag_Format, out Scale_Factor); }
