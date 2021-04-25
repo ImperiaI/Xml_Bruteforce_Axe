@@ -23,7 +23,7 @@ using Microsoft.Win32;
 
 
 
-namespace Log_Compactor
+namespace Xml_Axe
 {
 
 
@@ -86,11 +86,16 @@ namespace Log_Compactor
             if (File.Exists(Xml_Directory + "Axe_Blacklist.txt"))
             { Blacklisted_Xmls = File.ReadAllLines(Xml_Directory + "Axe_Blacklist.txt").ToList(); }
 
-          
-
+            Load_Xml_Content(Properties.Settings.Default.Last_File, false); // Need this loaded so In_Selected_Xml(); can match true
+            
 
             Tag_List = Properties.Settings.Default.Tags;
-            if (Tag_List == null | Tag_List == "") { Reset_Tag_List(); }
+            if (Tag_List == null | Tag_List == "") 
+            {   Reset_Tag_List();
+                Properties.Settings.Default.Tags = Tag_List;              
+                Properties.Settings.Default.Save();          
+            }
+
             Text_Box_Tags.Text = Tag_List;
             Reset_Tag_Box();
 
@@ -99,7 +104,6 @@ namespace Log_Compactor
             // Loading Values, this needs to happen AFTER Reset_Tag_Box() or it will cause errors
             Text_Box_Original_Path.Text = Properties.Settings.Default.Last_File;
             if (Properties.Settings.Default.Steam_Exe_Path == "") { Check_for_Steam_Version(); }
-
 
             if (Match_Setting("Store_Last_Settings"))
             {   Combo_Box_Entity_Name.Text = Properties.Settings.Default.Entity_Name;
@@ -362,7 +366,7 @@ namespace Log_Compactor
 
         private void Button_Run_Game_Click(object sender, EventArgs e)
         {
-            iConsole(600, 400, Check_for_Steam_Version());
+            // iConsole(600, 400, Check_for_Steam_Version()); // Debug
 
             if (Combo_Box_Tag_Name.Text == "") { return; }
             
@@ -456,7 +460,7 @@ namespace Log_Compactor
 
 
         // public List <string> Load_Xml_Content(string Xml_Path)
-        public void Load_Xml_Content(string Xml_Path)
+        public void Load_Xml_Content(string Xml_Path, bool Show_List = true)
         {       
             // List<string> Found_Entities = null;
             IEnumerable<XElement> Instances = null;
@@ -491,6 +495,7 @@ namespace Log_Compactor
                 }
 
                 Set_Checker(List_View_Selection);
+                if (!Show_List) { List_View_Selection.Visible = false; }
             } catch {}
         }
 
@@ -727,7 +732,7 @@ namespace Log_Compactor
 
         //===========================//
         public bool In_Selected_Xml(string Entry) 
-        {   if (Entry == "Multi") { return true; } 
+        {   if (Entry == "Multi") { return true; }
             else if (List_View_Matches(List_View_Selection, Entry)) { return true; }
             return false;
         }
@@ -792,8 +797,7 @@ namespace Log_Compactor
                 Reset_Tag_List();
                 Reset_Tag_Box();
                 Text_Box_Tags.Text = Tag_List;
-                if (Text_Box_Tags.Visible == false)
-                { Text_Box_Tags.Visible = true; }
+                if (Text_Box_Tags.Visible == false) { Text_Box_Tags.Visible = true; }
             }
             else // Otherwised this button is used to launch the game
             {                              
@@ -1067,7 +1071,7 @@ namespace Log_Compactor
 # High_Launch_Priority = true
 # RGBA_Color = 100, 170, 170, 255 # Marine Blue
 # Custom_Modpath = false
-# Script_Directory = %AppData%\Log_Compactor\Scripts
+# Script_Directory = %AppData%\Xml_Axe\Scripts
 
 
 Planet_Surface_Accessible @ bool # Set to No and it will turn all GCs to space only because it sets all Planets to unaccessible. This operation is revertable: it checks if a planet has a ground.ted map to determine whether it is safe to set surface back to accessible.
@@ -1388,7 +1392,7 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
             // The + " #" makes sure the last entry comment stays empty
             foreach (string Phrase in (Input + " #").Split('\n'))
             {
-                if (Phrase.StartsWith("//") || Phrase.StartsWith("#") || Phrase == "") { continue; } // Skip commented Lines
+                if (Phrase.StartsWith("//") || Phrase.StartsWith("#") || Phrase == "" || Phrase == "\n" || Phrase == "\r") { continue; } // Skip commented Lines
                 else 
                 {
                     string Tag_Name = Phrase.Replace(" ", "");
@@ -1737,6 +1741,25 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
             if (Entity_Name == "" | Entity_Name == "None") { return; }
 
 
+            // Matched in selected XML, so just show that one
+            if (In_Selected_Xml(Entity_Name)) 
+            { 
+                List_View_Selection.Visible = true;
+              
+                if (List_View_Selection.Items.Count > 0) // Auto selecting the item
+                {
+                    for (int i = List_View_Selection.Items.Count - 1; i >= 0; --i)
+                    {   // Selecting everything
+                        if (List_View_Selection.Items[i].Text == Entity_Name)
+                        { List_View_Selection.Items[i].Selected = true; List_View_Selection.Focus(); return; }
+                    }
+                }
+                return; 
+            } 
+
+
+
+
             IEnumerable<XElement> Instances = null;
 
 
@@ -1847,11 +1870,11 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                 Combo_Box_Tag_Name.Text = "";
                 Label_Tag_Name.Text = "Run Script";
 
-                       
-                string Script_Directory = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Log_Compactor\Scripts";
+
+                string Script_Directory = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Xml_Axe\Scripts";
 
                 // Overwride by User Setting
-                if (!Match_Without_Emptyspace_2(Properties.Settings.Default.Tags, @"Script_Directory = %AppData%\Log_Compactor\Scripts"))
+                if (!Match_Without_Emptyspace_2(Properties.Settings.Default.Tags, @"Script_Directory = %AppData%\Xml_Axe\Scripts"))
                 {   foreach (string Line in Properties.Settings.Default.Tags.Split('\n'))
                     { if (Line != "" & Line.Contains("Script_Directory")) { Script_Directory = Line.Split('=')[1]; } }
 
@@ -1863,9 +1886,13 @@ Tactical_Build_Cost_Multiplayer @ 100 # Set the price to 1 for all Skirmish unit
                 Found_Scripts = Get_All_Files(Script_Directory);
                 List<string> Script_Names = new List<string>();
 
-                foreach (string File_Path in Found_Scripts)
-                { Script_Names.Add(Path.GetFileName(File_Path)); }
-                Reset_Script_Box(Script_Names);
+                if (Found_Scripts != null)
+                {   try 
+                    {   foreach (string File_Path in Found_Scripts)
+                        { Script_Names.Add(Path.GetFileName(File_Path)); }
+                        Reset_Script_Box(Script_Names);
+                    } catch {}
+                }
 
                 Combo_Box_Tag_Name.DroppedDown = true; // Show to the User
             }

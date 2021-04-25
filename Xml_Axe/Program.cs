@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace Log_Compactor
+namespace Xml_Axe
 {
     static class Program
     {

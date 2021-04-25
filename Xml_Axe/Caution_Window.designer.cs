@@ -1,4 +1,4 @@
-﻿namespace Log_Compactor
+﻿namespace Xml_Axe
 {
     public partial class Caution_Window
     {
