@@ -58,6 +58,7 @@ namespace Xml_Axe
         public List<string> Found_Scripts = null;
         public List<string> File_Collection = new List<string>();
         public List<string> Blacklisted_Xmls = null;
+        public List<string> Temporal_E = new List<string>();
      
 
 
@@ -408,7 +409,7 @@ namespace Xml_Axe
 
                     iConsole(600, 100, Error_Text); return;
                 }
-                else { iDialogue(680, Line_Count, "Yes", "Cancel", "Ignore", "Blacklist", "Are you sure you wish to apply changes to:", Related_Xmls); }
+                else { iDialogue(680, Line_Count, "Yes", "Cancel", "Ignore", "Blacklist", "Are you sure you wish to apply changes to:", Related_Xmls, true); }
                  
   
                 if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }          
@@ -1376,6 +1377,38 @@ GroundBuildable";
                     {
                         if (File_Path.EndsWith(Selection)) // If is the selected file               
                         {
+                            string Vanilla_Dir = Path.GetDirectoryName(Properties.Settings.Default.Steam_Exe_Path) + @"\steamapps\common\Star Wars Empire at War\Data";
+                            Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\" \"" + Vanilla_Dir + "\"", Get_Scripts_Dir());
+                           
+
+                            // Match by Filename
+                            string[] Possible_Files = new string[] { "Mod_Cleanup.py", "01_mod_cleanup.py", "Test.py" };
+
+                            foreach (string File_Name in Possible_Files)
+                            {
+                                if (Match_Without_Emptyspace_2(Selection, File_Name)) // Append the Modpath to the Cleanup Script                             
+                                {                                   
+
+                                    Temporal_E = File.ReadAllLines(Properties.Settings.Default.Mod_Directory + @"\Data\cleanup.txt").ToList();
+                                    int Line_Count = (Temporal_E.Count() * 30) + 160;
+                                    if (Line_Count > 680) { Line_Count = 680; }
+
+                                    iDialogue(680, Line_Count, "Yes, All", "Textures", "Models only", "Cancel", "Do you wish to move these into a \"Unused\" folder:", Temporal_E);
+
+                                    if (Caution_Window.Passed_Value_A.Text_Data == "true") { Move_Unused_Files(); }
+                                    else if (Caution_Window.Passed_Value_A.Text_Data == "false") { Move_Unused_Files("textures"); }
+                                    else if (Caution_Window.Passed_Value_A.Text_Data == "else") { Move_Unused_Files("models"); }
+                                    // else if (Caution_Window.Passed_Value_A.Text_Data == "other") { } // Does nothing
+                       
+                                    
+                                    Temporal_E = new List<string>(); // reset
+                                }
+                            }
+
+                            return;
+                           
+
+                            /*
                             bool Has_Matched = false;
 
                             if (File_Path.EndsWith("py")) // No idea I just push these arguments to all py files XD
@@ -1386,7 +1419,7 @@ GroundBuildable";
                                 Has_Matched = true; return;
                             }
 
-                            /* // Match by Filename
+                            // Match by Filename
                             string[] Possible_Files = new string[] { "Mod_Cleanup.py", "01_mod_cleanup.py", "Show_Passed_Arguments.py",
                             "Dat_to_Tsv.py", "Tsv_to_Dat.py" };
 
@@ -1404,9 +1437,10 @@ GroundBuildable";
                                     Has_Matched = true; return;
                                 }                                                       
                             }
-                            */
+                            
 
                             if (!Has_Matched) { Execute(File_Path, "", Get_Scripts_Dir()); return; } 
+                            */
                         }                                                                         
                     }
                 }
@@ -1740,7 +1774,7 @@ GroundBuildable";
 
         //===========================//
 
-        public void iDialogue(int Window_Size_X, int Window_Size_Y, string Button_A_Text, string Button_B_Text, string Button_C_Text, string Button_D_Text, string Text, List<string> The_List = null)
+        public void iDialogue(int Window_Size_X, int Window_Size_Y, string Button_A_Text, string Button_B_Text, string Button_C_Text, string Button_D_Text, string Text, List<string> The_List = null, bool List_Exclusion_Mode = false)
         {
             //========== Displaying Error Messages to User   
             // Innitiating new Form
@@ -1815,7 +1849,7 @@ GroundBuildable";
             }
             else
             {
-                Display.List_Exclusion_Mode = true;
+                Display.List_Exclusion_Mode = List_Exclusion_Mode;
                 Display.List_View_Info.Visible = true;
                 Display.List_View_Info.Items.Add(Text); // Text serves as Header here
                 Display.List_View_Info.Items.Add("");
@@ -1929,9 +1963,110 @@ GroundBuildable";
         }
 
 
+        //===========================//
 
+        // Move_Unused_Files("models"); Move_Unused_Files("textures"); or just Move_Unused_Files(); to move all of them
+        private void Move_Unused_Files(string Mode = "all")
+        {                      
+            string Model_Directory = Properties.Settings.Default.Mod_Directory + @"\Data\Art\Models";
+            string Texture_Directory = Properties.Settings.Default.Mod_Directory + @"\Data\Art\Textures";
+            string Extension = ".alo"; // Defaulting to .alo
+            string Unused_Dir = Model_Directory + @"\Unused";       
+
+            List<string> Models = Get_All_Files(Model_Directory, "alo");
+            List<string> All_DDS = Get_All_Files(Texture_Directory, "dds");
+            List<string> All_TGA = Get_All_Files(Texture_Directory, "tga");
+            List<string> Last_Selection = Models;
+
+
+            if (Models.Count() > 0 & !Directory.Exists(Unused_Dir)) { Directory.CreateDirectory(Unused_Dir); }
+            if (!Directory.Exists(Texture_Directory + @"\Unused")) { Directory.CreateDirectory(Texture_Directory + @"\Unused"); }
+
+
+
+            foreach(string Missing_File in File.ReadAllLines(Properties.Settings.Default.Mod_Directory + @"\Data\cleanup.txt"))
+            {
+                if (Missing_File == "") { continue; }
+
+               
+                if (Missing_File.Contains(".alo"))
+                {
+                    if (Mode == "textures") { continue; } // Move the textures only!
+                    
+                    Extension = "alo"; // Defaulting to .alo
+                    Unused_Dir = Model_Directory + @"\Unused";                 
+                    Last_Selection = Models;                  
+                }
+                else if (Missing_File.Contains(".dds"))
+                {
+                    if (Mode == "models") { continue; } // Move the models only!
+
+                    Unused_Dir = Texture_Directory + @"\Unused";               
+                    Extension = "dds";
+                    Last_Selection = All_DDS;
+                }
+                else if (Missing_File.Contains(".tga"))
+                {
+                    if (Mode == "models") { continue; }
+
+                    Unused_Dir = Texture_Directory + @"\Unused";
+                    Extension = "tga";
+                    Last_Selection = All_TGA;
+                }
+
+
+                // Keeping the beginning of the File_Path but removing the "Missing" or "Unused" info
+                string The_File = Regex.Replace(Missing_File, Extension + ".*", Extension).Replace(@"/", @"\"); // So \ signs match properly
+  
+
+
+                foreach (string File_Path in Last_Selection)
+                {
+                    if (File_Path.ToLower().EndsWith(The_File)) // .ToLower() because the .py script converts all readings to lower
+                    {
+                        if (The_File.Contains(@"\")) // Considering sub directories   
+                        {   
+                            // continue; // temporary disabled until the .py script stops false reporting of models inside of subdirectories
+                            Unused_Dir = Path.GetDirectoryName(File_Path) + @"\Unused";
+                            if (!Directory.Exists(Unused_Dir)) { Directory.CreateDirectory(Unused_Dir); }  
+                        }                                       
+                                                                     
+                        Moving(File_Path, Unused_Dir);
+                        // iConsole(300, 100, File_Path.ToLower() + ", " + The_File); // Visualising what happens in the memory
+
+                        break; // If matches we break this loop, so we continue to the next entry
+                    }                   
+                } 
+            }
+
+        }
+
+
+
+       //=====================//
+        public void Moving(string Path_and_File, string New_Path)
+        {   try
+            {   FileAttributes The_Attribute = File.GetAttributes(Path_and_File);
+                if (!Directory.Exists(New_Path)) { Directory.CreateDirectory(New_Path); }
+
+                //detect whether its a directory or file
+                if ((The_Attribute & FileAttributes.Directory) == FileAttributes.Directory)
+                {
+                    try { System.IO.Directory.Move(Path_and_File, New_Path + @"\" + Path.GetFileName(Path_and_File)); } catch {}
+                }
+                else
+                {
+                    try { System.IO.File.Move(Path_and_File, New_Path + @"\" + Path.GetFileName(Path_and_File)); } catch {}
+                }
+            } catch {}           
+        }
+
+
+
+        //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
+           
             string Entity_Name = Wash_String(Combo_Box_Entity_Name.Text);
             if (Entity_Name == "" | Entity_Name == "None") { return; }
 
@@ -2081,7 +2216,8 @@ GroundBuildable";
                 if (Found_Scripts != null)
                 {   try 
                     {   foreach (string File_Path in Found_Scripts)
-                        {   if (!File_Path.EndsWith("json"))
+                    {
+                        if (!File_Path.EndsWith("json") & !File_Path.EndsWith("Installer.py"))
                             { Script_Names.Add(Path.GetFileName(File_Path)); }
                         }
                         Reset_Script_Box(Script_Names);
