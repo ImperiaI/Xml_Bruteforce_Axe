@@ -17,6 +17,7 @@ using Microsoft.Win32;
 
 
 
+
 // ====================================================================================================
 // **************************************** 03.2021 Imperial ******************************************
 // ====================================================================================================
@@ -1372,13 +1373,40 @@ GroundBuildable";
 
                 if (Found_Scripts != null && Selection != "")
                 {   foreach (string File_Path in Found_Scripts)
-                    {   if (File_Path.EndsWith(Selection))                 
+                    {
+                        if (File_Path.EndsWith(Selection)) // If is the selected file               
                         {
-                            string[] Possible_Files = new string[] { "Mod_Cleanup.py", "Show_Passed_Arguments.py" };
+                            bool Has_Matched = false;
 
-                            if (!Match_Without_Emptyspace_2(Selection, Possible_Files[0]) & !Match_Without_Emptyspace_2(Selection, Possible_Files[1]))
-                            { Execute(File_Path); break; } // Otherwise append the Modpath to the Cleanup Script
-                            else { Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\""); break; }
+                            if (File_Path.EndsWith("py")) // No idea I just push these arguments to all py files XD
+                            {
+                                string Vanilla_Dir = Path.GetDirectoryName(Properties.Settings.Default.Steam_Exe_Path) + @"\steamapps\common\Star Wars Empire at War\Data";
+
+                                Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\" \"" + Vanilla_Dir + "\"", Get_Scripts_Dir());
+                                Has_Matched = true; return;
+                            }
+
+                            /* // Match by Filename
+                            string[] Possible_Files = new string[] { "Mod_Cleanup.py", "01_mod_cleanup.py", "Show_Passed_Arguments.py",
+                            "Dat_to_Tsv.py", "Tsv_to_Dat.py" };
+
+                            foreach (string File_Name in Possible_Files)
+                            {   if (Match_Without_Emptyspace_2(Selection, File_Name)) // Append the Modpath to the Cleanup Script                             
+                                {
+                                    string Vanilla_Dir =  Path.GetDirectoryName(Properties.Settings.Default.Steam_Exe_Path) +  @"\steamapps\common\Star Wars Empire at War\Data";
+
+                                    Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\" \"" + Vanilla_Dir + "\"", Get_Scripts_Dir());
+
+                                    // Alternate way: Specify path to the .json file as argument:
+                                    //Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\"" + " " + Get_Scripts_Dir() + "\\vanilla_dump.json");
+
+                                    // iConsole(400, 100, File_Path + " \"" + Properties.Settings.Default.Mod_Directory + "\\Data\"" + "\npause");                               
+                                    Has_Matched = true; return;
+                                }                                                       
+                            }
+                            */
+
+                            if (!Has_Matched) { Execute(File_Path, "", Get_Scripts_Dir()); return; } 
                         }                                                                         
                     }
                 }
@@ -1469,22 +1497,55 @@ GroundBuildable";
         }
 
         //===========================//
-        private bool Execute(string File_Path, string Arguments = "")
+        private bool Execute(string File_Path, string Arguments = "", string Working_Dir = "")
         {   try
             {   ProcessStartInfo Process_Info = new ProcessStartInfo();
                 Process_Info.FileName = File_Path;
                 Process_Info.Arguments = Arguments;
 
+                if (Working_Dir != "") { Process_Info.WorkingDirectory = Working_Dir; }
+
                 // iConsole(60, 100, Program_Path + " " + Arguments); // return true;
                 Process.Start(Process_Info);
 
                 // The_Process = Process.GetProcessesByName(Program_Name); // Retrieve the app processes. 
-            }
-            catch { iConsole(60, 100, "\nFailed to find and launch " + File_Path); return false; }
+            } catch { iConsole(60, 100, "\nFailed to find and launch " + File_Path); return false; }
 
             return true;
         }
 
+
+        //===========================//
+        private void Run_Cmd(string cmd, string args)
+        {
+            ProcessStartInfo start = new ProcessStartInfo();
+            // start.Arguments = string.Format("{0} {1}", cmd, args);
+
+            if (cmd.EndsWith("py")) 
+            {   start.FileName = @"python.exe";
+                start.Arguments = cmd + " " + args;
+            }
+            else 
+            {   start.FileName = cmd;
+                start.Arguments = args;
+            }        
+            start.UseShellExecute = false;
+            start.RedirectStandardOutput = true;
+            start.RedirectStandardInput = true;
+            start.CreateNoWindow = true;
+ 
+
+            using (Process process = Process.Start(start))
+            {
+                process.WaitForExit();
+                using (StreamReader reader = process.StandardOutput)
+                {
+                    string result = reader.ReadToEnd();
+                    iConsole(600, 400, result);
+                    // Console.Write(result);
+                }
+            }
+        }
 
         //===========================//
         private List<string> Process_Tags(string Input = "")
@@ -2010,34 +2071,44 @@ GroundBuildable";
             {   Script_Mode = true;
                 Label_Tag_Name.Text = "Run Script";
                 Set_UI_Into_Script_Mode(!Script_Mode);
-                Combo_Box_Tag_Name.Text = "";            
+                Combo_Box_Tag_Name.Text = "";
 
+            
 
-                string Script_Directory = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Xml_Axe\Scripts";
-
-                // Overwride by User Setting
-                if (!Match_Without_Emptyspace_2(Properties.Settings.Default.Tags, @"Script_Directory = %AppData%\Local\Xml_Axe\Scripts"))
-                {   foreach (string Line in Properties.Settings.Default.Tags.Split('\n'))
-                    { if (Line != "" & Line.Contains("Script_Directory")) { Script_Directory = Line.Split('=')[1]; } }
-
-                    // Removing empty space
-                    if (Script_Directory[0] == ' ') { Script_Directory = Remove_Emptyspace_Prefix(Script_Directory); }
-                    // iConsole(600, 200, "\"" + Script_Directory + "\""); return;
-                }
-          
-                Found_Scripts = Get_All_Files(Script_Directory);
+                Found_Scripts = Get_All_Files(Get_Scripts_Dir());
                 List<string> Script_Names = new List<string>();
 
                 if (Found_Scripts != null)
                 {   try 
                     {   foreach (string File_Path in Found_Scripts)
-                        { Script_Names.Add(Path.GetFileName(File_Path)); }
+                        {   if (!File_Path.EndsWith("json"))
+                            { Script_Names.Add(Path.GetFileName(File_Path)); }
+                        }
                         Reset_Script_Box(Script_Names);
                     } catch {}
                 }
 
                 Combo_Box_Tag_Name.DroppedDown = true; // Show to the User
             }
+        }
+
+
+        private string Get_Scripts_Dir()
+        {
+            string Script_Directory = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Xml_Axe\Scripts";
+
+            // Overwride by User Setting
+            if (!Match_Without_Emptyspace_2(Properties.Settings.Default.Tags, @"Script_Directory = %AppData%\Local\Xml_Axe\Scripts"))
+            {
+                foreach (string Line in Properties.Settings.Default.Tags.Split('\n'))
+                { if (Line != "" & Line.Contains("Script_Directory")) { Script_Directory = Line.Split('=')[1]; break; } }
+
+                // Removing empty space
+                if (Script_Directory[0] == ' ') { Script_Directory = Remove_Emptyspace_Prefix(Script_Directory); }
+                // iConsole(600, 200, "\"" + Script_Directory + "\""); return;
+            }
+
+            return Script_Directory;
         }
 
         private void Button_Scripts_MouseHover(object sender, EventArgs e)

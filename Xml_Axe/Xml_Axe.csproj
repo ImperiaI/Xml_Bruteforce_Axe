@@ -209,9 +209,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Axe_Icon.ico" />
+    <None Include="Resources\Button_Flash.png" />
     <None Include="Resources\Button_Flash_Lit.png" />
     <None Include="Resources\Button_Hashtag_Lit.png" />
-    <None Include="Resources\Button_Flash.png" />
     <None Include="Resources\Button_Bool_Lit.png" />
     <None Include="Resources\Button_Bool.png" />
     <None Include="Resources\Button_Search_Lit.png" />
