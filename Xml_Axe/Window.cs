@@ -52,6 +52,7 @@ namespace Xml_Axe
         bool Script_Mode = false;
         string Temporal_A, Temporal_B = "";
         string Queried_Attribute = "Name"; // Preseting
+        string Text_Format_Delimiter = ";";
         string[] Balancing_Tags = null; // new string[] { };
         public Color Theme_Color = Color.CadetBlue;
         public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
@@ -105,7 +106,7 @@ namespace Xml_Axe
 
 
             Queried_Attribute = Get_Setting_Value("Queried_Attribute"); // Needs to run after Reset_Tag_List()!
-
+            Text_Format_Delimiter = Get_Setting_Value("Text_Format_Delimiter");
 
             // Loading Values, this needs to happen AFTER Reset_Tag_Box() or it will cause errors
             Text_Box_Original_Path.Text = Properties.Settings.Default.Last_File;
@@ -195,13 +196,15 @@ namespace Xml_Axe
 
         private void List_View_Selection_SelectedIndexChanged(object sender, EventArgs e)
         {
+            if (Script_Mode) { Run_Script(); return; } // Script Mode override
+
+
             if (List_View_Selection.SelectedItems.Count < 2)
             { Combo_Box_Entity_Name.Text = Select_List_View_First(List_View_Selection); }
             else
             {
                 Combo_Box_Entity_Name.Text = "Multi";
             }
-
         }
 
 
@@ -454,7 +457,7 @@ namespace Xml_Axe
             return false;
         }
 
-        // Custom_Modpath, Queried_Attribute
+        // Custom_Modpath, Queried_Attribute, Text_Format_Delimiter
         private string Get_Setting_Value(string Entry)
         {
             foreach (string Line in Properties.Settings.Default.Tags.Split('\n'))
@@ -786,7 +789,9 @@ namespace Xml_Axe
                 {   Properties.Settings.Default.Tags = Text_Box_Tags.Text;
                     Properties.Settings.Default.Save();
                     Tag_List = Text_Box_Tags.Text;
-                    Queried_Attribute = Get_Setting_Value("Queried_Attribute"); 
+                    // Refreshing Values:
+                    Queried_Attribute = Get_Setting_Value("Queried_Attribute");
+                    Text_Format_Delimiter = Get_Setting_Value("Text_Format_Delimiter");
                 }                       
                 Reset_Tag_Box();
                 Reset_Root_Tag_Box();
@@ -909,7 +914,7 @@ namespace Xml_Axe
                     Process_Info.FileName = Program_Path;
                     Process_Info.Arguments = Arguments;
 
-                    iConsole(60, 100, Program_Path + " " + Arguments); // return true;
+                    // iConsole(60, 100, Program_Path + " " + Arguments); // return true;
                     //The_Process[0] = Process.Start(Process_Info);
                     Process.Start(Process_Info);
 
@@ -1122,6 +1127,7 @@ namespace Xml_Axe
 # Set_Launch_Affinity = true
 # High_Launch_Priority = true
 # Queried_Attribute = Name
+# Text_Format_Delimiter = ;
 # Disable_EAW_Mode = false
 # RGBA_Color = 100, 170, 170, 255 # Marine Blue
 # Custom_Modpath = false
@@ -1262,7 +1268,7 @@ GroundBuildable";
 
         private void Reset_Script_Box(List<string> Source_List = null)
         {
-            Combo_Box_Tag_Name.Items.Clear();
+            List_View_Selection.Items.Clear();
 
             if (Source_List == null) { return; }
             try
@@ -1272,13 +1278,11 @@ GroundBuildable";
                     if (i > 20) { break; } // Size Limit
 
                     string Source = Source_List[i];
-                    if (Source != "" && !Combo_Box_Matches(Combo_Box_Tag_Name, Source)) { Combo_Box_Tag_Name.Items.Add(Source); }
+                    if (Source != "" && !List_View_Matches(List_View_Selection, Source)) { List_View_Selection.Items.Add(Source); }
                 }
-
-                //User_Input = false; // Preventing stack overflow when Combo_Box_Path_TextChanged() triggers.
-                //Combo_Box_Tag_Name.Text = Source_List[0];
-                //User_Input = true;
             } catch {}
+
+            Set_Checker(List_View_Selection);
         }
 
         //===========================//
@@ -1368,89 +1372,7 @@ GroundBuildable";
         private void Combo_Box_Tag_Name_TextChanged(object sender, EventArgs e)
         {
             if (!User_Input) { return; }
-
-            else if (Script_Mode)
-            {   string Selection = Combo_Box_Tag_Name.Text;
-
-                if (Found_Scripts != null && Selection != "")
-                {   foreach (string File_Path in Found_Scripts)
-                    {
-                        if (File_Path.EndsWith(Selection)) // If is the selected file               
-                        {
-                            string Vanilla_Dir = Path.GetDirectoryName(Properties.Settings.Default.Steam_Exe_Path) + @"\steamapps\common\Star Wars Empire at War\Data";
-                            Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\" \"" + Vanilla_Dir + "\"", Get_Scripts_Dir());
-                           
-
-                            // Match by Filename
-                            string[] Possible_Files = new string[] { "Mod_Cleanup.py", "01_mod_cleanup.py", "Test.py" };
-
-                            foreach (string File_Name in Possible_Files)
-                            {
-                                if (Match_Without_Emptyspace_2(Selection, File_Name)) // Append the Modpath to the Cleanup Script                             
-                                {                                   
-
-                                    Temporal_E = File.ReadAllLines(Properties.Settings.Default.Mod_Directory + @"\Data\cleanup.txt").ToList();
-                                    int Line_Count = (Temporal_E.Count() * 30) + 160;
-                                    if (Line_Count > 680) { Line_Count = 680; }
-
-                                    iDialogue(680, Line_Count, "Yes, All", "Textures", "Models only", "Cancel", "Do you wish to move these into a \"Unused\" folder:", Temporal_E);
-
-                                    if (Caution_Window.Passed_Value_A.Text_Data == "true") { Move_Unused_Files(); }
-                                    else if (Caution_Window.Passed_Value_A.Text_Data == "false") { Move_Unused_Files("textures"); }
-                                    else if (Caution_Window.Passed_Value_A.Text_Data == "else") { Move_Unused_Files("models"); }
-                                    // else if (Caution_Window.Passed_Value_A.Text_Data == "other") { } // Does nothing
-                       
-                                    
-                                    Temporal_E = new List<string>(); // reset
-                                }
-                            }
-
-                            return;
-                           
-
-                            /*
-                            bool Has_Matched = false;
-
-                            if (File_Path.EndsWith("py")) // No idea I just push these arguments to all py files XD
-                            {
-                                string Vanilla_Dir = Path.GetDirectoryName(Properties.Settings.Default.Steam_Exe_Path) + @"\steamapps\common\Star Wars Empire at War\Data";
-
-                                Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\" \"" + Vanilla_Dir + "\"", Get_Scripts_Dir());
-                                Has_Matched = true; return;
-                            }
-
-                            // Match by Filename
-                            string[] Possible_Files = new string[] { "Mod_Cleanup.py", "01_mod_cleanup.py", "Show_Passed_Arguments.py",
-                            "Dat_to_Tsv.py", "Tsv_to_Dat.py" };
-
-                            foreach (string File_Name in Possible_Files)
-                            {   if (Match_Without_Emptyspace_2(Selection, File_Name)) // Append the Modpath to the Cleanup Script                             
-                                {
-                                    string Vanilla_Dir =  Path.GetDirectoryName(Properties.Settings.Default.Steam_Exe_Path) +  @"\steamapps\common\Star Wars Empire at War\Data";
-
-                                    Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\" \"" + Vanilla_Dir + "\"", Get_Scripts_Dir());
-
-                                    // Alternate way: Specify path to the .json file as argument:
-                                    //Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\"" + " " + Get_Scripts_Dir() + "\\vanilla_dump.json");
-
-                                    // iConsole(400, 100, File_Path + " \"" + Properties.Settings.Default.Mod_Directory + "\\Data\"" + "\npause");                               
-                                    Has_Matched = true; return;
-                                }                                                       
-                            }
-                            
-
-                            if (!Has_Matched) { Execute(File_Path, "", Get_Scripts_Dir()); return; } 
-                            */
-                        }                                                                         
-                    }
-                }
-                return; // Because it isn't supposed to process xml stuff of below in Script_Mode.
-            }
-
-
-
-
-
+         
             bool Reset_Type_Filter = false;
 
 
@@ -2066,7 +1988,6 @@ GroundBuildable";
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-           
             string Entity_Name = Wash_String(Combo_Box_Entity_Name.Text);
             if (Entity_Name == "" | Entity_Name == "None") { return; }
 
@@ -2162,6 +2083,8 @@ GroundBuildable";
                 User_Input = false; // Un-Percenting
                 Combo_Box_Tag_Value.Text = Remove_Percentage(Combo_Box_Tag_Value.Text);
                 User_Input = true;
+
+                if (Text_Box_Description.Text.StartsWith("While in Percent Mode")) { Text_Box_Description.Visible = false; }
             }
             else 
             {   Percent_Mode = true; // Needs to be set BEFORE Process_Tags()
@@ -2196,36 +2119,115 @@ GroundBuildable";
         private void Button_Scripts_Click(object sender, EventArgs e)
         {
             if (Script_Mode) // Toggle between Script Mode
-            {   Script_Mode = false;
-                Label_Tag_Name.Text = "Tag Name";
+            {
+                Script_Mode = false;
+                Drop_Zone.Visible = true;
                 Set_UI_Into_Script_Mode(!Script_Mode);
-                Combo_Box_Tag_Name.Text = "";                          
-                Reset_Tag_Box();
-            }
-            else 
-            {   Script_Mode = true;
-                Label_Tag_Name.Text = "Run Script";
-                Set_UI_Into_Script_Mode(!Script_Mode);
-                Combo_Box_Tag_Name.Text = "";
 
-            
+                List_View_Selection.Size = new Size(404, 164);
+                List_View_Selection.Location = new Point(12, 12);
+
+                // Loading the Xml instead of the available scripts in script mode
+                Load_Xml_Content(Properties.Settings.Default.Last_File);
+                Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit);
+            }
+            else
+            {
+                Script_Mode = true;
+                Drop_Zone.Visible = false;
+                List_View_Selection.Visible = true;
+                Set_UI_Into_Script_Mode(!Script_Mode);
+
+                List_View_Selection.Size = new Size(367, 482);
+                List_View_Selection.Location = new Point(31, 29);
+
 
                 Found_Scripts = Get_All_Files(Get_Scripts_Dir());
                 List<string> Script_Names = new List<string>();
 
                 if (Found_Scripts != null)
-                {   try 
+                {   try
                     {   foreach (string File_Path in Found_Scripts)
-                    {
-                        if (!File_Path.EndsWith("json") & !File_Path.EndsWith("Installer.py"))
+                        {
+                            if (!File_Path.EndsWith("json") & !File_Path.Contains("Hidden") & !File_Path.EndsWith("Installer.py"))
                             { Script_Names.Add(Path.GetFileName(File_Path)); }
                         }
                         Reset_Script_Box(Script_Names);
                     } catch {}
                 }
-
-                Combo_Box_Tag_Name.DroppedDown = true; // Show to the User
             }
+
+            try { List_View_Selection.Columns[0].Width = List_View_Selection.Width - 8; } catch {}
+                
+        }
+
+
+        private void Run_Script()
+        {
+            string Selection = Select_List_View_First(List_View_Selection);
+
+
+            if (Found_Scripts != null && Selection != null && Selection != "")
+            {   foreach (string File_Path in Found_Scripts)
+                {   if (File_Path.EndsWith(Selection)) // If is the selected file               
+                    {
+
+                        string[] Possible_Files = new string[] { "Dat_to_File.py", "File_to_Dat.py" }; // Match by Filename
+
+                        foreach (string File_Name in Possible_Files)
+                        {
+                            if (Match_Without_Emptyspace_2(Selection, File_Name))                              
+                            {
+                                string Extension = "txt";
+                                if (Text_Format_Delimiter == "\\t") { Extension = "tsv"; }
+                                else if (Text_Format_Delimiter == "," | Text_Format_Delimiter == ";") { Extension = "csv"; }
+
+                                Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\" " + Text_Format_Delimiter + " " + Extension, Get_Scripts_Dir());                               
+
+                                // Alternate way: Specify path to the .json file as argument:
+                                // Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\"" + " " + Get_Scripts_Dir() + "\\vanilla_dump.json");
+
+                                // iConsole(400, 100, File_Path + " \"" + Properties.Settings.Default.Mod_Directory + "\\Data\"" + "\npause");  
+                                return;                            
+                            }
+                        }
+                        // if (!Has_Matched) { Execute(File_Path, "", Get_Scripts_Dir()); return; } 
+
+
+
+
+
+                        string Vanilla_Dir = Path.GetDirectoryName(Properties.Settings.Default.Steam_Exe_Path) + @"\steamapps\common\Star Wars Empire at War\Data";
+                        Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\" \"" + Vanilla_Dir + "\"", Get_Scripts_Dir());
+
+                        Possible_Files = new string[] { "Mod_Cleanup.py", "01_mod_cleanup.py", "Test.py" };
+
+                        foreach (string File_Name in Possible_Files)
+                        {
+                            if (Match_Without_Emptyspace_2(Selection, File_Name)) // Append the Modpath to the Cleanup Script                             
+                            {
+
+                                Temporal_E = File.ReadAllLines(Properties.Settings.Default.Mod_Directory + @"\Data\cleanup.txt").ToList();
+                                int Line_Count = (Temporal_E.Count() * 30) + 160;
+                                if (Line_Count > 680) { Line_Count = 680; }
+
+                                iDialogue(680, Line_Count, "Yes, All", "Textures", "Models only", "Cancel", "Do you wish to move these into a \"Unused\" folder:", Temporal_E);
+
+                                if (Caution_Window.Passed_Value_A.Text_Data == "true") { Move_Unused_Files(); }
+                                else if (Caution_Window.Passed_Value_A.Text_Data == "false") { Move_Unused_Files("textures"); }
+                                else if (Caution_Window.Passed_Value_A.Text_Data == "else") { Move_Unused_Files("models"); }
+                                // else if (Caution_Window.Passed_Value_A.Text_Data == "other") { } // Does nothing
+
+
+                                Temporal_E = new List<string>(); // reset
+                            }
+                        }
+
+                        return;
+
+                    }
+                }
+            } return; // Because it isn't supposed to process xml stuff of below in Script_Mode.         
         }
 
 
@@ -2257,8 +2259,9 @@ GroundBuildable";
 
 
         private void Set_UI_Into_Script_Mode(bool Mode)
-        {   Control[] Controls = { Button_Percentage, Button_Operator, Label_Tag_Value, Combo_Box_Tag_Value, Check_Box_All_Occurances, 
-                                   Button_Run_Game, Track_Bar_Tag_Value, Button_Toggle_Settings, Button_Reset_Blacklist };
+        {
+            Control[] Controls = { Button_Browse, Button_Start, Button_Run_Game, Button_Search, 
+                                   Button_Percentage, Button_Operator, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
         }
 
