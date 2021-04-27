@@ -50,7 +50,7 @@
             this.Check_Box_All_Occurances = new System.Windows.Forms.CheckBox();
             this.List_View_Selection = new System.Windows.Forms.ListView();
             this.Entries = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.Button_Run_Game = new System.Windows.Forms.PictureBox();
+            this.Button_Run = new System.Windows.Forms.PictureBox();
             this.Button_Percentage = new System.Windows.Forms.PictureBox();
             this.Button_Operator = new System.Windows.Forms.PictureBox();
             this.Button_Search = new System.Windows.Forms.PictureBox();
@@ -61,7 +61,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.Button_Browse)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Toggle_Settings)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Reset_Blacklist)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.Button_Run_Game)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Run)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Percentage)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Operator)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Search)).BeginInit();
@@ -312,17 +312,17 @@
             // 
             this.Entries.Width = 396;
             // 
-            // Button_Run_Game
+            // Button_Run
             // 
-            this.Button_Run_Game.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.Button_Run_Game.Location = new System.Drawing.Point(399, 430);
-            this.Button_Run_Game.Name = "Button_Run_Game";
-            this.Button_Run_Game.Size = new System.Drawing.Size(30, 30);
-            this.Button_Run_Game.TabIndex = 32;
-            this.Button_Run_Game.TabStop = false;
-            this.Button_Run_Game.Click += new System.EventHandler(this.Button_Run_Game_Click);
-            this.Button_Run_Game.MouseLeave += new System.EventHandler(this.Button_Run_Game_MouseLeave);
-            this.Button_Run_Game.MouseHover += new System.EventHandler(this.Button_Run_Game_MouseHover);
+            this.Button_Run.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.Button_Run.Location = new System.Drawing.Point(399, 430);
+            this.Button_Run.Name = "Button_Run";
+            this.Button_Run.Size = new System.Drawing.Size(30, 30);
+            this.Button_Run.TabIndex = 32;
+            this.Button_Run.TabStop = false;
+            this.Button_Run.Click += new System.EventHandler(this.Button_Run_Click);
+            this.Button_Run.MouseLeave += new System.EventHandler(this.Button_Run_MouseLeave);
+            this.Button_Run.MouseHover += new System.EventHandler(this.Button_Run_MouseHover);
             // 
             // Button_Percentage
             // 
@@ -385,7 +385,7 @@
             this.Controls.Add(this.Button_Operator);
             this.Controls.Add(this.Button_Percentage);
             this.Controls.Add(this.Text_Box_Description);
-            this.Controls.Add(this.Button_Run_Game);
+            this.Controls.Add(this.Button_Run);
             this.Controls.Add(this.List_View_Selection);
             this.Controls.Add(this.Check_Box_All_Occurances);
             this.Controls.Add(this.Combo_Box_Entity_Name);
@@ -415,7 +415,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.Button_Browse)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Toggle_Settings)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Reset_Blacklist)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.Button_Run_Game)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Run)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Percentage)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Operator)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Search)).EndInit();
@@ -448,7 +448,7 @@
         private System.Windows.Forms.CheckBox Check_Box_All_Occurances;
         private System.Windows.Forms.ListView List_View_Selection;
         private System.Windows.Forms.ColumnHeader Entries;
-        private System.Windows.Forms.PictureBox Button_Run_Game;
+        private System.Windows.Forms.PictureBox Button_Run;
         private System.Windows.Forms.PictureBox Button_Percentage;
         private System.Windows.Forms.PictureBox Button_Operator;
         private System.Windows.Forms.PictureBox Button_Search;

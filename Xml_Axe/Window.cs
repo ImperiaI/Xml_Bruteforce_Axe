@@ -76,12 +76,12 @@ namespace Xml_Axe
             Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent);
             Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash);
             Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus);
-            Set_Resource_Button(Button_Run_Game, Properties.Resources.Button_Axe);
+            Set_Resource_Button(Button_Run, Properties.Resources.Button_Axe);
             Set_Resource_Button(Button_Toggle_Settings, Properties.Resources.Button_Settings);
             Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller);
 
 
-            Control[] Controls = { Button_Browse, Button_Start, Button_Run_Game, Button_Search, Button_Percentage,
+            Control[] Controls = { Button_Browse, Button_Start, Button_Run, Button_Search, Button_Percentage,
                                    Button_Scripts, Button_Operator, Button_Reset_Blacklist, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.BackColor = Color.Transparent; }   
     
@@ -378,12 +378,12 @@ namespace Xml_Axe
 
         //===========================//
 
-        private void Button_Run_Game_Click(object sender, EventArgs e)
+        private void Button_Run_Click(object sender, EventArgs e)
         {
             // iConsole(600, 400, Check_for_Steam_Version()); // Debug
 
             if (Combo_Box_Tag_Name.Text == "") { return; }
-            
+
             int Line_Count = 0;
             // bool Warn_User = true;
             string The_Settings = Properties.Settings.Default.Tags;
@@ -398,7 +398,7 @@ namespace Xml_Axe
                 Line_Count = (Related_Xmls.Count() * 30) + 160;
                 if (Line_Count > 680) { Line_Count = 680; }
 
-                if (Related_Xmls.Count == 0) 
+                if (Related_Xmls.Count == 0)
                 {
                     string Error_Text = "\nI'm sorry, no entries with Attribute Name \"" + Queried_Attribute
                     + "\"\nand Attribute Value \"" + Combo_Box_Entity_Name.Text + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
@@ -413,9 +413,9 @@ namespace Xml_Axe
                     iConsole(600, 100, Error_Text); return;
                 }
                 else { iDialogue(680, Line_Count, "Yes", "Cancel", "Ignore", "Blacklist", "Are you sure you wish to apply changes to:", Related_Xmls, true); }
-                 
-  
-                if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }          
+
+
+                if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
             }
 
 
@@ -428,7 +428,7 @@ namespace Xml_Axe
 
             Properties.Settings.Default.Type_Filter = Combo_Box_Type_Filter.Text;
             Properties.Settings.Default.Tag_Name = Combo_Box_Tag_Name.Text;
-            Properties.Settings.Default.Tag_Value = Combo_Box_Tag_Value.Text;                                
+            Properties.Settings.Default.Tag_Value = Combo_Box_Tag_Value.Text;
             Properties.Settings.Default.Trackbar_Value = Track_Bar_Tag_Value.Value;
             Properties.Settings.Default.Save(); // Storing last usage
 
@@ -444,11 +444,12 @@ namespace Xml_Axe
             }*/
         }
 
-        private void Button_Run_Game_MouseHover(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Run_Game, Properties.Resources.Button_Axe_Lit); }
 
-        private void Button_Run_Game_MouseLeave(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Run_Game, Properties.Resources.Button_Axe); }
+        private void Button_Run_MouseHover(object sender, EventArgs e)
+        { Set_Resource_Button(Button_Run, Properties.Resources.Button_Axe_Lit); }
+
+        private void Button_Run_MouseLeave(object sender, EventArgs e)
+        { Set_Resource_Button(Button_Run, Properties.Resources.Button_Axe); }
 
 
 
@@ -835,7 +836,7 @@ namespace Xml_Axe
 
         private void Set_UI_Into_Settings_Mode(bool Mode)
         {
-            Control[] Controls = { Button_Search, Button_Run_Game, Button_Percentage, Button_Scripts, Button_Operator, Label_Type_Filter };
+            Control[] Controls = { Button_Search, Button_Run, Button_Percentage, Button_Scripts, Button_Operator, Label_Type_Filter };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
         }
 
@@ -2260,7 +2261,7 @@ GroundBuildable";
 
         private void Set_UI_Into_Script_Mode(bool Mode)
         {
-            Control[] Controls = { Button_Browse, Button_Start, Button_Run_Game, Button_Search, 
+            Control[] Controls = { Button_Browse, Button_Start, Button_Run, Button_Search, 
                                    Button_Percentage, Button_Operator, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
         }
@@ -2333,6 +2334,10 @@ GroundBuildable";
             }
         }
 
+
+
+
+     
 
 
 
