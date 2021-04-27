@@ -102,7 +102,7 @@ namespace Xml_Axe
 
         private void Button_Caution_Box_4_Click(object sender, EventArgs e)
         {
-            List<string> The_Blacklist = new List<string>();
+            List<string> The_Blacklist = Active_Window.Blacklisted_Xmls;
 
             Passed_Value_A.Text_Data = "other";
 
@@ -130,7 +130,8 @@ namespace Xml_Axe
         private void Caution_Window_FormClosed(object sender, FormClosedEventArgs e)
         {
             // Important or occasions that expect false to not continue would missunderstand the user here!
-            if (Passed_Value_A.Text_Data == null) { Passed_Value_A.Text_Data = "false"; }
+            // Also if the User just blacklisted or ignored entries before pressing X this must not trigger.
+            if (Passed_Value_A.Text_Data != "true") { Passed_Value_A.Text_Data = "false"; }
         }
 
 

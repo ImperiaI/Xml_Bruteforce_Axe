@@ -89,9 +89,7 @@ namespace Xml_Axe
             foreach (Control Selectrion in Controls) { Selectrion.BackColor = Color.Transparent; }   
     
      
-
-            if (File.Exists(Xml_Directory + "Axe_Blacklist.txt"))
-            { Blacklisted_Xmls = File.ReadAllLines(Xml_Directory + "Axe_Blacklist.txt").ToList(); }
+        
 
             Load_Xml_Content(Properties.Settings.Default.Last_File, false); // Need this loaded so In_Selected_Xml(); can match true
             
@@ -425,7 +423,11 @@ namespace Xml_Axe
             // iConsole(600, 400, Check_for_Steam_Version()); // Debug
             if (Combo_Box_Tag_Name.Text == "") { return; }
             Set_Resource_Button(Drop_Zone, Get_Start_Image());
-           
+
+
+            if (File.Exists(Xml_Directory + "Axe_Blacklist.txt"))
+            { Blacklisted_Xmls = File.ReadAllLines(Xml_Directory + "Axe_Blacklist.txt").ToList(); }
+
 
             int Line_Count = 0;
             // bool Warn_User = true;
