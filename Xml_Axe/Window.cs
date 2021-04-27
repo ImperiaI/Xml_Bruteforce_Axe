@@ -55,6 +55,7 @@ namespace Xml_Axe
         string Queried_Attribute = "Name"; // Preseting
         string Text_Format_Delimiter = ";";
         string Script_Directory = "";
+        string Last_Combo_Box_Tag_Name = "";
         string[] Balancing_Tags = null; // new string[] { };
         public Color Theme_Color = Color.CadetBlue;
         public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
@@ -356,6 +357,10 @@ namespace Xml_Axe
 
             Combo_Box_Tag_Value.Text = Operator + (Track_Bar_Tag_Value.Value * Scale_Factor) + Percentage;
             User_Input = true;
+
+
+            // Check to disable Bool_Mode
+            Combo_Box_Tag_Value_TextChanged(null, null); // This must run with User_Input
         }
 
 
@@ -466,11 +471,15 @@ namespace Xml_Axe
             if (Combo_Box_Entity_Name.Text == "None") { Properties.Settings.Default.Entity_Name = ""; }
             else { Properties.Settings.Default.Entity_Name = Wash_String(Combo_Box_Entity_Name.Text); }
 
-            Properties.Settings.Default.Type_Filter = Combo_Box_Type_Filter.Text;
-            Properties.Settings.Default.Tag_Name = Combo_Box_Tag_Name.Text;
 
-            if (Combo_Box_Tag_Value.Text.Contains("%")) { Properties.Settings.Default.Tag_Value = ""; } // Preventing Errors
-            else { Properties.Settings.Default.Tag_Value = Combo_Box_Tag_Value.Text; }
+            if (Combo_Box_Tag_Name.Text != "Rebalance_Everything") // We don't want the user to accidently re-apply such a powerfull setting
+            {   Properties.Settings.Default.Type_Filter = Combo_Box_Type_Filter.Text;
+                Properties.Settings.Default.Tag_Name = Combo_Box_Tag_Name.Text;
+
+                if (Combo_Box_Tag_Value.Text.Contains("%")) { Properties.Settings.Default.Tag_Value = ""; } // Preventing Errors
+                else { Properties.Settings.Default.Tag_Value = Combo_Box_Tag_Value.Text; }
+            }
+           
 
             Properties.Settings.Default.Trackbar_Value = Track_Bar_Tag_Value.Value;
             Properties.Settings.Default.Save(); // Storing last usage
@@ -1264,7 +1273,7 @@ bool Is_Targetable # Defines whether or not all Hardpoints in current selection 
 
 bool Is_Destroyable # Defines whether or not all Hardpoints in current selection or the Mod can be destroyed.
 
-bool Is_Named_Hero # Set to No and no more heroes will respawn.
+bool Is_Named_Hero # Set to No and no more heroes will respawn. Most of them will also hide their hero Images.
 
 Projectile_Does_Shield_Damage = bool # Set to Yes and apply to the whole mod, to disable all shield piercing effects.
 
@@ -1290,7 +1299,7 @@ Build_Cost_Credits = 100 # Set the price to 1, then you can build as many units 
 
 Tactical_Build_Cost_Multiplayer = 100 # Set the price to 1 for all Skirmish units.
 
-Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Projectile_Damage, Damage # This balances the most important aspects of the Game: Tactical_Health, Shields, Shield_Refresh_Rate, Projectile_Damage
+Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Projectile_Damage, Damage # This balances the most important aspects of the Game: Tactical_Health, Shields, Shield_Refresh_Rate, Projectile_Damage. You can remove or add more Tag types to this tag in the settings! Then they will scale by the same % value.
 ";
         }
 
@@ -1471,10 +1480,12 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //===========================//
         private void Combo_Box_Tag_Name_TextChanged(object sender, EventArgs e)
         {
-            if (!User_Input) { return; }
-         
+            if (!User_Input) { return; }     
             bool Reset_Type_Filter = false;
 
+
+            if (Last_Combo_Box_Tag_Name == "Rebalance_Everything") // Auto-Deactivating Percent mode
+            { Button_Percentage_Click(null, null); Button_Percentage_MouseLeave(null, null); }
 
 
             switch (Combo_Box_Tag_Name.Text)
@@ -1549,7 +1560,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
             Process_Tags(Text_Box_Tags.Text);
-            
+            Last_Combo_Box_Tag_Name = Combo_Box_Tag_Name.Text;           
         }
 
         //===========================//
@@ -1699,7 +1710,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 // Button_Operator.Visible = false;
                 // Button_Percentage.Visible = false;
                 Track_Bar_Tag_Value.Visible = false;
-                Combo_Box_Tag_Value.Items.Clear();
+                // Combo_Box_Tag_Value.Items.Clear(); // Disabled
 
                 Bool_Mode = false; Percent_Mode = false;
                 Button_Operator_MouseLeave(null, null);
@@ -1711,6 +1722,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Button_Percentage.Visible = false;
                 Track_Bar_Tag_Value.Visible = false;
                 
+                /* // Disabled because the tool does not know the type of tags the user types in
                 if (Combo_Box_Tag_Value.Items.Count == 0)
                 {   Combo_Box_Tag_Value.Items.Add("True");
                     Combo_Box_Tag_Value.Items.Add("False");
@@ -1718,6 +1730,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     Combo_Box_Tag_Value.Items.Add("Yes");
                     Combo_Box_Tag_Value.Items.Add("No");
                 }
+                */
 
 
                 string It = Combo_Box_Tag_Value.Text;
@@ -1750,7 +1763,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
                 Button_Percentage.Visible = true;
                 Track_Bar_Tag_Value.Visible = true;
-                Combo_Box_Tag_Value.Items.Clear();
+                // Combo_Box_Tag_Value.Items.Clear(); // Disabled
             }
 
             User_Input = true;
@@ -1764,6 +1777,11 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             if (User_Input) 
             {   Disable_Description();
                 if (Percent_Mode & !Combo_Box_Tag_Value.Text.Contains("%")) { Combo_Box_Tag_Value.Text += "%"; }
+
+                if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "False")
+                    | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "Yes") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "No"))
+                { Bool_Mode = true; }
+                else { Bool_Mode = false; }
             }
 
             Button_Operator_MouseLeave(null, null); // Check if bool and refresh
