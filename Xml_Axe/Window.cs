@@ -143,7 +143,9 @@ namespace Xml_Axe
 
 
             if (Match_Setting("Disable_EAW_Mode"))
-            {   Label_Entity_Name.Text = "Attribute";
+            {
+                EAW_Mode = false;
+                Label_Entity_Name.Text = "Attribute";
                 Label_Type_Filter.Text = "Parent Name";
             }
 
@@ -284,7 +286,18 @@ namespace Xml_Axe
 
 
                     // Don't use else if here!
-                    if (!Is_Match(Temporal_A, "xml$")) { Temporal_A = Path.GetDirectoryName(Temporal_A); }
+                    if (!Is_Match(Temporal_A, "xml$")) 
+                    {
+                        if (!EAW_Mode)
+                        {   // Then the parent dir is always the selected Xml_Directory 
+                            Xml_Directory = Temporal_A;
+                            Properties.Settings.Default.Xml_Directory = Xml_Directory; 
+                            break;
+                        }
+
+                        Temporal_A = Path.GetDirectoryName(Temporal_A); // Trying to utilize recursion on Temporal_A in the next loop
+                    } 
+
                     else if (Is_Match(Temporal_A, "data$"))
                     {
                         Xml_Directory = Temporal_A + @"\xml\"; // Updating 
@@ -297,7 +310,7 @@ namespace Xml_Axe
                     }
 
                     else //Until we got to the Xml directory
-                    {
+                    {                      
                         Xml_Directory = Temporal_A + @"\"; // Updating 
                         Properties.Settings.Default.Xml_Directory = Xml_Directory;
 
@@ -312,7 +325,7 @@ namespace Xml_Axe
             }
 
             else // If not Refresh_Dir, we trust that the selected file is a xml
-            {   Load_Xml_Content(The_Path);
+            {   Load_Xml_Content(The_Path, true);
                 List_View_Selection.Visible = true;                             
             }
 
@@ -419,14 +432,14 @@ namespace Xml_Axe
                 Line_Count = (Related_Xmls.Count() * 30) + 160;
                 if (Line_Count > 680) { Line_Count = 680; }
 
-                if (Related_Xmls.Count == 0)
+                if (Related_Xmls.Count == 0) // the Slice function is supposed to fill this list with paths
                 {
                     string Error_Text = "\nI'm sorry, no entries with Attribute Name \"" + Queried_Attribute
                     + "\"\nand Attribute Value \"" + Combo_Box_Entity_Name.Text + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
 
                     if (Combo_Box_Entity_Name.Text == "" | Combo_Box_Entity_Name.Text == "None") // Then the query went by filter, which is name of the Entities root tag
                     {
-                        Error_Text = "\nI'm sorry, no entries with EntityParent Tag Name \"" + Combo_Box_Type_Filter.Text
+                        Error_Text = "\nI'm sorry, no entries with Entity Parent Tag Name \"" + Combo_Box_Type_Filter.Text
                         + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
                     }
 
@@ -449,7 +462,10 @@ namespace Xml_Axe
 
             Properties.Settings.Default.Type_Filter = Combo_Box_Type_Filter.Text;
             Properties.Settings.Default.Tag_Name = Combo_Box_Tag_Name.Text;
-            Properties.Settings.Default.Tag_Value = Combo_Box_Tag_Value.Text;
+
+            if (Combo_Box_Tag_Value.Text.Contains("%")) { Properties.Settings.Default.Tag_Value = ""; } // Preventing Errors
+            else { Properties.Settings.Default.Tag_Value = Combo_Box_Tag_Value.Text; }
+
             Properties.Settings.Default.Trackbar_Value = Track_Bar_Tag_Value.Value;
             Properties.Settings.Default.Save(); // Storing last usage
 
@@ -637,8 +653,8 @@ namespace Xml_Axe
 
 
             foreach (var Xml in File_Collection)
-            {   try
-                {
+            {   
+                try {
                     Selected_Xml = Xml;
                     // Ignoring blacklisted Xmls
                     if (Blacklisted_Xmls != null) { if (Blacklisted_Xmls.Contains(Selected_Xml.Replace(Xml_Directory, ""))) { continue; } }
@@ -648,9 +664,12 @@ namespace Xml_Axe
                     XDocument Xml_File = XDocument.Load(Selected_Xml, LoadOptions.PreserveWhitespace);
                     
                     // ===================== Opening Xml File =====================
+                    int Query = 0;
 
                     if (In_Selected_Xml(Entity_Name)) // Select Multiple by Name
                     {
+                        Query = 1;
+
                         Selected_Xml = Properties.Settings.Default.Last_File; // Overwride what ever xml this loop selected before
                         Xml_File = XDocument.Load(Selected_Xml, LoadOptions.PreserveWhitespace);
                         List<string> Selected_Entities = Select_List_View_Items(List_View_Selection);
@@ -662,8 +681,10 @@ namespace Xml_Axe
                     }
 
 
-                    else if (Combo_Box_Type_Filter.Text == "Faction Name Filter")
+                    else if (Selected_Type == "FactionNameFilter")
                     {
+                        Query = 2;
+
                         Instances =
                            from All_Tags in Xml_File.Root.Descendants() // Entity_Name means the Faction name here
                            where All_Tags.Descendants("Affiliation").Last().Value.Contains(Entity_Name)
@@ -671,13 +692,17 @@ namespace Xml_Axe
                     }
                     else if (Entity_Name != "" & Entity_Name != "None") // Select a single Entity by Name
                     {
+                        Query = 3;
+
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
                           where (string)All_Tags.Attribute(Queried_Attribute) == Entity_Name
                           select All_Tags;
                     }
-                    else if (Combo_Box_Type_Filter.Text != "" & Combo_Box_Type_Filter.Text != "All Types") // By Entity Type
+                    else if (Selected_Type != "" & Selected_Type != "AllTypes") // By Entity Type
                     {
+                        Query = 4;
+
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
                           where All_Tags.Name == Selected_Type
@@ -685,6 +710,8 @@ namespace Xml_Axe
                     }
                     else // Target all entities in the whole Mod!
                     {
+                        Query = 5;
+
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
                           // Selecting all non empty tags that have the Queried_Attribute "Name", null because we need all selected.
@@ -692,7 +719,7 @@ namespace Xml_Axe
                           select All_Tags;
                     }
 
-
+                    // iConsole(300, 100, Query + " Is the Case of Query");
 
 
 
@@ -757,14 +784,18 @@ namespace Xml_Axe
                         Changed_Entities++;
                         foreach (XElement Target in Instance.Descendants(Selected_Tag))
                         {
-                            if (!Percent_Mode) { Target.Value = Combo_Box_Tag_Value.Text.Replace("+", ""); }
+                            if (!Percent_Mode) 
+                            {
+                                if (Combo_Box_Tag_Value.Text.Contains("%")) { Combo_Box_Tag_Value.Text = Combo_Box_Tag_Value.Text.Replace("%", ""); } // Removing Mistakes
+                                Target.Value = Combo_Box_Tag_Value.Text.Replace("+", "");
+                            }
 
                             else try // Refactoring the old value!
                             {   int Percentage = 0;
                                 decimal Original_Value = 0;
 
                                 Decimal.TryParse(Target.Value, out Original_Value);
-                                Int32.TryParse(Remove_Percentage(Combo_Box_Tag_Value.Text), out Percentage);
+                                Int32.TryParse(Remove_Operators(Combo_Box_Tag_Value.Text), out Percentage);
 
                                 if (Combo_Box_Tag_Value.Text.Contains("-")) // Shrink Value
                                 { Target.Value = (Original_Value - ((Original_Value / 100) * Percentage)).ToString(); }
@@ -834,16 +865,25 @@ namespace Xml_Axe
                 Reset_Root_Tag_Box();
 
 
-                // This Check needs to run AFTER Reset_Tag_Box();
-                if (Combo_Box_Type_Filter.Text == "Faction Name Filter") { Label_Entity_Name.Text = "Faction Name"; }
+             
 
-                else if (Match_Setting("Disable_EAW_Mode"))
+                if (Match_Setting("Disable_EAW_Mode"))
                 {
+                    EAW_Mode = false;
                     Label_Entity_Name.Text = "Attribute";
                     Label_Type_Filter.Text = "Parent Name";
                 }
+
+                // This Check needs to run AFTER Reset_Tag_Box();
+                else if (Combo_Box_Type_Filter.Text == "Faction Name Filter")
+                {
+                    EAW_Mode = true;
+                   
+                    Label_Entity_Name.Text = "Faction Name";
+                } 
                 else
                 {
+                    EAW_Mode = true;
                     Label_Entity_Name.Text = "Entity Name";
                     Label_Type_Filter.Text = "Filter Type";
                 }
@@ -902,7 +942,7 @@ namespace Xml_Axe
                 Text_Box_Tags.Text = Tag_List;
                 if (Text_Box_Tags.Visible == false) { Text_Box_Tags.Visible = true; }
             }
-            else // Otherwised this button is used to launch the game
+            else if (EAW_Mode) // Otherwised this button is used to launch the game
             {                              
                 string Steam_Path = Properties.Settings.Default.Steam_Exe_Path; 
                 string Program_Path = Path.GetDirectoryName(Steam_Path) + @"\steamapps\common\Star Wars Empire at War\corruption\StarWarsG.exe";
@@ -1263,8 +1303,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate # Thi
         public void Reset_Root_Tag_Box()
         {
             Combo_Box_Type_Filter.Items.Clear();
-            
-            if (Match_Setting("Disable_EAW_Mode")) // Only for EAW Mode
+
+            if (!EAW_Mode) // Only for EAW Mode
             { Combo_Box_Type_Filter.Items.Add("All Types"); }
 
             else
@@ -1367,7 +1407,7 @@ GroundBuildable";
                 Button_Search.Visible = false;
             }
 
-            else if (Match_Setting("Disable_EAW_Mode"))
+            else if (!EAW_Mode)
             {   Label_Entity_Name.Text = "Attribute";
                 Label_Type_Filter.Text = "Parent Name";
                 Button_Search.Visible = true;
@@ -2041,8 +2081,9 @@ GroundBuildable";
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-            iConsole(400, 100, Properties.Settings.Default.Mod_Directory); return;
+            // iConsole(400, 100, Properties.Settings.Default.Xml_Directory + "\n" + Properties.Settings.Default.Mod_Directory); return;
             
+
             string Entity_Name = Wash_String(Combo_Box_Entity_Name.Text);
             if (Entity_Name == "" | Entity_Name == "None") { return; }
 
@@ -2136,7 +2177,7 @@ GroundBuildable";
             if (Percent_Mode) 
             {   Percent_Mode = false;
                 User_Input = false; // Un-Percenting
-                Combo_Box_Tag_Value.Text = Remove_Percentage(Combo_Box_Tag_Value.Text);
+                Combo_Box_Tag_Value.Text = Remove_Operators(Combo_Box_Tag_Value.Text);
                 User_Input = true;
 
                 if (Text_Box_Description.Text.StartsWith("While in Percent Mode")) { Text_Box_Description.Visible = false; }
@@ -2157,7 +2198,7 @@ GroundBuildable";
             }
         }
 
-        private string Remove_Percentage(string The_Text)
+        private string Remove_Operators(string The_Text)
         { return The_Text.Replace("+", "").Replace("-", "").Replace("%", ""); }
 
         private void Button_Percentage_MouseHover(object sender, EventArgs e)
@@ -2203,9 +2244,16 @@ GroundBuildable";
                 if (Found_Scripts != null)
                 {   try
                     {   foreach (string File_Path in Found_Scripts)
-                        {
-                            if (!File_Path.EndsWith("json") & !File_Path.Contains("Hidden") & !File_Path.EndsWith("Installer.py"))
-                            { Script_Names.Add(Path.GetFileName(File_Path)); }
+                        {                        
+                            if (!File_Path.EndsWith("json") & !File_Path.Contains("Hidden"))
+                            {
+                                string[] Blacklist = new string[] { "Installer" }; // Match and disqualify by filename
+                                
+                                // These Python scrips are only meant for EAW mode
+                                if (!EAW_Mode) { Blacklist = new string[] { "Installer", "Dat_to_File", "File_to_Dat", "Find_Textures_In_Maps", "Make_Mp_Maps_Default", "Mod_Cleanup"}; }
+
+                                if (!Blacklist.Contains(Path.GetFileNameWithoutExtension(File_Path))) { Script_Names.Add(Path.GetFileName(File_Path)); }
+                            }                           
                         }
                         Reset_Script_Box(Script_Names);
                     } catch {}
@@ -2227,6 +2275,10 @@ GroundBuildable";
                 {   if (File_Path.EndsWith(Selection)) // If is the selected file               
                     {
 
+                        // Piping arguments into the script code below makes only sense in EAW Mode 
+                        if (!EAW_Mode) { Execute(File_Path, "", Script_Directory); return; } 
+
+
                         string[] Possible_Files = new string[] { "Dat_to_File.py", "File_to_Dat.py" }; // Match by Filename
 
                         foreach (string File_Name in Possible_Files)
@@ -2246,10 +2298,9 @@ GroundBuildable";
                                 return;                            
                             }
                         }
-                        // if (!Has_Matched) { Execute(File_Path, "", Script_Directory); return; } 
-
-
-
+                        
+                    
+                                                                            
 
 
                         string Vanilla_Dir = Path.GetDirectoryName(Properties.Settings.Default.Steam_Exe_Path) + @"\steamapps\common\Star Wars Empire at War\Data";
