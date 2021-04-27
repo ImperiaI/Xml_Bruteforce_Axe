@@ -202,10 +202,10 @@
   <data name="Done_01" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Done_01.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="Excluded_Lines" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Excluded_Lines.txt;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;Windows-1252</value>
-  </data>
   <data name="Idle_01" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Idle_01.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Scripts" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Scripts.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
 </root>

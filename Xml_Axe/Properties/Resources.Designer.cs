@@ -341,46 +341,22 @@ namespace Xml_Axe.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to // I am a Comment # too
-        ///CRC:
-        ///Program:
-        ///00 Root
-        ///Console Command
-        ///SteamClass
-        ///MegaFile
-        ///DefaultLangID
-        ///alD3dEffect::Load
-        ///Supported language
-        ///Creating cursors
-        ///Creating game objects
-        ///Creating SFXEvents
-        ///Creating new
-        ///Created new
-        ///Adding file
-        ///xmlParseFile(
-        ///Parsing found map
-        ///Added player
-        ///towards
-        ///can fire
-        ///firepower
-        ///is on team
-        ///Frame Advance to
-        ///WM_IME_SETCONTEXT
-        ///.
-        /// </summary>
-        internal static string Excluded_Lines {
-            get {
-                return ResourceManager.GetString("Excluded_Lines", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap Idle_01 {
             get {
                 object obj = ResourceManager.GetObject("Idle_01", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] Scripts {
+            get {
+                object obj = ResourceManager.GetObject("Scripts", resourceCulture);
+                return ((byte[])(obj));
             }
         }
     }

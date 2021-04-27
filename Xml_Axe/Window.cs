@@ -14,7 +14,7 @@ using System.Xml.Linq;
 
 using System.Diagnostics;
 using Microsoft.Win32;
-
+using Microsoft.VisualBasic.FileIO; // For the "Deleting()" function
 
 
 
@@ -48,11 +48,13 @@ namespace Xml_Axe
         string Tag_List = "";
         bool User_Input = false;
         bool Percent_Mode = false;
+        bool EAW_Mode = true;
         bool Bool_Mode = false;
         bool Script_Mode = false;
         string Temporal_A, Temporal_B = "";
         string Queried_Attribute = "Name"; // Preseting
         string Text_Format_Delimiter = ";";
+        string Script_Directory = "";
         string[] Balancing_Tags = null; // new string[] { };
         public Color Theme_Color = Color.CadetBlue;
         public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
@@ -65,9 +67,9 @@ namespace Xml_Axe
 
         private void Window_Load(object sender, EventArgs e)
         {
+               
             Drop_Zone.AllowDrop = true;
             List_View_Selection.AllowDrop = true;
-  
 
             Set_Resource_Button(Drop_Zone, Get_Start_Image()); 
             Set_Resource_Button(Button_Browse, Properties.Resources.Button_File);
@@ -107,6 +109,25 @@ namespace Xml_Axe
 
             Queried_Attribute = Get_Setting_Value("Queried_Attribute"); // Needs to run after Reset_Tag_List()!
             Text_Format_Delimiter = Get_Setting_Value("Text_Format_Delimiter");
+
+
+            // ================== INSTALLATION ==================
+            Script_Directory = Get_Scripts_Dir();
+            if (!Directory.Exists(Script_Directory))
+            {
+                string Parent_Dir = Path.GetDirectoryName(Script_Directory);
+                // iConsole(200, 100, Scripts_Directory);
+
+                byte[] Archive = Properties.Resources.Scripts;
+                File.WriteAllBytes(Parent_Dir + @"\Delete_Me.zip", Archive);
+
+                System.IO.Compression.ZipFile.ExtractToDirectory(Parent_Dir + @"\Delete_Me.zip", Parent_Dir);
+
+                // Trashing after extraction, named the archive "Delete_Me" for the case that its autodeletion fails
+                Deleting(Parent_Dir + @"\Delete_Me.zip");
+            }
+
+
 
             // Loading Values, this needs to happen AFTER Reset_Tag_Box() or it will cause errors
             Text_Box_Original_Path.Text = Properties.Settings.Default.Last_File;
@@ -258,7 +279,7 @@ namespace Xml_Axe
                     if (Is_Match(Temporal_A, "xml$"))
                     {
                         List_View_Selection.Visible = true;
-                        Load_Xml_Content(The_Path);
+                        Load_Xml_Content(The_Path, true);
                     }
 
 
@@ -487,6 +508,12 @@ namespace Xml_Axe
             return false;
         }
 
+        private bool Is_Match_2(string Entry_1, string Entry_2) // This is as slow as the Regex method XP
+        {
+            if (Entry_1.ToLower() == Entry_2.ToLower()) { return true; }
+            return false;
+        }
+
 
         public string Get_Item_That_Contains(List<string> The_List, string Item)
         {
@@ -597,7 +624,7 @@ namespace Xml_Axe
 
             
             if (!Directory.Exists(Xml_Directory))
-            { iConsole(200, 100, "\nCan't find the Xml."); return null; }
+            { iConsole(200, 100, "\nCan't find the Xml Directory."); return null; }
 
 
 
@@ -793,6 +820,15 @@ namespace Xml_Axe
                     // Refreshing Values:
                     Queried_Attribute = Get_Setting_Value("Queried_Attribute");
                     Text_Format_Delimiter = Get_Setting_Value("Text_Format_Delimiter");
+
+
+                    string New_Script_Dir = Get_Scripts_Dir(true);
+
+                    if (Script_Directory != New_Script_Dir)
+                    {                       
+                        Moving(Script_Directory, Path.GetDirectoryName(New_Script_Dir));
+                        Script_Directory = New_Script_Dir;
+                    }
                 }                       
                 Reset_Tag_Box();
                 Reset_Root_Tag_Box();
@@ -1985,10 +2021,28 @@ GroundBuildable";
         }
 
 
+        //=====================//
+        public void Deleting(string Data)
+        {
+            if (Directory.Exists(Data)) 
+            {
+                try { Microsoft.VisualBasic.FileIO.FileSystem.DeleteDirectory(Data, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin); }
+                catch {}
+            }
+            else if (File.Exists(Data)) 
+            {
+                try { Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(Data, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin); }
+                catch {}
+            }
+        }
+
+
 
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
+            iConsole(400, 100, Properties.Settings.Default.Mod_Directory); return;
+            
             string Entity_Name = Wash_String(Combo_Box_Entity_Name.Text);
             if (Entity_Name == "" | Entity_Name == "None") { return; }
 
@@ -2143,7 +2197,7 @@ GroundBuildable";
                 List_View_Selection.Location = new Point(31, 29);
 
 
-                Found_Scripts = Get_All_Files(Get_Scripts_Dir());
+                Found_Scripts = Get_All_Files(Script_Directory);
                 List<string> Script_Names = new List<string>();
 
                 if (Found_Scripts != null)
@@ -2183,23 +2237,23 @@ GroundBuildable";
                                 if (Text_Format_Delimiter == "\\t") { Extension = "tsv"; }
                                 else if (Text_Format_Delimiter == "," | Text_Format_Delimiter == ";") { Extension = "csv"; }
 
-                                Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\" " + Text_Format_Delimiter + " " + Extension, Get_Scripts_Dir());                               
+                                Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\" " + Text_Format_Delimiter + " " + Extension, Script_Directory);                               
 
                                 // Alternate way: Specify path to the .json file as argument:
-                                // Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\"" + " " + Get_Scripts_Dir() + "\\vanilla_dump.json");
+                                // Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\"" + " " + Script_Directory + "\\vanilla_dump.json");
 
                                 // iConsole(400, 100, File_Path + " \"" + Properties.Settings.Default.Mod_Directory + "\\Data\"" + "\npause");  
                                 return;                            
                             }
                         }
-                        // if (!Has_Matched) { Execute(File_Path, "", Get_Scripts_Dir()); return; } 
+                        // if (!Has_Matched) { Execute(File_Path, "", Script_Directory); return; } 
 
 
 
 
 
                         string Vanilla_Dir = Path.GetDirectoryName(Properties.Settings.Default.Steam_Exe_Path) + @"\steamapps\common\Star Wars Empire at War\Data";
-                        Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\" \"" + Vanilla_Dir + "\"", Get_Scripts_Dir());
+                        Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\" \"" + Vanilla_Dir + "\"", Script_Directory);
 
                         Possible_Files = new string[] { "Mod_Cleanup.py", "01_mod_cleanup.py", "Test.py" };
 
@@ -2232,9 +2286,10 @@ GroundBuildable";
         }
 
 
-        private string Get_Scripts_Dir()
+        private string Get_Scripts_Dir(bool check_string = false)
         {
             string Script_Directory = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Xml_Axe\Scripts";
+            string New_Script_Directory = Script_Directory;
 
             // Overwride by User Setting
             if (!Match_Without_Emptyspace_2(Properties.Settings.Default.Tags, @"Script_Directory = %AppData%\Local\Xml_Axe\Scripts"))
@@ -2242,12 +2297,32 @@ GroundBuildable";
                 foreach (string Line in Properties.Settings.Default.Tags.Split('\n'))
                 { if (Line != "" & Line.Contains("Script_Directory")) { Script_Directory = Line.Split('=')[1]; break; } }
 
-                // Removing empty space
-                if (Script_Directory[0] == ' ') { Script_Directory = Remove_Emptyspace_Prefix(Script_Directory); }
+
+                if (Script_Directory == "") // Then the original path in Environment will be chosen
+                { return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Xml_Axe\Scripts"; }
+
+                else 
+                {   // Removing empty space
+                    if (Script_Directory[0] == ' ') { Script_Directory = Remove_Emptyspace_Prefix(Script_Directory); }
+
+                    // Pretty stupid but this helps preventing errors lol
+
+                    if (!Script_Directory.EndsWith("Scripts")) { New_Script_Directory = Script_Directory + "\\Scripts"; }
+                    else { New_Script_Directory = Script_Directory; }
+                }
+
+                if (check_string)
+                {   Properties.Settings.Default.Tags = Properties.Settings.Default.Tags.Replace(Script_Directory, New_Script_Directory);
+                    Properties.Settings.Default.Save();
+
+                    Tag_List = Properties.Settings.Default.Tags;
+                    Text_Box_Tags.Text = Tag_List;
+                }              
+
                 // iConsole(600, 200, "\"" + Script_Directory + "\""); return;
             }
 
-            return Script_Directory;
+            return New_Script_Directory;
         }
 
         private void Button_Scripts_MouseHover(object sender, EventArgs e)
