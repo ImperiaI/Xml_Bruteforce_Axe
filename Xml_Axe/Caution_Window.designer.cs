@@ -150,6 +150,7 @@
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Caution";
             this.TopMost = true;
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Caution_Window_FormClosed);
             this.Load += new System.EventHandler(this.Caution_Window_Load);
             this.Resize += new System.EventHandler(this.Caution_Window_Resize);
             this.ResumeLayout(false);

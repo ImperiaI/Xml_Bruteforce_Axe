@@ -361,7 +361,10 @@ namespace Xml_Axe
 
         //===========================//
         private void Button_Browse_Click(object sender, EventArgs e)
-        {           
+        {
+            if (Script_Mode) { Execute(Script_Directory); return; }
+
+
             Open_File_Dialog_1.FileName = "";
             if (Properties.Settings.Default.Last_File != null & Properties.Settings.Default.Last_File != "")
             { Open_File_Dialog_1.InitialDirectory = Path.GetDirectoryName(Properties.Settings.Default.Last_File); }
@@ -409,14 +412,15 @@ namespace Xml_Axe
             else { Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs); } 
         }
 
-
-        //===========================//
+      
+        //===========================// 
 
         private void Button_Run_Click(object sender, EventArgs e)
         {
             // iConsole(600, 400, Check_for_Steam_Version()); // Debug
-
             if (Combo_Box_Tag_Name.Text == "") { return; }
+            Set_Resource_Button(Drop_Zone, Get_Start_Image());
+           
 
             int Line_Count = 0;
             // bool Warn_User = true;
@@ -431,6 +435,8 @@ namespace Xml_Axe
                 Related_Xmls = Slice(false); // Means don't apply any changes
                 Line_Count = (Related_Xmls.Count() * 30) + 160;
                 if (Line_Count > 680) { Line_Count = 680; }
+
+               
 
                 if (Related_Xmls.Count == 0) // the Slice function is supposed to fill this list with paths
                 {
@@ -454,7 +460,7 @@ namespace Xml_Axe
 
 
             Related_Xmls = Slice(true); // This line does the actual Job!
-            Set_Resource_Button(Drop_Zone, Get_Compacted_Image());
+            Set_Resource_Button(Drop_Zone, Get_Done_Image());
             if (List_View_Selection.Visible) { Button_Start_Click(null, null); } // Hiding open Xml
 
             if (Combo_Box_Entity_Name.Text == "None") { Properties.Settings.Default.Entity_Name = ""; }
@@ -681,7 +687,7 @@ namespace Xml_Axe
                     }
 
 
-                    else if (Selected_Type == "FactionNameFilter")
+                    else if (Combo_Box_Type_Filter.Text == "Faction Name Filter")
                     {
                         Query = 2;
 
@@ -699,7 +705,7 @@ namespace Xml_Axe
                           where (string)All_Tags.Attribute(Queried_Attribute) == Entity_Name
                           select All_Tags;
                     }
-                    else if (Selected_Type != "" & Selected_Type != "AllTypes") // By Entity Type
+                    else if (Selected_Type != "" & Combo_Box_Type_Filter.Text != "All Types") // By Entity Type
                     {
                         Query = 4;
 
@@ -942,36 +948,58 @@ namespace Xml_Axe
                 Text_Box_Tags.Text = Tag_List;
                 if (Text_Box_Tags.Visible == false) { Text_Box_Tags.Visible = true; }
             }
-            else if (EAW_Mode) // Otherwised this button is used to launch the game
-            {                              
-                string Steam_Path = Properties.Settings.Default.Steam_Exe_Path; 
-                string Program_Path = Path.GetDirectoryName(Steam_Path) + @"\steamapps\common\Star Wars Empire at War\corruption\StarWarsG.exe";
-              
-                string Mod_Name = Path.GetFileName(Properties.Settings.Default.Mod_Directory);
-                string Arguments = @"Modpath=Mods\" + Mod_Name + " Ignoreasserts";
-
-
-                // Overwride by User Setting
-                if (!Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Custom_Modpath = false"))
-                {  Arguments = "Modpath=" + Get_Setting_Value("Custom_Modpath") + " Ignoreasserts";
-                   //  Arguments = "Modpath=" + Properties.Settings.Default.Mod_Directory.Replace(" ", "\\ ") + " Ignoreasserts";
-                }
-                else if (Mod_Name.All(char.IsDigit)) // If all characters are numbers, that means we target a Workshop mod
-                {   // So argument 1 targets now the Workshop dir            
-                    // Arguments = @"Modpath=..\..\..\workshop\content\32470\" + Mod_Name; 
-                    Arguments = @"Steammod=" + Mod_Name + " Ignoreasserts";              
-                }
-
-        
-
+            else
+            {
                 bool Affinity = false;
                 bool Priority = false;
 
-                if (Match_Setting("Set_Launch_Affinity")) {Affinity = true; }
+                if (Match_Setting("Set_Launch_Affinity")) { Affinity = true; }
                 if (Match_Setting("High_Launch_Priority")) { Priority = true; }
-                          
-                // Now, that we made sure Steam is running, we can launch the game           
-                if (Check_Process(Steam_Path)) { Check_Process(Program_Path, Arguments, Affinity, Priority); }        
+
+
+                string Custom_Parameters = Get_Setting_Value("Custom_Start_Parameters");
+                if (!EAW_Mode && Custom_Parameters == "") 
+                { iConsole(400, 100, "\nPlease write any Filepath + Arguments into \nSettings\\Custom_Start_Parameters" +
+                    "\nThat we could launch by this button."
+                    ); 
+                }
+
+
+                if (Custom_Parameters != "" & !Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Custom_Start_Parameters = false"))
+                {
+                    string[] Command = Custom_Parameters.Split(' ');
+                    string Arguments = "";
+                    for (int i = 1; i < Command.Count(); i++) { Arguments += Command[i] + " "; }
+
+                    // iConsole(400, 100, "\"" + Custom_Parameters + "\""); // Debug
+                    // Execute(Command[0], Arguments); // This version would throw no error if the process can't be found
+                    Check_Process(Command[0], Arguments, Affinity, Priority);
+
+                }
+                else if (EAW_Mode) // Otherwised this button is used to launch the game
+                {
+                    string Steam_Path = Properties.Settings.Default.Steam_Exe_Path;
+                    string Program_Path = Path.GetDirectoryName(Steam_Path) + @"\steamapps\common\Star Wars Empire at War\corruption\StarWarsG.exe";
+
+                    string Mod_Name = Path.GetFileName(Properties.Settings.Default.Mod_Directory);
+                    string Arguments = @"Modpath=Mods\" + Mod_Name + " Ignoreasserts";
+
+
+                    // Overwride by User Setting
+                    if (!Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Custom_Modpath = false"))
+                    {
+                        Arguments = "Modpath=" + Get_Setting_Value("Custom_Modpath") + " Ignoreasserts";
+                        //  Arguments = "Modpath=" + Properties.Settings.Default.Mod_Directory.Replace(" ", "\\ ") + " Ignoreasserts";
+                    }
+                    else if (Mod_Name.All(char.IsDigit)) // If all characters are numbers, that means we target a Workshop mod
+                    {   // So argument 1 targets now the Workshop dir            
+                        // Arguments = @"Modpath=..\..\..\workshop\content\32470\" + Mod_Name; 
+                        Arguments = @"Steammod=" + Mod_Name + " Ignoreasserts";
+                    }
+
+                    // Now, that we made sure Steam is running, we can launch the game           
+                    if (Check_Process(Steam_Path)) { Check_Process(Program_Path, Arguments, Affinity, Priority); }
+                } 
             }
 
         }
@@ -999,30 +1027,43 @@ namespace Xml_Axe
                 } catch { iConsole(60, 100, "\nFailed to find and launch " + Program_Name); return false; }
             }
 
-            
 
 
-            if (Set_Affinity | High_Priority) //Process[] The_Processes; 
-            {   // Get the ProcessThread collection for the first instance
-                ProcessThreadCollection The_Threads = The_Process[0].Threads;
+            try 
+            {   if (Set_Affinity | High_Priority) //Process[] The_Processes; 
+                {   // Get the ProcessThread collection for the first instance
+                    ProcessThreadCollection The_Threads = The_Process[0].Threads;
 
-                if (Set_Affinity)
-                {
-                    int Logical_Processors = Environment.ProcessorCount;
+                    if (Set_Affinity)
+                    {
+                        int Logical_Processors = Environment.ProcessorCount;
 
-                    // Set the properties on the first ProcessThread in the collection
-                    The_Threads[0].IdealProcessor = Logical_Processors -1;                 
-                    The_Threads[0].ProcessorAffinity = (IntPtr)Logical_Processors - 1; // Set to the last thread
+                        // Set the properties on the first ProcessThread in the collection
+                        The_Threads[0].IdealProcessor = Logical_Processors -1;                 
+                        The_Threads[0].ProcessorAffinity = (IntPtr)Logical_Processors - 1; // Set to the last thread
 
-                    // The_Threads[0].IdealProcessor = 0; // Former Value
-                    // The_Threads[0].ProcessorAffinity = (IntPtr)1;  // Former Value
+                        // The_Threads[0].IdealProcessor = 0; // Former Value
+                        // The_Threads[0].ProcessorAffinity = (IntPtr)1;  // Former Value
+                    }
+
+                    if (High_Priority) { The_Process[0].PriorityClass = ProcessPriorityClass.High; }
                 }
 
-                if (High_Priority) { The_Process[0].PriorityClass = ProcessPriorityClass.High; }               
+                if (The_Process[0] != null) { return true; }
+            }
+            catch 
+            {   
+                string Error_Text = "\nFailed to find the process by its file name.";
+                //  Fails because the ProcessThreadCollection The_Threads can't get the process
+                if (Set_Affinity & High_Priority) { Error_Text = "\nFailed to set Affinity and Priority, because \nI could not find the process by its file name."; }
+                else if (Set_Affinity) { Error_Text = "\nFailed to set Affinity, because \nI could not find the process by its file name."; }
+                else if (High_Priority) { Error_Text = "\nFailed to set Affinity, because \nI could not find the process by its file name."; }
+
+                if (Set_Affinity | High_Priority) { iConsole(400, 100, Error_Text); }
             }
 
 
-            if (The_Process[0] != null) { return true; }
+          
             return false;
         }
 
@@ -1133,7 +1174,7 @@ namespace Xml_Axe
         //===========================//
 
 
-        public Bitmap Get_Compacted_Image()
+        public Bitmap Get_Done_Image()
         {
             return Properties.Resources.Done_01;
 
@@ -1192,9 +1233,11 @@ namespace Xml_Axe
             // return Result;
 
         }
-         
 
-        //===========================// # Show_Changed_Files = true
+
+        //===========================//
+        // # Show_Changed_Files = true  Get_Setting_Value();
+ 
         public void Reset_Tag_List()
         {
             Tag_List = @"# ====================== Settings ======================
@@ -1204,11 +1247,13 @@ namespace Xml_Axe
 # Set_Launch_Affinity = true
 # High_Launch_Priority = true
 # Queried_Attribute = Name
-# Text_Format_Delimiter = ;
-# Disable_EAW_Mode = false
 # RGBA_Color = 100, 170, 170, 255 # Marine Blue
-# Custom_Modpath = false
 # Script_Directory = %AppData%\Local\Xml_Axe\Scripts
+# Custom_Start_Parameters = false
+# Disable_EAW_Mode = false
+# Text_Format_Delimiter = ;
+# Custom_Modpath = false
+
 
 
 # ===================== Bool Values ======================
@@ -1245,7 +1290,7 @@ Build_Cost_Credits = 100 # Set the price to 1, then you can build as many units 
 
 Tactical_Build_Cost_Multiplayer = 100 # Set the price to 1 for all Skirmish units.
 
-Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate # This balances the most important aspects of the Game: Tactical_Health, Shield, Shield_Refresh_Rate, Projectile Damage
+Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Projectile_Damage, Damage # This balances the most important aspects of the Game: Tactical_Health, Shields, Shield_Refresh_Rate, Projectile_Damage
 ";
         }
 
@@ -1309,35 +1354,13 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate # Thi
 
             else
             {
-                string Entries = @"All Types
-All in loaded Xml
-Faction Name Filter
+                string[] Entries = new string[] {"All Types", "All in loaded Xml", "Faction Name Filter", "", "SpaceUnit", "UniqueUnit", 
+                    "TransportUnit", "GroundInfantry", "GroundVehicle", "HeroUnit", "", "Squadron", "HeroCompany", "GroundCompany", "Planet",
+                    "Faction", "HardPoint", "Projectile", "", "StarBase", "SpaceBuildable", "SpecialStructure", "TechBuilding", "GroundBase", 
+                    "GroundStructure", "GroundBuildable"
+                };
 
-SpaceUnit
-UniqueUnit
-TransportUnit
-GroundInfantry
-GroundVehicle
-HeroUnit
-
-Squadron
-HeroCompany
-GroundCompany
-Planet
-Faction
-HardPoint
-Projectile
-
-StarBase
-SpaceBuildable
-SpecialStructure				
-TechBuilding					
-GroundBase					
-GroundStructure
-GroundBuildable";
-
-
-                foreach(string Entry in Entries.Split('\n')) { Combo_Box_Type_Filter.Items.Add(Entry); }
+                foreach(string Entry in Entries) { Combo_Box_Type_Filter.Items.Add(Entry); }
             }
         }
 
@@ -2082,7 +2105,7 @@ GroundBuildable";
         private void Button_Search_Click(object sender, EventArgs e)
         {
             // iConsole(400, 100, Properties.Settings.Default.Xml_Directory + "\n" + Properties.Settings.Default.Mod_Directory); return;
-            
+
 
             string Entity_Name = Wash_String(Combo_Box_Entity_Name.Text);
             if (Entity_Name == "" | Entity_Name == "None") { return; }
@@ -2222,6 +2245,8 @@ GroundBuildable";
 
                 List_View_Selection.Size = new Size(404, 164);
                 List_View_Selection.Location = new Point(12, 12);
+             
+                Button_Browse.Location = new Point(1, 193);
 
                 // Loading the Xml instead of the available scripts in script mode
                 Load_Xml_Content(Properties.Settings.Default.Last_File);
@@ -2236,6 +2261,8 @@ GroundBuildable";
 
                 List_View_Selection.Size = new Size(367, 482);
                 List_View_Selection.Location = new Point(31, 29);
+
+                Button_Browse.Location = new Point(1, 350);
 
 
                 Found_Scripts = Get_All_Files(Script_Directory);
@@ -2262,6 +2289,14 @@ GroundBuildable";
 
             try { List_View_Selection.Columns[0].Width = List_View_Selection.Width - 8; } catch {}
                 
+        }
+
+
+        private void Set_UI_Into_Script_Mode(bool Mode)
+        {
+            Control[] Controls = { Button_Start, Button_Run, Button_Search, 
+                                   Button_Percentage, Button_Operator, Button_Toggle_Settings };
+            foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
         }
 
 
@@ -2385,12 +2420,6 @@ GroundBuildable";
         }
 
 
-        private void Set_UI_Into_Script_Mode(bool Mode)
-        {
-            Control[] Controls = { Button_Browse, Button_Start, Button_Run, Button_Search, 
-                                   Button_Percentage, Button_Operator, Button_Toggle_Settings };
-            foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
-        }
 
       
      

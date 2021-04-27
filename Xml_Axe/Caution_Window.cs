@@ -127,6 +127,12 @@ namespace Xml_Axe
             }                  
         }
 
+        private void Caution_Window_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            // Important or occasions that expect false to not continue would missunderstand the user here!
+            if (Passed_Value_A.Text_Data == null) { Passed_Value_A.Text_Data = "false"; }
+        }
+
 
       
       
