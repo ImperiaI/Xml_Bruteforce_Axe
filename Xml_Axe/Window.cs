@@ -732,23 +732,36 @@ namespace Xml_Axe
                           where All_Tags.Name == Selected_Type
                           select All_Tags;
                     }
+
+                    else if (Selected_Tag == "Scale_Factor" | Selected_Tag == "Max_Speed")
+                    {
+                        Query = 5;
+
+                        Instances =
+                           from All_Tags in Xml_File.Root.Descendants()
+                           where All_Tags.Descendants(Selected_Tag).Any()
+                           // Means they are excluded, unless they are EXPLICITLY specified as Selected_Type!
+                           & (All_Tags.Name != "Planet" | Selected_Type == "Planet") 
+                           & (All_Tags.Name != "Projectile" | Selected_Type == "Projectile")
+                           
+                           select All_Tags;
+                    }
+                  
                     else if (Selected_Tag == "Enable_Abilities" | Selected_Tag == "Enable_Passive_Abilities")
                     {
                         string Required_Tag = "Unit_Abilities_Data";
                         if (Selected_Tag == "Enable_Passive_Abilities") { Required_Tag = "Abilities"; }
 
-                        Query = 5;
+                        Query = 6;
 
                         Instances =
                           from All_Tags in Xml_File.Descendants()
-                           // Selecting all non empty tags that have the Queried_Attribute "Name", null because we need all selected.
-                           // where All_Tags.Descendants().Descendants(Required_Tag) != null
                            where All_Tags.Descendants(Required_Tag).Any()
                            select All_Tags;
                     }
                     else // Target all entities in the whole Mod!
                     {
-                        Query = 6;
+                        Query = 7;
 
                         Instances =
                           from All_Tags in Xml_File.Descendants()
@@ -806,15 +819,9 @@ namespace Xml_Axe
                             }
                             else if (Combo_Box_Tag_Name.Text == "Major_Heroes_To_Minor")
                             { Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Is_Named_Hero", Apply_Changes); }
-                                
-                            else if (Selected_Tag == "Max_Projectile_Speed")
-                            {
-                                Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Max_Speed", Apply_Changes); 
-                            }
-
-
+                                  
                             else if (Combo_Box_Tag_Name.Text != "Rebalance_Everything") // This one would usually trigger
-                            {                             
+                            {                            
                                 Set_Tag(Changed_Xmls, Instance, Selected_Xml, Selected_Tag, Apply_Changes);
                             }
                             else if (Balancing_Tags != null)
@@ -829,7 +836,7 @@ namespace Xml_Axe
                         }
                     }
 
-                    // if (Apply_Changes) { Xml_File.Save(Selected_Xml); } //  iConsole(500, 100, "\nSaving to " + Xml); }
+                    if (Apply_Changes) { Xml_File.Save(Selected_Xml); } //  iConsole(500, 100, "\nSaving to " + Xml); }
                     if (In_Selected_Xml(Entity_Name)) { return Changed_Xmls; } // Exiting after the first (and only) Xml File.
       
                 } catch {}
@@ -837,7 +844,7 @@ namespace Xml_Axe
 
 
             // !Apply_Changes because it shall trigger once only
-            if (!Apply_Changes) { iConsole(300, 100, Query + " Is the Case of Query"); } 
+            // if (!Apply_Changes) { iConsole(300, 100, Query + " Is the Case of Query"); } 
 
 
             File_Collection = new List<string>(); // Clearing for the next time          
@@ -856,6 +863,7 @@ namespace Xml_Axe
                 if (Instance.Descendants(Selected_Tag).Any()) // Set the new tag value(s)
                 {
                     Temporal_A = Selected_Xml.Replace(Xml_Directory, ""); // Removing Path
+                    // This needs to run outside of Apply_Changes, because its supposed to collect candidate files before any changes are applied in the 2nd run of this function
                     if (!Changed_Xmls.Contains(Temporal_A)) { Changed_Xmls.Add(Temporal_A); }
 
 
@@ -908,29 +916,15 @@ namespace Xml_Axe
                         {
                             if (Percent_Mode)
                             {
-                                if (Combo_Box_Tag_Name.Text == "Max_Speed")   // Don't use Selected_Tag instead of Combo_Box_Tag_Name.Text here! Or the match is different. 
-                                {   if (Instance.Name.ToString() != "Projectile") // Projectiles have their own setting so it wont change in this case.
-                                    {   Target.Value = Process_Percentage(Target.Value);
+                                if (Selected_Tag == "Max_Speed")  
+                                {   Target.Value = Process_Percentage(Target.Value);
 
-                                        if (Instance.Descendants("Min_Speed").Any()) // Min_Speed is bundled to Max_Speed
-                                        {   string Min_Speed = Instance.Descendants("Min_Speed").Last().Value;
-                                            Instance.Descendants("Min_Speed").Last().Value = Process_Percentage(Min_Speed);
-                                        }
-                                    }
-                                }
-
-                              
-                                else if (Combo_Box_Tag_Name.Text == "Max_Projectile_Speed") // DON'T put the if statement from below here, this is on purpose.
-                                {   if (Instance.Name.ToString() == "Projectile") 
-                                    {   Target.Value = Process_Percentage(Target.Value);
-
-                                        if (Instance.Descendants("Min_Speed").Any()) 
-                                        {
-                                            string Min_Speed = Instance.Descendants("Min_Speed").Last().Value;
-                                            Instance.Descendants("Min_Speed").Last().Value = Process_Percentage(Min_Speed);
-                                        }
-                                    }
-                                }                                   
+                                    if (Instance.Descendants("Min_Speed").Any()) // Min_Speed is bundled to Max_Speed
+                                    {
+                                        string Min_Speed = Instance.Descendants("Min_Speed").Last().Value;
+                                        Instance.Descendants("Min_Speed").Last().Value = Process_Percentage(Min_Speed);
+                                    }                                
+                                }                               
                                 else { Target.Value = Process_Percentage(Target.Value); }
                             }
                             else
@@ -939,7 +933,7 @@ namespace Xml_Axe
                             }
                      
                            
-                            if (!Check_Box_All_Occurances.Checked) { break; } // Stop after first occurance
+                            if (!Check_Box_All_Occurances.Checked) { return; } // Stop after first occurance
                         }
                     }
                 }
@@ -1444,8 +1438,6 @@ Shield_Points = 100
 int Shield_Refresh_Rate = 5 # Usually about 30 for capital ships and less for weaker classes.
 
 int Max_Speed = 1 # In Percent Mode this is bundled to the <Min_Speed> tag, it grows or shrinks both values by the same amount. This Setting ignores objects of Projectile type.
-
-int Max_Projectile_Speed = 1 # This setting influences only Projectiles.
 
 int Scale_Factor = 1 # Use this in Percent Mode to scale all units in a Mod. Keep in mind to not scale too much, because the Particles are not scaled by this value and they remain at the old size that won't longer fit the unit. Reversible, if you figure out the right % scale.
 
