@@ -650,6 +650,7 @@ namespace Xml_Axe
             // iConsole(500, 100, Properties.Settings.Default.Xml_Directory);
             // iConsole(500, 100, Properties.Settings.Default.Mod_Directory);         
 
+            int Query = 0;
             string Selected_Xml = "";
             string Xml_Directory = Properties.Settings.Default.Xml_Directory;
             string Entity_Name = Wash_String(Combo_Box_Entity_Name.Text);
@@ -686,9 +687,8 @@ namespace Xml_Axe
                     
 
                     XDocument Xml_File = XDocument.Load(Selected_Xml, LoadOptions.PreserveWhitespace);
-                    
-                    // ===================== Opening Xml File =====================
-                    int Query = 0;
+                  
+                    // ===================== Opening Xml File =====================                  
 
                     if (In_Selected_Xml(Entity_Name)) // Select Multiple by Name
                     {
@@ -732,9 +732,23 @@ namespace Xml_Axe
                           where All_Tags.Name == Selected_Type
                           select All_Tags;
                     }
+                    else if (Selected_Tag == "Enable_Abilities" | Selected_Tag == "Enable_Passive_Abilities")
+                    {
+                        string Required_Tag = "Unit_Abilities_Data";
+                        if (Selected_Tag == "Enable_Passive_Abilities") { Required_Tag = "Abilities"; }
+
+                        Query = 5;
+
+                        Instances =
+                          from All_Tags in Xml_File.Descendants()
+                           // Selecting all non empty tags that have the Queried_Attribute "Name", null because we need all selected.
+                           // where All_Tags.Descendants().Descendants(Required_Tag) != null
+                           where All_Tags.Descendants(Required_Tag).Any()
+                           select All_Tags;
+                    }
                     else // Target all entities in the whole Mod!
                     {
-                        Query = 5;
+                        Query = 6;
 
                         Instances =
                           from All_Tags in Xml_File.Descendants()
@@ -743,13 +757,47 @@ namespace Xml_Axe
                           select All_Tags;
                     }
 
-                    // iConsole(300, 100, Query + " Is the Case of Query");
-
-
+                    
 
                     // =================== Checking Xml Instance ===================
                     foreach (XElement Instance in Instances)
-                    {   if (Instance.Descendants().Any())
+                    {
+                       
+                        if (Selected_Tag == "Enable_Abilities" | Selected_Tag == "Enable_Passive_Abilities")
+                        {
+                            string The_Value = "";
+                            string Ability_Tag_Name = "Unit_Abilities_Data";
+                            Temporal_A = Selected_Xml.Replace(Xml_Directory, ""); 
+                                
+
+                            if (Selected_Tag == "Enable_Abilities" && Instance.Descendants("Unit_Abilities_Data").Any())
+                            {   The_Value = Instance.Descendants(Ability_Tag_Name).First().FirstAttribute.Value;
+                                // string The_Name = Instance.Attribute("Name").Value;
+                                // iConsole(400, 100, The_Name + ", " + The_Value); // return Changed_Xmls;
+
+                                if (!Changed_Xmls.Contains(Temporal_A)) { Changed_Xmls.Add(Temporal_A); }
+                            }
+                            else if (Selected_Tag == "Enable_Passive_Abilities" && Instance.Descendants("Abilities").Any())
+                            {
+                                Ability_Tag_Name = "Abilities";
+                                The_Value = Instance.Descendants(Ability_Tag_Name).First().FirstAttribute.Value;
+
+                                // this here makes the Set_Tag() function obsolete for this case:
+                                if (!Changed_Xmls.Contains(Temporal_A)) { Changed_Xmls.Add(Temporal_A); }
+                            }
+
+
+                            if (Get_Text_Box_Bool() == "True" && The_Value == "No")
+                            { Instance.Descendants(Ability_Tag_Name).First().FirstAttribute.Value = "Yes"; }
+
+                            else if (Get_Text_Box_Bool() == "False" && The_Value == "Yes")
+                            { Instance.Descendants(Ability_Tag_Name).First().FirstAttribute.Value = "No"; }
+                        }
+
+                      
+                        
+                    
+                        else if (Instance.Descendants().Any())
                         {
 
                             if (Combo_Box_Tag_Name.Text == "Minor_Heroes_To_Major")
@@ -759,9 +807,14 @@ namespace Xml_Axe
                             else if (Combo_Box_Tag_Name.Text == "Major_Heroes_To_Minor")
                             { Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Is_Named_Hero", Apply_Changes); }
                                 
+                            else if (Selected_Tag == "Max_Projectile_Speed")
+                            {
+                                Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Max_Speed", Apply_Changes); 
+                            }
+
 
                             else if (Combo_Box_Tag_Name.Text != "Rebalance_Everything") // This one would usually trigger
-                            {
+                            {                             
                                 Set_Tag(Changed_Xmls, Instance, Selected_Xml, Selected_Tag, Apply_Changes);
                             }
                             else if (Balancing_Tags != null)
@@ -776,11 +829,16 @@ namespace Xml_Axe
                         }
                     }
 
-                    if (Apply_Changes) { Xml_File.Save(Selected_Xml); } //  iConsole(500, 100, "\nSaving to " + Xml); }
+                    // if (Apply_Changes) { Xml_File.Save(Selected_Xml); } //  iConsole(500, 100, "\nSaving to " + Xml); }
                     if (In_Selected_Xml(Entity_Name)) { return Changed_Xmls; } // Exiting after the first (and only) Xml File.
       
                 } catch {}
             }
+
+
+            // !Apply_Changes because it shall trigger once only
+            if (!Apply_Changes) { iConsole(300, 100, Query + " Is the Case of Query"); } 
+
 
             File_Collection = new List<string>(); // Clearing for the next time          
             return Changed_Xmls;      
@@ -798,8 +856,7 @@ namespace Xml_Axe
                 if (Instance.Descendants(Selected_Tag).Any()) // Set the new tag value(s)
                 {
                     Temporal_A = Selected_Xml.Replace(Xml_Directory, ""); // Removing Path
-                    if (!Changed_Xmls.Contains(Temporal_A))
-                    { Changed_Xmls.Add(Temporal_A); }
+                    if (!Changed_Xmls.Contains(Temporal_A)) { Changed_Xmls.Add(Temporal_A); }
 
 
                     if (Apply_Changes)
@@ -850,13 +907,31 @@ namespace Xml_Axe
                         foreach (XElement Target in Instance.Descendants(Selected_Tag))
                         {
                             if (Percent_Mode)
-                            { 
-                                Target.Value = Process_Percentage(Target.Value);
+                            {
+                                if (Combo_Box_Tag_Name.Text == "Max_Speed")   // Don't use Selected_Tag instead of Combo_Box_Tag_Name.Text here! Or the match is different. 
+                                {   if (Instance.Name.ToString() != "Projectile") // Projectiles have their own setting so it wont change in this case.
+                                    {   Target.Value = Process_Percentage(Target.Value);
 
-                                if (Selected_Tag == "Max_Speed" && Instance.Descendants("Min_Speed").Any()) // Min_Speed is bundled to Max_Speed
-                                {   string Min_Speed = Instance.Descendants("Min_Speed").Last().Value;
-                                    Instance.Descendants("Min_Speed").Last().Value = Process_Percentage(Min_Speed);
+                                        if (Instance.Descendants("Min_Speed").Any()) // Min_Speed is bundled to Max_Speed
+                                        {   string Min_Speed = Instance.Descendants("Min_Speed").Last().Value;
+                                            Instance.Descendants("Min_Speed").Last().Value = Process_Percentage(Min_Speed);
+                                        }
+                                    }
                                 }
+
+                              
+                                else if (Combo_Box_Tag_Name.Text == "Max_Projectile_Speed") // DON'T put the if statement from below here, this is on purpose.
+                                {   if (Instance.Name.ToString() == "Projectile") 
+                                    {   Target.Value = Process_Percentage(Target.Value);
+
+                                        if (Instance.Descendants("Min_Speed").Any()) 
+                                        {
+                                            string Min_Speed = Instance.Descendants("Min_Speed").Last().Value;
+                                            Instance.Descendants("Min_Speed").Last().Value = Process_Percentage(Min_Speed);
+                                        }
+                                    }
+                                }                                   
+                                else { Target.Value = Process_Percentage(Target.Value); }
                             }
                             else
                             {   if (Combo_Box_Tag_Value.Text.Contains("%")) { Combo_Box_Tag_Value.Text = Combo_Box_Tag_Value.Text.Replace("%", ""); } // Removing Mistakes
@@ -1342,13 +1417,17 @@ bool Is_Targetable # Defines whether or not all Hardpoints in current selection 
 
 bool Is_Destroyable # Defines whether or not all Hardpoints in current selection or the Mod can be destroyed. Not reversible because all Hardpoints in the selection get the same value.
 
-bool Is_Named_Hero # Set to No and no more Heroes will respawn. The entities that don't have Show_Hero_Head will also hide their hero Images. Not reversible because all Units in the selection get the same value.
+bool Is_Named_Hero # Set to No and no more Heroes will respawn. The entities that don't have Show_Hero_Head will also hide their hero Images in tactical battles. Not reversible because all Units in the selection get the same value.
 
-bool Show_Hero_Head # This turns a unit into a minor Hero, that does not respawn. Set to No to hide all Icons of minor Heroes. Not reversible because all Units in the selection get the same value.
+bool Show_Hero_Head # This turns a unit into a minor Hero, that does not respawn and their icon won't show up in GC mode. Set to No to hide all (tactical) Icons of minor Heroes. Not reversible because all Units in the selection get the same value.
 
 bool Minor_Heroes_To_Major # This converts all minor Heroes to major heroes that do respawn. Not reversible because minor heroes are merged into the group of majors.
 
-bool Major_Heroes_To_Minor # This converts all major Heroes to minor heroes, and they won't longer respawn. Not reversible because major heroes are merged into the group of minors. 
+bool Major_Heroes_To_Minor # This converts all major Heroes to minor heroes, and they won't longer respawn or show their icons in the GC mode. Icons of minor heroes only show up in tactical battles. Not reversible because major heroes are merged into the group of minors. 
+
+bool Enable_Abilities # This sets the SubObjectList attribute of the selected entities and can therefore disable or enable all abilities of the Game. Not reversible at all because units that had their abilities disabled before were never meaned to be batch-enabled!
+
+bool Enable_Passive_Abilities # This sets the SubObjectList attribute of the selected entities, it targets passive abilities like systemspy and all fieldcommander bonus. Not reversible at all because units that had their abilities disabled before were never meaned to be batch-enabled!
 
 Projectile_Does_Shield_Damage = bool # Set to Yes and apply to the whole mod, to disable all shield piercing effects. Not reversible because all Projectiles in the selection get the same value.
 
@@ -1364,7 +1443,11 @@ Shield_Points = 100
 
 int Shield_Refresh_Rate = 5 # Usually about 30 for capital ships and less for weaker classes.
 
-int Max_Speed = 1 # In Percent Mode this is bundled to the <Min_Speed> tag, it grows or shrinks both values by the same amount.
+int Max_Speed = 1 # In Percent Mode this is bundled to the <Min_Speed> tag, it grows or shrinks both values by the same amount. This Setting ignores objects of Projectile type.
+
+int Max_Projectile_Speed = 1 # This setting influences only Projectiles.
+
+int Scale_Factor = 1 # Use this in Percent Mode to scale all units in a Mod. Keep in mind to not scale too much, because the Particles are not scaled by this value and they remain at the old size that won't longer fit the unit. Reversible, if you figure out the right % scale.
 
 Int Select_Box_Scale = 100 # Set to 0 and all Ships and Troops will have their select box deactivated. Not reversible because all values in the selection become 0 which can't be scalled. In percent mode this scales the size of all select box circles.
 
@@ -1375,6 +1458,10 @@ Space_Tactical_Unit_Cap = 10 # Sets Unit cap in space tactical battles, for all 
 Build_Cost_Credits = 100 # Set the price to 1, then you can build as many units as the population cap allows. Not reversible. In percent mode all prices can be scalled, which is kinda reversible if you work out the correct % values.
 
 Tactical_Build_Cost_Multiplayer = 100 # Set the price to 1 for all Skirmish units. Not reversible. In percent mode all prices can be scalled, which is kinda reversible if you work out the correct % values.
+
+int Population_Value # Scale down in Percent Mode to reduce population requirements for building and spawning units. Reversible.
+
+string Encyclopedia_Text # Axe this as empty string to wipe away all Encyclopedia Texts. Obviously entirely irreversible, please use only for fun purposes!
 
 Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Projectile_Damage, Damage # This balances the most important aspects of the Game: Tactical_Health, Shields, Shield_Refresh_Rate, Projectile_Damage. You can remove or add more Tag types to this tag in the settings! Then they will scale as group by the same % value.
 ";
@@ -1830,9 +1917,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Bool_Mode = false;
                 Button_Operator_MouseLeave(null, null);
 
-                if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True")| Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "False") 
-                    | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "Yes") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "No"))
-                { Combo_Box_Tag_Value.Text = ""; }        
+
+                if (Get_Text_Box_Bool() != "Neither") { Combo_Box_Tag_Value.Text = ""; }        
 
 
                 // Resetting the right scale factor
@@ -1845,6 +1931,14 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
             User_Input = true;
             return List_Of_Tags;
+        }
+
+
+        private string Get_Text_Box_Bool()
+        {
+            if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True")| Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "Yes")) { return "True"; }
+            else if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "False") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "No")) { return "False"; }
+            return "Neither";
         }
    
 
