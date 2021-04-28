@@ -109,79 +109,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Scripts.zip" />
-    <None Include="Resources\Shadow_Clone_01.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Shadow_Clone_02.jpg" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Button_Jutsu.ico" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\Excluded_Lines.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_File.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_File_Lit.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_Run.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_Run_Lit.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Rasengan_01.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_Settings.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_Settings_Lit.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_Refresh.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_Refresh_Lit.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Compacted_01.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Compacted_02.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Compacted_03.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Compacted_04.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Starting_01.jpg" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_Logs.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_Logs_Lit.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_Axe.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_Axe_Lit.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_Controller.png" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\Button_Controller2.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_Controller_Lit.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Idle_01.jpg" />
@@ -190,35 +123,36 @@
     <None Include="Resources\Done_01.jpg" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\Button_Plus.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_Plus_Lit.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_Minus.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_Minus_Lit.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_Percent.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Resources\Button_Percent_Lit.png" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\Axe_Icon.ico" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Axe_Icon.ico" />
-    <None Include="Resources\Button_Flash.png" />
-    <None Include="Resources\Button_Flash_Lit.png" />
-    <None Include="Resources\Button_Hashtag_Lit.png" />
-    <None Include="Resources\Button_Bool_Lit.png" />
-    <None Include="Resources\Button_Bool.png" />
+    <None Include="Resources\Button_Run.png" />
+    <None Include="Resources\Button_Refresh_Lit.png" />
+    <None Include="Resources\Button_Run_Lit.png" />
+    <None Include="Resources\Button_Refresh.png" />
+    <None Include="Resources\Button_Settings_Lit.png" />
+    <None Include="Resources\Button_Settings.png" />
     <None Include="Resources\Button_Search_Lit.png" />
     <None Include="Resources\Button_Search.png" />
+    <None Include="Resources\Button_Plus_Lit.png" />
+    <None Include="Resources\Button_Percent_Lit.png" />
+    <None Include="Resources\Button_Percent.png" />
+    <None Include="Resources\Button_Plus.png" />
+    <None Include="Resources\Button_Minus_Lit.png" />
+    <None Include="Resources\Button_Minus.png" />
+    <None Include="Resources\Button_Logs.png" />
+    <None Include="Resources\Button_Logs_Lit.png" />
+    <None Include="Resources\Button_Flash.png" />
+    <None Include="Resources\Button_File_Lit.png" />
+    <None Include="Resources\Button_File.png" />
+    <None Include="Resources\Button_Flash_Lit.png" />
+    <None Include="Resources\Button_Controller.png" />
+    <None Include="Resources\Button_Controller_Lit.png" />
+    <None Include="Resources\Button_Bool.png" />
+    <None Include="Resources\Button_Axe_Lit.png" />
+    <None Include="Resources\Button_Axe.png" />
+    <None Include="Resources\Button_Bool_Lit.png" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.5">

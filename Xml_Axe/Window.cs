@@ -61,7 +61,7 @@ namespace Xml_Axe
         public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
         public List<string> Found_Scripts = null;
         public List<string> File_Collection = new List<string>();
-        public List<string> Blacklisted_Xmls = null;
+        public List<string> Blacklisted_Xmls = new List<string>();
         public List<string> Temporal_E = new List<string>();
      
 
@@ -422,6 +422,13 @@ namespace Xml_Axe
         {
             // iConsole(600, 400, Check_for_Steam_Version()); // Debug
             if (Combo_Box_Tag_Name.Text == "") { return; }
+
+
+            if (Percent_Mode && Combo_Box_Tag_Value.Text == "-100%")
+            {   iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nRemoving -100% means set the value to 0 \nare you sure about that?");
+                if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
+            }
+
             Set_Resource_Button(Drop_Zone, Get_Start_Image());
 
 
@@ -744,7 +751,16 @@ namespace Xml_Axe
                     foreach (XElement Instance in Instances)
                     {   if (Instance.Descendants().Any())
                         {
-                            if (Combo_Box_Tag_Name.Text != "Rebalance_Everything")
+
+                            if (Combo_Box_Tag_Name.Text == "Minor_Heroes_To_Major")
+                            {   // Changing Selected_Tag from  "Minor_Heroes_To_Major" to "Show_Hero_Head" here, to match the right units!
+                                Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Show_Hero_Head", Apply_Changes);
+                            }
+                            else if (Combo_Box_Tag_Name.Text == "Major_Heroes_To_Minor")
+                            { Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Is_Named_Hero", Apply_Changes); }
+                                
+
+                            else if (Combo_Box_Tag_Name.Text != "Rebalance_Everything") // This one would usually trigger
                             {
                                 Set_Tag(Changed_Xmls, Instance, Selected_Xml, Selected_Tag, Apply_Changes);
                             }
@@ -790,37 +806,64 @@ namespace Xml_Axe
                     {
                         string New_Value = Combo_Box_Tag_Value.Text.Replace("+", "");
                         
-                        if (Selected_Tag == "Planet_Surface_Accessible")
-                        {   if (Match_Without_Emptyspace(New_Value, "True") | Match_Without_Emptyspace(New_Value, "Yes"))
+                      
+                        // Deliberately NOT comparing to Selected_Tag here, because we use "Show_Hero_Head" as Selected_Tag, to match the targeted entities in first line.
+                        if (Combo_Box_Tag_Name.Text == "Minor_Heroes_To_Major") 
+                        {          
+                            string Head_Value = Instance.Descendants("Show_Hero_Head").Last().Value;
+                            
+                            if (!Instance.Descendants("Show_Hero_Head").Any()) { return; } // This only makes sense for units that have this tag, and set to true   
+                            else if (!Match_Without_Emptyspace(Head_Value, "True") & !Match_Without_Emptyspace(Head_Value, "Yes")) { return; }
+                            
+                            else if (Instance.Descendants("Is_Named_Hero").Any()) { Instance.Descendants("Is_Named_Hero").Last().Value = "Yes"; }
+                            else { Instance.Descendants("Show_Hero_Head").Last().AddAfterSelf("\n\t", new XElement("Is_Named_Hero", "Yes")); }
+                           
+                            return; // Exiting here because this tag has its own way to be handled
+                        }
+                        else if (Combo_Box_Tag_Name.Text == "Major_Heroes_To_Minor") 
+                        {          
+                            string Named_Hero = Instance.Descendants("Is_Named_Hero").Last().Value;
+
+                            if (!Instance.Descendants("Is_Named_Hero").Any()) { return; } // This only makes sense for units that have this tag, and set to true   
+                            else if (!Match_Without_Emptyspace(Named_Hero, "True") & !Match_Without_Emptyspace(Named_Hero, "Yes")) { return; }
+
+                            else if (Instance.Descendants("Show_Hero_Head").Any()) { Instance.Descendants("Show_Hero_Head").Last().Value = "Yes"; }
+                            else { Instance.Descendants("Is_Named_Hero").Last().AddAfterSelf("\n\t", new XElement("Show_Hero_Head", "Yes")); }
+
+                            Instance.Descendants("Is_Named_Hero").Last().Value = "No"; // Degrading him to Minor Hero
+                           
+                            return; 
+                        }
+
+
+                        else if (Selected_Tag == "Planet_Surface_Accessible")
+                        {
+                            if (Match_Without_Emptyspace(New_Value, "True") | Match_Without_Emptyspace(New_Value, "Yes"))
                             {   if (!Instance.Descendants("Land_Tactical_Map").Any() | !Is_Match(Instance.Descendants("Land_Tactical_Map").First().Value, ".ted"))
                                 { return; } // Failsafe, we must not apply "true" to planets that have no ground maps - or the game will crash!
                             }
-                        } 
+                        }
 
+               
 
                         Changed_Entities++;
                         foreach (XElement Target in Instance.Descendants(Selected_Tag))
                         {
-                            if (!Percent_Mode) 
-                            {
-                                if (Combo_Box_Tag_Value.Text.Contains("%")) { Combo_Box_Tag_Value.Text = Combo_Box_Tag_Value.Text.Replace("%", ""); } // Removing Mistakes
+                            if (Percent_Mode)
+                            { 
+                                Target.Value = Process_Percentage(Target.Value);
+
+                                if (Selected_Tag == "Max_Speed" && Instance.Descendants("Min_Speed").Any()) // Min_Speed is bundled to Max_Speed
+                                {   string Min_Speed = Instance.Descendants("Min_Speed").Last().Value;
+                                    Instance.Descendants("Min_Speed").Last().Value = Process_Percentage(Min_Speed);
+                                }
+                            }
+                            else
+                            {   if (Combo_Box_Tag_Value.Text.Contains("%")) { Combo_Box_Tag_Value.Text = Combo_Box_Tag_Value.Text.Replace("%", ""); } // Removing Mistakes
                                 Target.Value = Combo_Box_Tag_Value.Text.Replace("+", "");
                             }
-
-                            else try // Refactoring the old value!
-                            {   int Percentage = 0;
-                                decimal Original_Value = 0;
-
-                                Decimal.TryParse(Target.Value, out Original_Value);
-                                Int32.TryParse(Remove_Operators(Combo_Box_Tag_Value.Text), out Percentage);
-
-                                if (Combo_Box_Tag_Value.Text.Contains("-")) // Shrink Value
-                                { Target.Value = (Original_Value - ((Original_Value / 100) * Percentage)).ToString(); }
-
-                                else // if (Combo_Box_Tag_Value.Text.Contains("+")) // Grow Value
-                                { Target.Value = (Original_Value + ((Original_Value / 100) * Percentage)).ToString(); }
-                            }  catch {}
-
+                     
+                           
                             if (!Check_Box_All_Occurances.Checked) { break; } // Stop after first occurance
                         }
                     }
@@ -829,6 +872,30 @@ namespace Xml_Axe
         }
 
         //===========================//
+
+        public string Process_Percentage(string The_Value)
+        {   
+            try // Refactoring the old value!
+            {   
+                int Percentage = 0;
+                float Original_Value = 0;
+
+                // Replace(".", ",") because otherwise it does not interpret . as comma 
+                float.TryParse(The_Value.Replace(".", ","), out Original_Value); 
+                Int32.TryParse(Remove_Operators(Combo_Box_Tag_Value.Text), out Percentage);
+
+                if (Combo_Box_Tag_Value.Text.Contains("-")) // Shrink Value
+                { The_Value = (Original_Value - ((Original_Value / 100) * Percentage)).ToString(); }
+
+                else // if (Combo_Box_Tag_Value.Text.Contains("+")) // Grow Value
+                { The_Value = (Original_Value + ((Original_Value / 100) * Percentage)).ToString(); }
+
+            } catch {}
+
+            // The , might be confused by EAW with table values so . fitts better
+            return The_Value.Replace(",", "."); 
+        }
+
 
         public string Wash_String(string The_String)
         { return Regex.Replace(The_String, "[\n\r\t ]", ""); }
@@ -1253,14 +1320,14 @@ namespace Xml_Axe
         {
             Tag_List = @"# ====================== Settings ======================
 # Show_Tooltip = true
+# Queried_Attribute = Name
 # Store_Last_Settings = true
 # Request_File_Approval = true
+# RGBA_Color = 100, 170, 170, 255 # Marine Blue
 # Set_Launch_Affinity = true
 # High_Launch_Priority = true
-# Queried_Attribute = Name
-# RGBA_Color = 100, 170, 170, 255 # Marine Blue
-# Script_Directory = %AppData%\Local\Xml_Axe\Scripts
 # Custom_Start_Parameters = false
+# Script_Directory = %AppData%\Local\Xml_Axe\Scripts
 # Disable_EAW_Mode = false
 # Text_Format_Delimiter = ;
 # Custom_Modpath = false
@@ -1269,19 +1336,25 @@ namespace Xml_Axe
 
 # ===================== Bool Values ======================
 
-bool Planet_Surface_Accessible # Set to No and it will turn all GCs to space only because it sets all Planets to unaccessible. This operation is revertable: it checks if a planet has a ground.ted map to determine whether it is safe to set surface back to accessible.
+bool Planet_Surface_Accessible # Set to No and it will turn all GCs to space only because it sets all Planets to unaccessible. This operation is kinda reversible: it checks if a planet has a ground.ted map to determine whether it is safe to set surface back to accessible.
 
-bool Is_Targetable # Defines whether or not all Hardpoints in current selection or the Mod can be targeted.
+bool Is_Targetable # Defines whether or not all Hardpoints in current selection or the Mod can be targeted. Not reversible because all Hardpoints in the selection get the same value.
 
-bool Is_Destroyable # Defines whether or not all Hardpoints in current selection or the Mod can be destroyed.
+bool Is_Destroyable # Defines whether or not all Hardpoints in current selection or the Mod can be destroyed. Not reversible because all Hardpoints in the selection get the same value.
 
-bool Is_Named_Hero # Set to No and no more heroes will respawn. Most of them will also hide their hero Images.
+bool Is_Named_Hero # Set to No and no more Heroes will respawn. The entities that don't have Show_Hero_Head will also hide their hero Images. Not reversible because all Units in the selection get the same value.
 
-Projectile_Does_Shield_Damage = bool # Set to Yes and apply to the whole mod, to disable all shield piercing effects.
+bool Show_Hero_Head # This turns a unit into a minor Hero, that does not respawn. Set to No to hide all Icons of minor Heroes. Not reversible because all Units in the selection get the same value.
 
-Projectile_Does_Energy_Damage = bool # Careful, if set to yes Hitpoint damage will start once enemy energy level reaches 0.
+bool Minor_Heroes_To_Major # This converts all minor Heroes to major heroes that do respawn. Not reversible because minor heroes are merged into the group of majors.
 
-Projectile_Does_Hitpoint_Damage = bool 
+bool Major_Heroes_To_Minor # This converts all major Heroes to minor heroes, and they won't longer respawn. Not reversible because major heroes are merged into the group of minors. 
+
+Projectile_Does_Shield_Damage = bool # Set to Yes and apply to the whole mod, to disable all shield piercing effects. Not reversible because all Projectiles in the selection get the same value.
+
+Projectile_Does_Energy_Damage = bool # Careful, if set to yes Hitpoint damage will start once enemy energy level reaches 0. Not reversible because all Projectiles in the selection get the same value.
+
+Projectile_Does_Hitpoint_Damage = bool # Not reversible because all Projectiles in the selection get the same value.
 
 # ====================== Int Values ======================
 
@@ -1291,17 +1364,19 @@ Shield_Points = 100
 
 int Shield_Refresh_Rate = 5 # Usually about 30 for capital ships and less for weaker classes.
 
-Int Select_Box_Scale = 100 # Set to 0 and all Ships and Troops will have their select box deactivated (not revertable). In percent mode this scales the size of all select box circles.
+int Max_Speed = 1 # In Percent Mode this is bundled to the <Min_Speed> tag, it grows or shrinks both values by the same amount.
 
-Layer_Z_Adjust = 100 # In percent mode this will scale the distance between all height layer values.
+Int Select_Box_Scale = 100 # Set to 0 and all Ships and Troops will have their select box deactivated. Not reversible because all values in the selection become 0 which can't be scalled. In percent mode this scales the size of all select box circles.
 
-Space_Tactical_Unit_Cap = 10 # Sets Unit cap in space tactical battles, for all Factions in the Mod. Don't put too high or it will cause laggs.
+Layer_Z_Adjust = 100 # In percent mode this will scale the distance between all height layer values. Reversible if you figure out the correct % values.
 
-Build_Cost_Credits = 100 # Set the price to 1, then you can build as many units as the population cap allows.
+Space_Tactical_Unit_Cap = 10 # Sets Unit cap in space tactical battles, for all Factions in the Mod. Don't put too high or it will cause laggs. Actually reversible but all factions are merged to have the same value.
 
-Tactical_Build_Cost_Multiplayer = 100 # Set the price to 1 for all Skirmish units.
+Build_Cost_Credits = 100 # Set the price to 1, then you can build as many units as the population cap allows. Not reversible. In percent mode all prices can be scalled, which is kinda reversible if you work out the correct % values.
 
-Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Projectile_Damage, Damage # This balances the most important aspects of the Game: Tactical_Health, Shields, Shield_Refresh_Rate, Projectile_Damage. You can remove or add more Tag types to this tag in the settings! Then they will scale by the same % value.
+Tactical_Build_Cost_Multiplayer = 100 # Set the price to 1 for all Skirmish units. Not reversible. In percent mode all prices can be scalled, which is kinda reversible if you work out the correct % values.
+
+Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Projectile_Damage, Damage # This balances the most important aspects of the Game: Tactical_Health, Shields, Shield_Refresh_Rate, Projectile_Damage. You can remove or add more Tag types to this tag in the settings! Then they will scale as group by the same % value.
 ";
         }
 
