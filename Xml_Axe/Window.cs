@@ -579,7 +579,7 @@ namespace Xml_Axe
                 XDocument Xml_File = XDocument.Load(Xml_Path, LoadOptions.PreserveWhitespace);
              
                 Instances = // Target all entities in the whole Mod!
-                  from All_Tags in Xml_File.Root.Descendants()
+                  from All_Tags in Xml_File.Descendants()
                     // Selecting all non empty tags that have the Attribute "Name", null because we need all selected.
                       where All_Tags != null
                         select All_Tags;
@@ -699,7 +699,7 @@ namespace Xml_Axe
                         List<string> Selected_Entities = Select_List_View_Items(List_View_Selection);
 
                        Instances =
-                         from All_Tags in Xml_File.Root.Descendants()
+                         from All_Tags in Xml_File.Descendants()
                          where List_Matches(Selected_Entities, (string)All_Tags.Attribute(Queried_Attribute))
                          select All_Tags;
                     }
@@ -710,7 +710,7 @@ namespace Xml_Axe
                         Query = 2;
 
                         Instances =
-                           from All_Tags in Xml_File.Root.Descendants() // Entity_Name means the Faction name here
+                           from All_Tags in Xml_File.Descendants() // Entity_Name means the Faction name here
                            where All_Tags.Descendants("Affiliation").Last().Value.Contains(Entity_Name)
                            select All_Tags; // Last() because it overwrites the first occurances ingame
                     }
@@ -719,7 +719,7 @@ namespace Xml_Axe
                         Query = 3;
 
                         Instances =
-                          from All_Tags in Xml_File.Root.Descendants()
+                          from All_Tags in Xml_File.Descendants()
                           where (string)All_Tags.Attribute(Queried_Attribute) == Entity_Name
                           select All_Tags;
                     }
@@ -728,7 +728,7 @@ namespace Xml_Axe
                         Query = 4;
 
                         Instances =
-                          from All_Tags in Xml_File.Root.Descendants()
+                          from All_Tags in Xml_File.Descendants()
                           where All_Tags.Name == Selected_Type
                           select All_Tags;
                     }
@@ -737,7 +737,7 @@ namespace Xml_Axe
                         Query = 5;
 
                         Instances =
-                          from All_Tags in Xml_File.Root.Descendants()
+                          from All_Tags in Xml_File.Descendants()
                           // Selecting all non empty tags that have the Queried_Attribute "Name", null because we need all selected.
                           where All_Tags != null
                           select All_Tags;
@@ -2222,7 +2222,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
 
                     Instances =
-                      from All_Tags in Xml_File.Root.Descendants()
+                      from All_Tags in Xml_File.Descendants()
                       where (string)All_Tags.Attribute(Queried_Attribute) == Entity_Name // Fast Search                    
                       select All_Tags;
 
@@ -2240,7 +2240,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     {   XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
 
                         Instances =
-                          from All_Tags in Xml_File.Root.Descendants()
+                          from All_Tags in Xml_File.Descendants()
                           // Regex; This is damn slow - but it delivers results
                           where Is_Match((string)All_Tags.Attribute(Queried_Attribute), Entity_Name)
                           select All_Tags;
