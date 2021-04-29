@@ -401,8 +401,8 @@ namespace Xml_Axe
        
         //===========================//
         private void Button_Start_Click(object sender, EventArgs e)
-        {         
-            if (List_View_Selection.Visible) { List_View_Selection.Visible = false; }
+        {
+            if (List_View_Selection.Visible) { List_View_Selection.Visible = false; Zoom_List_View(false); }
             else 
             {   Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible 
              
@@ -447,6 +447,27 @@ namespace Xml_Axe
             List<string> Related_Xmls = new List<string>();
 
 
+            // Storing last search
+            if (Combo_Box_Entity_Name.Text == "None") { Properties.Settings.Default.Entity_Name = ""; }
+            else { Properties.Settings.Default.Entity_Name = Wash_String(Combo_Box_Entity_Name.Text); }
+
+
+            if (Combo_Box_Tag_Name.Text != "Rebalance_Everything") // We don't want the user to accidently re-apply such a powerfull setting
+            {
+                Properties.Settings.Default.Type_Filter = Combo_Box_Type_Filter.Text;
+
+                // Would otherwise end up in loading a broken selection, because the selection was stored in the ListView of the last session:
+                if (Combo_Box_Entity_Name.Text != "Multi")
+                { Properties.Settings.Default.Tag_Name = Combo_Box_Tag_Name.Text; }
+
+                if (Combo_Box_Tag_Value.Text.Contains("%")) { Properties.Settings.Default.Tag_Value = ""; } // Preventing Errors
+                else { Properties.Settings.Default.Tag_Value = Combo_Box_Tag_Value.Text; }
+            }
+
+            Properties.Settings.Default.Trackbar_Value = Track_Bar_Tag_Value.Value;
+            Properties.Settings.Default.Save(); // Storing last usage
+
+
             // if (The_Settings.Contains("Show_Files_That_Would_Change = true") | The_Settings.Contains("Request_Approval=true"))
             if (Match_Setting("Request_File_Approval") & !In_Selected_Xml(Combo_Box_Entity_Name.Text))
             {
@@ -482,23 +503,8 @@ namespace Xml_Axe
             Set_Resource_Button(Drop_Zone, Get_Done_Image());
             if (List_View_Selection.Visible) { Button_Start_Click(null, null); } // Hiding open Xml
 
-            if (Combo_Box_Entity_Name.Text == "None") { Properties.Settings.Default.Entity_Name = ""; }
-            else { Properties.Settings.Default.Entity_Name = Wash_String(Combo_Box_Entity_Name.Text); }
-
-
-            if (Combo_Box_Tag_Name.Text != "Rebalance_Everything") // We don't want the user to accidently re-apply such a powerfull setting
-            {   Properties.Settings.Default.Type_Filter = Combo_Box_Type_Filter.Text;
-                Properties.Settings.Default.Tag_Name = Combo_Box_Tag_Name.Text;
-
-                if (Combo_Box_Tag_Value.Text.Contains("%")) { Properties.Settings.Default.Tag_Value = ""; } // Preventing Errors
-                else { Properties.Settings.Default.Tag_Value = Combo_Box_Tag_Value.Text; }
-            }
-           
-
-            Properties.Settings.Default.Trackbar_Value = Track_Bar_Tag_Value.Value;
-            Properties.Settings.Default.Save(); // Storing last usage
-
             if (Text_Box_Description.Visible) { Disable_Description(); }
+
 
             // Disabled Feature, quite obsolete
             /*if (Related_Xmls.Count() > 0 & Warn_User & !In_Selected_Xml(Combo_Box_Entity_Name.Text) 
@@ -716,9 +722,11 @@ namespace Xml_Axe
 
                         Instances =
                            from All_Tags in Xml_File.Root.Descendants() // Entity_Name means the Faction name here
+                           where All_Tags.Descendants("Affiliation").Any() // We need this to prevent null exceptions
                            where All_Tags.Descendants("Affiliation").Last().Value.Contains(Entity_Name)
                            select All_Tags; // Last() because it overwrites the first occurances ingame
                     }
+
                     else if (Entity_Name != "" & Entity_Name != "None") // Select a single Entity by Name
                     {
                         Query = 3;
@@ -728,19 +736,33 @@ namespace Xml_Axe
                           where (string)All_Tags.Attribute(Queried_Attribute) == Entity_Name
                           select All_Tags;
                     }
-                    else if (Selected_Type != "" & Combo_Box_Type_Filter.Text != "All Types") // By Entity Type
+
+                    // Match by Tag Value
+                    else if (Selected_Type == "FighterUnit") // If Fighter Locomotor can be found we spoof the fake tagname "FighterUnit"
                     {
                         Query = 4;
+                        
+                        Instances =
+                          from All_Tags in Xml_File.Root.Descendants()
+                          where All_Tags.Descendants("SpaceBehavior").Any() // We need this to prevent null exceptions! And it increases speed a lot.
+                          where All_Tags.Descendants("SpaceBehavior").Last().Value.Contains("FIGHTER_LOCOMOTOR")
+                          select All_Tags;
+                       
+                    }
+
+                    else if (Selected_Type != "" & Combo_Box_Type_Filter.Text != "All Types") // By Entity Type
+                    {
+                        Query = 5;
 
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
                           where All_Tags.Name == Selected_Type
                           select All_Tags;
-                    }
-
+                    }                
+                     
                     else if (Selected_Tag == "Scale_Factor" | Selected_Tag == "Max_Speed")
                     {
-                        Query = 5;
+                        Query = 6;
 
                         Instances =
                            from All_Tags in Xml_File.Root.Descendants()
@@ -757,7 +779,7 @@ namespace Xml_Axe
                         string Required_Tag = "Unit_Abilities_Data";
                         if (Selected_Tag == "Enable_Passive_Abilities") { Required_Tag = "Abilities"; }
 
-                        Query = 6;
+                        Query = 7;
 
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
@@ -766,7 +788,7 @@ namespace Xml_Axe
                     }
                     else // Target all entities in the whole Mod!
                     {
-                        Query = 7;
+                        Query = 8;
 
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
@@ -1524,7 +1546,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
             else
             {
-                string[] Entries = new string[] {"All Types", "All in loaded Xml", "Faction Name Filter", "", "SpaceUnit", "UniqueUnit", 
+                string[] Entries = new string[] {"All Types", "All in loaded Xml", "Faction Name Filter", "", "SpaceUnit", "FighterUnit", "UniqueUnit", 
                     "TransportUnit", "GroundInfantry", "GroundVehicle", "HeroUnit", "", "Squadron", "HeroCompany", "GroundCompany", "Planet",
                     "Faction", "HardPoint", "Projectile", "", "StarBase", "SpaceBuildable", "SpecialStructure", "TechBuilding", "GroundBase", 
                     "GroundStructure", "GroundBuildable"
@@ -1686,12 +1708,16 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 {   // ===================== Opening Xml File =====================                            
                     XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
 
-                    Instances =
-                      from All_Tags in Xml_File.Root.Descendants()
-                      where All_Tags.Name == Parent_Tag_Name
-                      select All_Tags;
+                    if (Parent_Tag_Name == "All Types")
+                    { iConsole(400, 100, "\nSorry, \"All Types\" is not specific enough to search."); return Temporal_E; }
+                    else
+                    { Instances =
+                        from All_Tags in Xml_File.Root.Descendants()
+                        where All_Tags.Name == Parent_Tag_Name
+                        select All_Tags;
+                    }
                 }
-                catch { }
+                catch {}
 
 
                 if (Instances.Any())
@@ -1711,6 +1737,49 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
             return Temporal_E;
         }
+
+
+        //===========================//
+        private List<string> Query_For_Tag_Value(string Tag_Name, string Tag_Value)
+        {
+            IEnumerable<XElement> Instances = null;
+            Temporal_E = new List<string>();
+
+
+            foreach (var Xml in Get_All_Files(Xml_Directory, "xml"))
+            {
+                try
+                {   // ===================== Opening Xml File =====================                            
+                    XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
+
+                    Instances =
+                      from All_Tags in Xml_File.Root.Descendants()
+                      where All_Tags.Descendants(Tag_Name).Any() // We need this to prevent null exceptions! And it increases speed a lot.
+                      where All_Tags.Descendants(Tag_Name).Last().Value.Contains(Tag_Value)
+                      select All_Tags;
+                }
+                catch {}
+
+
+                if (Instances.Any())
+                {
+                    foreach (XElement Instance in Instances)
+                    {
+                        try
+                        {   // Be aware Queried_Attribute is a variable that decides the outcome!
+                            string Faction_Name = (string)Instance.Attribute(Queried_Attribute);
+
+                            if (!Temporal_E.Contains(Faction_Name))
+                            { Temporal_E.Add(Faction_Name); }
+                        }
+                        catch { }
+                    }
+                }
+            }
+
+            return Temporal_E;
+        }
+
 
         //===========================//
         private void Combo_Box_Tag_Name_TextChanged(object sender, EventArgs e)
@@ -2385,12 +2454,14 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             if (Combo_Box_Type_Filter.Focused) 
             {
                 if (Combo_Box_Type_Filter.Text == "") { return; }
+                else if (Combo_Box_Type_Filter.Text == "FighterUnit") { Query_For_Tag_Value("SpaceBehavior", "FIGHTER_LOCOMOTOR"); }
+                else
+                {   // Caution, Query_For_Entity_Parent() only returns a list of Entity Names, nothing more!            
+                    Query_For_Entity_Parent(Combo_Box_Type_Filter.Text);
+                }
 
 
-                // Caution, Query_For_Entity_Parent() only returns a list of Entity Names, nothing more!            
-                Query_For_Entity_Parent(Combo_Box_Type_Filter.Text);
-                             
-                // Temporal_E because that is the list used in Query_For_Entity_Parent(), this is actually a hack lol
+                // Temporal_E because that is the list used in Query_For_Entity_Parent() & Query_For_Tag_Value(), this is actually a hack lol
                 if (Temporal_E.Count > 0) 
                 { 
                     List_View_Selection.Items.Clear();
@@ -2403,6 +2474,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
                     Xml_List_Mode = false;
                     List_View_Selection.Visible = true;
+                    Zoom_List_View(true);
+
                     Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit);
                     Set_Checker(List_View_Selection, Color.Black);
                 }
@@ -2462,6 +2535,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 }
             }
 
+            Zoom_List_View(false);
             Found_In_Xml(Entity_Name); // Just to select the found entity
         }
 
@@ -2548,11 +2622,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             {
                 Script_Mode = false;
                 Drop_Zone.Visible = true;
-                Set_UI_Into_Script_Mode(!Script_Mode);
-
-                List_View_Selection.Size = new Size(404, 164);
-                List_View_Selection.Location = new Point(12, 12);
-             
+                Zoom_List_View(false);    
+                Set_UI_Into_Script_Mode(!Script_Mode);                                  
                 Button_Browse.Location = new Point(1, 193);
 
                 // Loading the Xml instead of the available scripts in script mode
@@ -2564,11 +2635,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Script_Mode = true;
                 Drop_Zone.Visible = false;
                 List_View_Selection.Visible = true;
-                Set_UI_Into_Script_Mode(!Script_Mode);
-
-                List_View_Selection.Size = new Size(367, 482);
-                List_View_Selection.Location = new Point(31, 29);
-
+                Zoom_List_View(true);
+                Set_UI_Into_Script_Mode(!Script_Mode);               
                 Button_Browse.Location = new Point(1, 350);
 
 
@@ -2598,6 +2666,20 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 
         }
 
+
+        private void Zoom_List_View(bool Large)
+        {
+            if (Large)
+            {   Drop_Zone.Visible = false; // Hiding Background
+                List_View_Selection.Size = new Size(367, 482);
+                List_View_Selection.Location = new Point(31, 29);
+            } 
+            else
+            {   Drop_Zone.Visible = true;
+                List_View_Selection.Size = new Size(404, 164);
+                List_View_Selection.Location = new Point(12, 12);               
+            }     
+        }
 
         private void Set_UI_Into_Script_Mode(bool Mode)
         {
