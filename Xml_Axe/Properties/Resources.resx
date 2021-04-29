@@ -133,6 +133,12 @@
   <data name="Button_Bool_Lit" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Button_Bool_Lit.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="Button_Clock" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Button_Clock.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Button_Clock_Lit" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Button_Clock_Lit.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="Button_Controller" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Button_Controller.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>

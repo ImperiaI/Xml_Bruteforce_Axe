@@ -47,6 +47,7 @@ namespace Xml_Axe
         int Scale_Factor = 10;
         string Tag_List = "";
         bool User_Input = false;
+        bool Xml_List_Mode = true;
         bool Percent_Mode = false;
         bool EAW_Mode = true;
         bool Bool_Mode = false;
@@ -56,10 +57,13 @@ namespace Xml_Axe
         string Text_Format_Delimiter = ";";
         string Script_Directory = "";
         string Last_Combo_Box_Tag_Name = "";
+        string Last_Combo_Box_Entity_Name = "";
+
         string[] Balancing_Tags = null; // new string[] { };
         public Color Theme_Color = Color.CadetBlue;
         public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
         public List<string> Found_Scripts = null;
+        public List<string> Found_Factions = new List<string>();
         public List<string> File_Collection = new List<string>();
         public List<string> Blacklisted_Xmls = new List<string>();
         public List<string> Temporal_E = new List<string>();
@@ -75,6 +79,7 @@ namespace Xml_Axe
             Set_Resource_Button(Drop_Zone, Get_Start_Image()); 
             Set_Resource_Button(Button_Browse, Properties.Resources.Button_File);
             Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs);
+            Set_Resource_Button(Button_Undo, Properties.Resources.Button_Clock);
             Set_Resource_Button(Button_Search, Properties.Resources.Button_Search);
             Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent);
             Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash);
@@ -84,7 +89,7 @@ namespace Xml_Axe
             Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller);
 
 
-            Control[] Controls = { Button_Browse, Button_Start, Button_Run, Button_Search, Button_Percentage,
+            Control[] Controls = { Button_Browse, Button_Start, Button_Undo, Button_Run, Button_Search, Button_Percentage,
                                    Button_Scripts, Button_Operator, Button_Reset_Blacklist, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.BackColor = Color.Transparent; }   
     
@@ -330,7 +335,7 @@ namespace Xml_Axe
 
 
             Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit);
-            Set_Checker(List_View_Selection);
+            Set_Checker(List_View_Selection, Theme_Color);
 
             if (Text_Box_Description.Visible) { Disable_Description(); }
 
@@ -599,7 +604,7 @@ namespace Xml_Axe
                     }
                 }
 
-                Set_Checker(List_View_Selection);
+                Set_Checker(List_View_Selection, Theme_Color);
                 if (!Show_List) { List_View_Selection.Visible = false; }
             } catch {}
         }
@@ -755,7 +760,7 @@ namespace Xml_Axe
                         Query = 6;
 
                         Instances =
-                          from All_Tags in Xml_File.Descendants()
+                          from All_Tags in Xml_File.Root.Descendants()
                            where All_Tags.Descendants(Required_Tag).Any()
                            select All_Tags;
                     }
@@ -764,7 +769,7 @@ namespace Xml_Axe
                         Query = 7;
 
                         Instances =
-                          from All_Tags in Xml_File.Descendants()
+                          from All_Tags in Xml_File.Root.Descendants()
                           // Selecting all non empty tags that have the Queried_Attribute "Name", null because we need all selected.
                           where All_Tags != null
                           select All_Tags;
@@ -1437,9 +1442,9 @@ Shield_Points = 100
 
 int Shield_Refresh_Rate = 5 # Usually about 30 for capital ships and less for weaker classes.
 
-int Max_Speed = 1 # In Percent Mode this is bundled to the <Min_Speed> tag, it grows or shrinks both values by the same amount. This Setting ignores objects of Projectile type.
+int Max_Speed = 1 # In Percent Mode this is bundled to the <Min_Speed> tag, it grows or shrinks both values by the same amount. This Setting ignores objects of Projectile type, unless you explicitly select them as Filter Type.
 
-int Scale_Factor = 1 # Use this in Percent Mode to scale all units in a Mod. Keep in mind to not scale too much, because the Particles are not scaled by this value and they remain at the old size that won't longer fit the unit. Reversible, if you figure out the right % scale.
+int Scale_Factor = 1 # Use this in Percent Mode to scale all units in a Mod. Projectiles and Planets will be ignored, unless you explicitly select them as Filter Type. Keep in mind to not scale too much, because the Particles in models are not scaled by this value. Reversible.
 
 Int Select_Box_Scale = 100 # Set to 0 and all Ships and Troops will have their select box deactivated. Not reversible because all values in the selection become 0 which can't be scalled. In percent mode this scales the size of all select box circles.
 
@@ -1501,7 +1506,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                         foreach (Control The_Control in Controls)
                         { The_Control.ForeColor = Theme_Color; }
 
-                        Set_Checker(List_View_Selection);
+                        Set_Checker(List_View_Selection, Theme_Color);
                         break;
                     } catch {}
                 }
@@ -1547,7 +1552,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 }
             } catch {}
 
-            Set_Checker(List_View_Selection);
+            Set_Checker(List_View_Selection, Theme_Color);
         }
 
         //===========================//
@@ -1565,6 +1570,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //===========================//
         private void Combo_Box_Type_Filter_TextChanged(object sender, EventArgs e)
         {
+            if (!User_Input) { return; } // Preventing Recursion
+
+
             switch (Combo_Box_Type_Filter.Text)
             {
                 case "GroundInfantry":
@@ -1587,12 +1595,41 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             }
 
             if (Percent_Mode) { Scale_Factor = 10; } // Percentage Override
+          
+            if (Last_Combo_Box_Entity_Name == "Faction Name Filter")
+            {   
+                Last_Combo_Box_Entity_Name = "";
+                Combo_Box_Entity_Name.Text = "";
+                Combo_Box_Entity_Name.Items.Clear();
+                Combo_Box_Entity_Name.Items.Add("None");           
+            } // Don't chain here!
 
 
-            if (Combo_Box_Type_Filter.Text == "Faction Name Filter") 
-            {   Label_Entity_Name.Text = "Faction Name";
+
+            if (Combo_Box_Type_Filter.Text == "Faction Name Filter")
+            {
+                Label_Entity_Name.Text = "Faction Name";
                 Label_Type_Filter.Text = "Filter Type";
-                Button_Search.Visible = false;
+                Button_Search.Visible = false;   
+
+
+                if (Found_Factions.Count() == 0) 
+                { Found_Factions = Query_For_Entity_Parent("Faction"); }
+
+                if (Found_Factions.Count() > 0)
+                {   foreach (string Faction_Name in Found_Factions)
+                    {   if (!Combo_Box_Matches(Combo_Box_Entity_Name, Faction_Name))
+                        { Combo_Box_Entity_Name.Items.Add(Faction_Name); }
+                    }
+
+                  
+                    User_Input = false; // Preventing Recursion
+                    Combo_Box_Entity_Name.Text = "";
+                    User_Input = true;
+
+                    Last_Combo_Box_Entity_Name = "Faction Name Filter";
+                    Combo_Box_Entity_Name.DroppedDown = true; // Show results to the User                  
+                }
             }
 
             else if (!EAW_Mode)
@@ -1607,6 +1644,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             }
 
         
+
             if (Combo_Box_Type_Filter.Text == "All in loaded Xml") // Don't use elseif here
             {   Combo_Box_Entity_Name.Text = "Multi";
                 Combo_Box_Type_Filter.Text = ""; // Because then this can trigger a 2nd time in a row
@@ -1628,10 +1666,51 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             }
             //else if (Combo_Box_Entity_Name.Text ==  "Multi")
             //{ Combo_Box_Entity_Name.Text = ""; }
-     
+
+            // iConsole(400, 100, "\"" + Combo_Box_Type_Filter.Text + "\"");
 
         }
 
+      
+
+        //===========================//
+        private List<string> Query_For_Entity_Parent(string Parent_Tag_Name)
+        {
+            IEnumerable<XElement> Instances = null;
+            Temporal_E = new List<string>();
+
+
+            foreach (var Xml in Get_All_Files(Xml_Directory, "xml"))
+            {
+                try
+                {   // ===================== Opening Xml File =====================                            
+                    XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
+
+                    Instances =
+                      from All_Tags in Xml_File.Root.Descendants()
+                      where All_Tags.Name == Parent_Tag_Name
+                      select All_Tags;
+                }
+                catch { }
+
+
+                if (Instances.Any())
+                {
+                    foreach (XElement Instance in Instances)
+                    {
+                        try
+                        {   // Be aware Queried_Attribute is a variable that decides the outcome!
+                            string Faction_Name = (string)Instance.Attribute(Queried_Attribute);
+
+                            if (!Temporal_E.Contains(Faction_Name))
+                            { Temporal_E.Add(Faction_Name); }
+                        } catch {}
+                    }                 
+                }
+            }
+
+            return Temporal_E;
+        }
 
         //===========================//
         private void Combo_Box_Tag_Name_TextChanged(object sender, EventArgs e)
@@ -2061,7 +2140,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 foreach (string Entry in The_List)
                 { Display.List_View_Info.Items.Add(Entry); }
 
-                Set_Checker(Display.List_View_Info);
+                Set_Checker(Display.List_View_Info, Theme_Color);
             }
 
 
@@ -2146,8 +2225,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         }
 
 
-        //===========================//
-        public void Set_Checker(ListView The_Box)
+        //===========================// Theme_Color
+        public void Set_Checker(ListView The_Box, Color Selected_Color)
         {
             // Sorting here instead of the default property because of timing issues with the loop below
             The_Box.Sort();
@@ -2156,7 +2235,10 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             {   // Every second Tag should have this value in order to create a checkmate pattern with good contrast
                 if (Item.Index % 2 == 0)
                 {   Item.ForeColor = Color.White;
-                    Item.BackColor = Theme_Color; 
+                    Item.BackColor = Selected_Color;
+
+                    //if (Color_Override != Color.White) { Item.BackColor = Color_Override; }
+                    //else { Item.BackColor = Theme_Color; }
                 }
                 else
                 {   Item.ForeColor = Color.Black;
@@ -2283,9 +2365,51 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
         //=====================//
+        private void Button_Undo_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void Button_Undo_MouseHover(object sender, EventArgs e)
+        { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Clock_Lit); }
+
+        private void Button_Undo_MouseLeave(object sender, EventArgs e)
+        { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Clock); }
+
+
+        //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
             // iConsole(400, 100, Properties.Settings.Default.Xml_Directory + "\n" + Properties.Settings.Default.Mod_Directory); return;
+
+            if (Combo_Box_Type_Filter.Focused) 
+            {
+                if (Combo_Box_Type_Filter.Text == "") { return; }
+
+
+                // Caution, Query_For_Entity_Parent() only returns a list of Entity Names, nothing more!            
+                Query_For_Entity_Parent(Combo_Box_Type_Filter.Text);
+                             
+                // Temporal_E because that is the list used in Query_For_Entity_Parent(), this is actually a hack lol
+                if (Temporal_E.Count > 0) 
+                { 
+                    List_View_Selection.Items.Clear();
+
+                    foreach (string Parent_Tag_Name in Temporal_E)
+                    {
+                        if (!List_View_Matches(List_View_Selection, Parent_Tag_Name))
+                        { List_View_Selection.Items.Add(Parent_Tag_Name); }
+                    }
+
+                    Xml_List_Mode = false;
+                    List_View_Selection.Visible = true;
+                    Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit);
+                    Set_Checker(List_View_Selection, Color.Black);
+                }
+                return; // Preventing the search below (that searches for content in Combo_Box_Entity_Name.Text).
+            }
+
+
 
 
             string Entity_Name = Wash_String(Combo_Box_Entity_Name.Text);
@@ -2293,8 +2417,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
             // Matched in selected XML, so just show that one
-            if (Found_In_Xml(Entity_Name)) { return; } 
+            if (Xml_List_Mode & Found_In_Xml(Entity_Name)) { return; }
 
+            Xml_List_Mode = true; // Otherwise we set it for the next time
 
 
 
@@ -2342,9 +2467,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
         private void Button_Search_MouseHover(object sender, EventArgs e)
-        {
-            Set_Resource_Button(Button_Search, Properties.Resources.Button_Search_Lit);
-        }
+        { Set_Resource_Button(Button_Search, Properties.Resources.Button_Search_Lit); }
 
         private void Button_Search_MouseLeave(object sender, EventArgs e)
         { Set_Resource_Button(Button_Search, Properties.Resources.Button_Search); }
@@ -2359,6 +2482,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
                 if (List_View_Selection.Items.Count > 0) // Auto selecting the item
                 {
+                    if (List_View_Selection.SelectedItems.Count > 0)
+                    { List_View_Selection.SelectedItems[0].Selected = false; }
+
                     for (int i = List_View_Selection.Items.Count - 1; i >= 0; --i)
                     {   // Selecting everything
                         if (List_View_Selection.Items[i].Text == Entity_Name)
@@ -2672,12 +2798,6 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
 
-
-     
-
-
-
-     
 
 
     

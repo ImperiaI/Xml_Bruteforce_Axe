@@ -87,7 +87,7 @@ namespace Xml_Axe
                     }                  
                 }
 
-                Active_Window.Set_Checker(List_View_Info);
+                Active_Window.Set_Checker(List_View_Info, Active_Window.Theme_Color);
             }    
   
         }
@@ -119,7 +119,7 @@ namespace Xml_Axe
                     }
                 }
 
-                Active_Window.Set_Checker(List_View_Info);
+                Active_Window.Set_Checker(List_View_Info, Active_Window.Theme_Color);
                 Active_Window.Blacklisted_Xmls = The_Blacklist; // Refreshing
 
                 string Blacklist = string.Join("\n", The_Blacklist);          

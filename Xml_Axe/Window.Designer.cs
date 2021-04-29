@@ -55,6 +55,7 @@
             this.Button_Operator = new System.Windows.Forms.PictureBox();
             this.Button_Search = new System.Windows.Forms.PictureBox();
             this.Button_Scripts = new System.Windows.Forms.PictureBox();
+            this.Button_Undo = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.Drop_Zone)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Track_Bar_Tag_Value)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Start)).BeginInit();
@@ -66,6 +67,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.Button_Operator)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Search)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Scripts)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Undo)).BeginInit();
             this.SuspendLayout();
             // 
             // Drop_Zone
@@ -270,7 +272,7 @@
             this.Text_Box_Description.ForeColor = System.Drawing.SystemColors.Info;
             this.Text_Box_Description.Location = new System.Drawing.Point(12, 12);
             this.Text_Box_Description.Name = "Text_Box_Description";
-            this.Text_Box_Description.Size = new System.Drawing.Size(404, 164);
+            this.Text_Box_Description.Size = new System.Drawing.Size(358, 164);
             this.Text_Box_Description.TabIndex = 29;
             this.Text_Box_Description.Text = "";
             this.Text_Box_Description.Click += new System.EventHandler(this.Text_Box_Description_Click);
@@ -352,7 +354,7 @@
             // Button_Search
             // 
             this.Button_Search.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.Button_Search.Location = new System.Drawing.Point(1, 270);
+            this.Button_Search.Location = new System.Drawing.Point(399, 270);
             this.Button_Search.Name = "Button_Search";
             this.Button_Search.Size = new System.Drawing.Size(30, 30);
             this.Button_Search.TabIndex = 35;
@@ -373,12 +375,25 @@
             this.Button_Scripts.MouseLeave += new System.EventHandler(this.Button_Scripts_MouseLeave);
             this.Button_Scripts.MouseHover += new System.EventHandler(this.Button_Scripts_MouseHover);
             // 
+            // Button_Undo
+            // 
+            this.Button_Undo.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.Button_Undo.Location = new System.Drawing.Point(1, 270);
+            this.Button_Undo.Name = "Button_Undo";
+            this.Button_Undo.Size = new System.Drawing.Size(30, 30);
+            this.Button_Undo.TabIndex = 37;
+            this.Button_Undo.TabStop = false;
+            this.Button_Undo.Click += new System.EventHandler(this.Button_Undo_Click);
+            this.Button_Undo.MouseLeave += new System.EventHandler(this.Button_Undo_MouseLeave);
+            this.Button_Undo.MouseHover += new System.EventHandler(this.Button_Undo_MouseHover);
+            // 
             // Window
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.ClientSize = new System.Drawing.Size(428, 542);
+            this.Controls.Add(this.Button_Undo);
             this.Controls.Add(this.Button_Scripts);
             this.Controls.Add(this.Button_Search);
             this.Controls.Add(this.Button_Operator);
@@ -420,6 +435,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.Button_Operator)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Search)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Scripts)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Undo)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -453,6 +469,7 @@
         private System.Windows.Forms.PictureBox Button_Operator;
         private System.Windows.Forms.PictureBox Button_Search;
         private System.Windows.Forms.PictureBox Button_Scripts;
+        private System.Windows.Forms.PictureBox Button_Undo;
     }
 }
 
