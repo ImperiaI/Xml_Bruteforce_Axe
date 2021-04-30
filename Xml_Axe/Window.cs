@@ -50,6 +50,7 @@ namespace Xml_Axe
         bool Xml_List_Mode = true;
         bool Percent_Mode = false;
         bool EAW_Mode = true;
+        bool Backup_Mode = false;
         bool Bool_Mode = false;
         bool Script_Mode = false;
         string Temporal_A, Temporal_B = "";
@@ -64,6 +65,7 @@ namespace Xml_Axe
         public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
         public List<string> Found_Scripts = null;
         public List<string> Found_Factions = new List<string>();
+        public List<string> Found_Entities = new List<string>();
         public List<string> File_Collection = new List<string>();
         public List<string> Blacklisted_Xmls = new List<string>();
         public List<string> Temporal_E = new List<string>();
@@ -768,7 +770,8 @@ namespace Xml_Axe
                            from All_Tags in Xml_File.Root.Descendants()
                            where All_Tags.Descendants(Selected_Tag).Any()
                            // Means they are excluded, unless they are EXPLICITLY specified as Selected_Type!
-                           & (All_Tags.Name != "Planet" | Selected_Type == "Planet") 
+                           & (All_Tags.Name != "Planet" | Selected_Type == "Planet")
+                           & (All_Tags.Name != "Particle" | Selected_Type == "Particle")                           
                            & (All_Tags.Name != "Projectile" | Selected_Type == "Projectile")
                            
                            select All_Tags;
@@ -951,7 +954,27 @@ namespace Xml_Axe
                                         string Min_Speed = Instance.Descendants("Min_Speed").Last().Value;
                                         Instance.Descendants("Min_Speed").Last().Value = Process_Percentage(Min_Speed);
                                     }                                
-                                }                               
+                                }
+
+                                // Needs different treatment because its value is seperated by emptyspace
+                                else if (Selected_Tag == "Radar_Icon_Size") 
+                                {
+                                    string Full_Value = "";
+
+                                    foreach (string Factor in Target.Value.Split(' '))
+                                    {    
+                                        float Test = 0;
+
+                                        if (float.TryParse(Factor.Replace(".", ","), out Test)) // Then it contains a number and can be processed
+                                        {
+                                            // Only after first entry, add two emptyspace as new seperators
+                                            if (Full_Value == "") { Full_Value += Process_Percentage(Factor) + "  "; }
+                                            else { Full_Value += Process_Percentage(Factor); break; }
+                                        }
+                                    }
+                                    Target.Value = Full_Value;
+                                }
+
                                 else { Target.Value = Process_Percentage(Target.Value); }
                             }
                             else
@@ -1068,7 +1091,7 @@ namespace Xml_Axe
                     Label_Type_Filter.Text = "Filter Type";
                 }
             }
-            else
+            else if (List_View_Selection.Size.Height < 200) 
             {
                 Text_Box_Tags.Visible = true;
                 Set_UI_Into_Settings_Mode(false);                                     
@@ -1092,7 +1115,7 @@ namespace Xml_Axe
 
         private void Set_UI_Into_Settings_Mode(bool Mode)
         {
-            Control[] Controls = { Button_Search, Button_Run, Button_Percentage, Button_Scripts, Button_Operator, Label_Type_Filter };
+            Control[] Controls = { Button_Search, Button_Run, Button_Undo, Button_Percentage, Button_Scripts, Button_Operator, Label_Type_Filter };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
         }
 
@@ -1466,9 +1489,11 @@ int Shield_Refresh_Rate = 5 # Usually about 30 for capital ships and less for we
 
 int Max_Speed = 1 # In Percent Mode this is bundled to the <Min_Speed> tag, it grows or shrinks both values by the same amount. This Setting ignores objects of Projectile type, unless you explicitly select them as Filter Type.
 
-int Scale_Factor = 1 # Use this in Percent Mode to scale all units in a Mod. Projectiles and Planets will be ignored, unless you explicitly select them as Filter Type. Keep in mind to not scale too much, because the Particles in models are not scaled by this value. Reversible.
+int Scale_Factor = 1 # Use this in Percent Mode to scale all units in a Mod. Projectiles, Particles and Planets will be ignored, unless you explicitly select them as Filter Type. Keep in mind to not scale too much, because the Particles in models are not scaled by this. Reversible.
 
 Int Select_Box_Scale = 100 # Set to 0 and all Ships and Troops will have their select box deactivated. Not reversible because all values in the selection become 0 which can't be scalled. In percent mode this scales the size of all select box circles.
+
+int Radar_Icon_Size = 100 # You can scale this double value tag in Percent Mode, along with Scale_Factor to match the new model sizes on the radar. 
 
 Layer_Z_Adjust = 100 # In percent mode this will scale the distance between all height layer values. Reversible if you figure out the correct % values.
 
@@ -1548,8 +1573,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             {
                 string[] Entries = new string[] {"All Types", "All in loaded Xml", "Faction Name Filter", "", "SpaceUnit", "FighterUnit", "UniqueUnit", 
                     "TransportUnit", "GroundInfantry", "GroundVehicle", "HeroUnit", "", "Squadron", "HeroCompany", "GroundCompany", "Planet",
-                    "Faction", "HardPoint", "Projectile", "", "StarBase", "SpaceBuildable", "SpecialStructure", "TechBuilding", "GroundBase", 
-                    "GroundStructure", "GroundBuildable"
+                    "Faction", "HardPoint", "Projectile", "Particle", "Prop", "", "StarBase", "SpaceBuildable", "SpecialStructure", "TechBuilding", "GroundBase", 
+                    "GroundStructure", "GroundBuildable", "SecondaryStructure", "MultiplayerStructureMarker"
                 };
 
                 foreach(string Entry in Entries) { Combo_Box_Type_Filter.Items.Add(Entry); }
@@ -1699,7 +1724,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         private List<string> Query_For_Entity_Parent(string Parent_Tag_Name)
         {
             IEnumerable<XElement> Instances = null;
-            Temporal_E = new List<string>();
+            Found_Entities = new List<string>();
 
 
             foreach (var Xml in Get_All_Files(Xml_Directory, "xml"))
@@ -1709,7 +1734,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
 
                     if (Parent_Tag_Name == "All Types")
-                    { iConsole(400, 100, "\nSorry, \"All Types\" is not specific enough to search."); return Temporal_E; }
+                    { iConsole(400, 100, "\nSorry, \"All Types\" is not specific enough to search."); return Found_Entities; }
                     else
                     { Instances =
                         from All_Tags in Xml_File.Root.Descendants()
@@ -1728,14 +1753,14 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                         {   // Be aware Queried_Attribute is a variable that decides the outcome!
                             string Faction_Name = (string)Instance.Attribute(Queried_Attribute);
 
-                            if (!Temporal_E.Contains(Faction_Name))
-                            { Temporal_E.Add(Faction_Name); }
+                            if (!Found_Entities.Contains(Faction_Name))
+                            { Found_Entities.Add(Faction_Name); }
                         } catch {}
                     }                 
                 }
             }
 
-            return Temporal_E;
+            return Found_Entities;
         }
 
 
@@ -1743,7 +1768,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         private List<string> Query_For_Tag_Value(string Tag_Name, string Tag_Value)
         {
             IEnumerable<XElement> Instances = null;
-            Temporal_E = new List<string>();
+            Found_Entities = new List<string>();
 
 
             foreach (var Xml in Get_All_Files(Xml_Directory, "xml"))
@@ -1769,15 +1794,15 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                         {   // Be aware Queried_Attribute is a variable that decides the outcome!
                             string Faction_Name = (string)Instance.Attribute(Queried_Attribute);
 
-                            if (!Temporal_E.Contains(Faction_Name))
-                            { Temporal_E.Add(Faction_Name); }
+                            if (!Found_Entities.Contains(Faction_Name))
+                            { Found_Entities.Add(Faction_Name); }
                         }
                         catch { }
                     }
                 }
             }
 
-            return Temporal_E;
+            return Found_Entities;
         }
 
 
@@ -2436,7 +2461,22 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //=====================//
         private void Button_Undo_Click(object sender, EventArgs e)
         {
+            if (Backup_Mode) 
+            { 
+                Backup_Mode = false;
+                Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible 
 
+                if (Text_Box_Description.Visible) { Disable_Description(); }
+            }            
+            else
+            {   Backup_Mode = true;
+                List_View_Selection.Items.Clear();
+                List_View_Selection.Visible = true;
+            }
+
+
+            Zoom_List_View(Backup_Mode);
+            Set_UI_Backup_Mode(!Backup_Mode);
         }
 
         private void Button_Undo_MouseHover(object sender, EventArgs e)
@@ -2451,7 +2491,19 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         {
             // iConsole(400, 100, Properties.Settings.Default.Xml_Directory + "\n" + Properties.Settings.Default.Mod_Directory); return;
 
-            if (Combo_Box_Type_Filter.Focused) 
+            if (Backup_Mode) // Just show the last results
+            {
+                Backup_Mode = false;
+                List_View_Selection.Items.Clear();
+               
+                foreach (string Entry in Found_Entities)
+                { List_View_Selection.Items.Add(Entry); }
+                Set_Checker(List_View_Selection, Color.Black);
+
+                return;
+            }
+
+            else if (Combo_Box_Type_Filter.Focused) 
             {
                 if (Combo_Box_Type_Filter.Text == "") { return; }
                 else if (Combo_Box_Type_Filter.Text == "FighterUnit") { Query_For_Tag_Value("SpaceBehavior", "FIGHTER_LOCOMOTOR"); }
@@ -2461,12 +2513,12 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 }
 
 
-                // Temporal_E because that is the list used in Query_For_Entity_Parent() & Query_For_Tag_Value(), this is actually a hack lol
-                if (Temporal_E.Count > 0) 
+                // Found_Entities because that is the list used in Query_For_Entity_Parent() & Query_For_Tag_Value()
+                if (Found_Entities.Count > 0) 
                 { 
                     List_View_Selection.Items.Clear();
 
-                    foreach (string Parent_Tag_Name in Temporal_E)
+                    foreach (string Parent_Tag_Name in Found_Entities)
                     {
                         if (!List_View_Matches(List_View_Selection, Parent_Tag_Name))
                         { List_View_Selection.Items.Add(Parent_Tag_Name); }
@@ -2494,6 +2546,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
             Xml_List_Mode = true; // Otherwise we set it for the next time
 
+            if (List_View_Selection.Size.Height > 482) { List_View_Selection.Items.Clear(); }
 
 
             IEnumerable<XElement> Instances = null;
@@ -2535,7 +2588,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 }
             }
 
-            Zoom_List_View(false);
+        
+            Zoom_List_View(false); // Minimizing again
             Found_In_Xml(Entity_Name); // Just to select the found entity
         }
 
@@ -2670,7 +2724,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         private void Zoom_List_View(bool Large)
         {
             if (Large)
-            {   Drop_Zone.Visible = false; // Hiding Background
+            {   Drop_Zone.Visible = false; // Hiding Background              
                 List_View_Selection.Size = new Size(367, 482);
                 List_View_Selection.Location = new Point(31, 29);
             } 
@@ -2681,12 +2735,20 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             }     
         }
 
-        private void Set_UI_Into_Script_Mode(bool Mode)
+
+        private void Set_UI_Backup_Mode(bool Mode)
         {
-            Control[] Controls = { Button_Start, Button_Run, Button_Search, 
-                                   Button_Percentage, Button_Operator, Button_Toggle_Settings };
+            Control[] Controls = { Button_Start, Button_Run, Button_Scripts, Button_Percentage, Button_Operator, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
         }
+
+        private void Set_UI_Into_Script_Mode(bool Mode)
+        {
+            Control[] Controls = { Button_Start, Button_Run, Button_Undo, Button_Search, Button_Percentage, Button_Operator, Button_Toggle_Settings };
+            foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
+        }
+
+     
 
 
         private void Run_Script()
