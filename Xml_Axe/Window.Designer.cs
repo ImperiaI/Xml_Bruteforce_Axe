@@ -191,8 +191,10 @@
             // Combo_Box_Type_Filter
             // 
             this.Combo_Box_Type_Filter.BackColor = System.Drawing.SystemColors.ScrollBar;
+            this.Combo_Box_Type_Filter.DropDownHeight = 244;
             this.Combo_Box_Type_Filter.Font = new System.Drawing.Font("Georgia", 12F);
             this.Combo_Box_Type_Filter.FormattingEnabled = true;
+            this.Combo_Box_Type_Filter.IntegralHeight = false;
             this.Combo_Box_Type_Filter.Location = new System.Drawing.Point(220, 272);
             this.Combo_Box_Type_Filter.Name = "Combo_Box_Type_Filter";
             this.Combo_Box_Type_Filter.Size = new System.Drawing.Size(178, 26);
@@ -244,8 +246,10 @@
             // Combo_Box_Entity_Name
             // 
             this.Combo_Box_Entity_Name.BackColor = System.Drawing.SystemColors.ScrollBar;
+            this.Combo_Box_Entity_Name.DropDownHeight = 244;
             this.Combo_Box_Entity_Name.Font = new System.Drawing.Font("Georgia", 12F);
             this.Combo_Box_Entity_Name.FormattingEnabled = true;
+            this.Combo_Box_Entity_Name.IntegralHeight = false;
             this.Combo_Box_Entity_Name.Items.AddRange(new object[] {
             "None"});
             this.Combo_Box_Entity_Name.Location = new System.Drawing.Point(31, 272);
@@ -393,7 +397,6 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.ClientSize = new System.Drawing.Size(428, 542);
-            this.Controls.Add(this.Text_Box_Tags);
             this.Controls.Add(this.Button_Undo);
             this.Controls.Add(this.Button_Scripts);
             this.Controls.Add(this.Button_Search);
@@ -418,6 +421,7 @@
             this.Controls.Add(this.Track_Bar_Tag_Value);
             this.Controls.Add(this.Text_Box_Original_Path);
             this.Controls.Add(this.Drop_Zone);
+            this.Controls.Add(this.Text_Box_Tags);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximumSize = new System.Drawing.Size(444, 580);
             this.MinimumSize = new System.Drawing.Size(444, 580);

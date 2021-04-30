@@ -618,6 +618,20 @@ namespace Xml_Axe
         }
 
 
+        public bool Array_Matches(string[] The_List, string Item, bool Case_Sensitive = true)
+        {
+            if (Case_Sensitive)
+            { 
+                foreach (string Entry in The_List) { if (Entry == Item) { return true; } } 
+            }
+            else 
+            {
+                foreach (string Entry in The_List) { if (Entry.ToLower() == Item.ToLower()) { return true; } } 
+            }
+
+            return false;
+        }
+
         public bool List_Matches(List<string> The_List, string Item)
         {
             bool Is_Match = false;
@@ -688,7 +702,7 @@ namespace Xml_Axe
             }
             else { File_Collection = Get_All_Files(Xml_Directory, "xml"); }
 
-
+        
 
             foreach (var Xml in File_Collection)
             {   
@@ -762,18 +776,43 @@ namespace Xml_Axe
                           select All_Tags;
                     }                
                      
-                    else if (Selected_Tag == "Scale_Factor" | Selected_Tag == "Max_Speed")
+                    else if (Selected_Tag == "Max_Speed")
                     {
                         Query = 6;
 
                         Instances =
                            from All_Tags in Xml_File.Root.Descendants()
                            where All_Tags.Descendants(Selected_Tag).Any()
-                           // Means they are excluded, unless they are EXPLICITLY specified as Selected_Type!
-                           & (All_Tags.Name != "Planet" | Selected_Type == "Planet")
+                           // Means they are excluded, unless they are EXPLICITLY specified as Selected_Type!                      
                            & (All_Tags.Name != "Particle" | Selected_Type == "Particle")                           
                            & (All_Tags.Name != "Projectile" | Selected_Type == "Projectile")
                            
+                           select All_Tags;
+                    }
+
+                    else if (Selected_Tag == "Scale_Factor")
+                    {
+                        Query = 7;
+
+                        /*
+                        Only this Scale_Factor_List matches to "All Types", because otherwise the change of Scale_Factor would affect all of these types:
+                        Planet, Projectile, Particle
+                        Prop, SpaceProp, Container, Marker, MiscObject, SpecialEffect, MOV_Cinematic,  
+                        SpacePrimarySkydome, SpaceSecondarySkydome, LandPrimarySkydome, LandSecondarySkydome, 
+
+                        StarBase, SpaceBuildable, SpecialStructure, SecondaryStructure, MultiplayerStructureMarker, 
+                        GroundBase, GroundStructure, GroundBuildable, 
+                        */
+
+                        List<string> Scale_Factor_List = new List<string>() { "SpaceUnit", "UniqueUnit", "StarBase" };
+                        // Scale_Factor_List.Add(Combo_Box_Type_Filter.Text); // This little gimmick because the OR operator in Linq is horrible... 
+                        
+
+                        Instances =
+                           from All_Tags in Xml_File.Root.Descendants()
+                           where List_Matches(Scale_Factor_List, All_Tags.Name.ToString())
+                           where All_Tags.Descendants(Selected_Tag).Any()
+
                            select All_Tags;
                     }
                   
@@ -782,7 +821,7 @@ namespace Xml_Axe
                         string Required_Tag = "Unit_Abilities_Data";
                         if (Selected_Tag == "Enable_Passive_Abilities") { Required_Tag = "Abilities"; }
 
-                        Query = 7;
+                        Query = 8;
 
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
@@ -791,7 +830,7 @@ namespace Xml_Axe
                     }
                     else // Target all entities in the whole Mod!
                     {
-                        Query = 8;
+                        Query = 9;
 
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
@@ -1489,7 +1528,7 @@ int Shield_Refresh_Rate = 5 # Usually about 30 for capital ships and less for we
 
 int Max_Speed = 1 # In Percent Mode this is bundled to the <Min_Speed> tag, it grows or shrinks both values by the same amount. This Setting ignores objects of Projectile type, unless you explicitly select them as Filter Type.
 
-int Scale_Factor = 1 # Use this in Percent Mode to scale all units in a Mod. Projectiles, Particles and Planets will be ignored, unless you explicitly select them as Filter Type. Keep in mind to not scale too much, because the Particles in models are not scaled by this. Reversible.
+int Scale_Factor = 1 # Use this in Percent Mode to scale all units in a Mod. NOTE: The *All Types* filter only means SpaceUnit, UniqueUnit and StarBase. You need to select all other entities explicitly as Filter Type: TransportUnit, Space Heroes, Projectile, Particle and Planet will be ignored, unless you scale them type by type. Keep in mind to not scale too much, because the Particles in models are not scaled by this. Reversible.
 
 Int Select_Box_Scale = 100 # Set to 0 and all Ships and Troops will have their select box deactivated. Not reversible because all values in the selection become 0 which can't be scalled. In percent mode this scales the size of all select box circles.
 
@@ -1569,12 +1608,13 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             if (!EAW_Mode) // Only for EAW Mode
             { Combo_Box_Type_Filter.Items.Add("All Types"); }
 
-            else
+            else  
             {
                 string[] Entries = new string[] {"All Types", "All in loaded Xml", "Faction Name Filter", "", "SpaceUnit", "FighterUnit", "UniqueUnit", 
                     "TransportUnit", "GroundInfantry", "GroundVehicle", "HeroUnit", "", "Squadron", "HeroCompany", "GroundCompany", "Planet",
-                    "Faction", "HardPoint", "Projectile", "Particle", "Prop", "", "StarBase", "SpaceBuildable", "SpecialStructure", "TechBuilding", "GroundBase", 
-                    "GroundStructure", "GroundBuildable", "SecondaryStructure", "MultiplayerStructureMarker"
+                    "Faction", "HardPoint", "Projectile", "Particle", "", "StarBase", "SpaceBuildable", "SpecialStructure", "SpaceProp", "Prop", "TechBuilding", "GroundBase", 
+                    "GroundStructure", "GroundBuildable", "", "Container", "Marker", "MiscObject", "SecondaryStructure", "MultiplayerStructureMarker", "", 
+                    "SpacePrimarySkydome", "SpaceSecondarySkydome", "LandPrimarySkydome", "LandSecondarySkydome",
                 };
 
                 foreach(string Entry in Entries) { Combo_Box_Type_Filter.Items.Add(Entry); }
