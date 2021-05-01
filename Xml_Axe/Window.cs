@@ -52,9 +52,7 @@ namespace Xml_Axe
         bool User_Input = false;
         bool Xml_List_Mode = true;
 
-        bool Percent_Mode = false;
-        bool Bool_Mode = false;
-        bool Random_Mode = false;
+        string Operation_Mode = "Normal";
 
         bool EAW_Mode = true;
         bool Backup_Mode = false;  
@@ -362,7 +360,7 @@ namespace Xml_Axe
             if (Combo_Box_Tag_Value.Text.StartsWith("-")) { Operator = "-"; } // Remain -
 
 
-            if (Random_Mode)
+            if (Operation_Mode == "Random")
             {   Max_Float_Range = (float)Track_Bar_Tag_Value.Value;
                 Min_Float_Range = (float)Track_Bar_Tag_Value.Value / 10;
 
@@ -375,7 +373,7 @@ namespace Xml_Axe
             {                
                 string Percentage = "";
            
-                if (Percent_Mode) // Don't place this above!
+                if (Operation_Mode == "Percent") // Don't place this above!
                 {
                     if (!Combo_Box_Tag_Value.Text.StartsWith("-")) { Operator = "+"; } // Defaulting Prefix to + 
                     Percentage = "%";
@@ -387,7 +385,7 @@ namespace Xml_Axe
 
             User_Input = true;
 
-            // Check to disable Bool_Mode
+            // Check to disable Bool Mode
             Combo_Box_Tag_Value_TextChanged(null, null); // This must run with User_Input
         }
 
@@ -454,7 +452,7 @@ namespace Xml_Axe
             if (Combo_Box_Tag_Name.Text == "") { return; }
 
 
-            if (Percent_Mode && Combo_Box_Tag_Value.Text == "-100%")
+            if (Operation_Mode == "Percent" && Combo_Box_Tag_Value.Text == "-100%")
             {   iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nRemoving -100% means set the value to 0 \nare you sure about that?");
                 if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
             }
@@ -1018,7 +1016,7 @@ namespace Xml_Axe
                         Changed_Entities++;
                         foreach (XElement Target in Instance.Descendants(Selected_Tag))
                         {
-                            if (Percent_Mode)
+                            if (Operation_Mode == "Percent")
                             {   string Full_Value = "";
 
 
@@ -1710,11 +1708,11 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         private void Combo_Box_Entity_Name_TextChanged(object sender, EventArgs e)
         {          
             if (Combo_Box_Entity_Name.Text == "Insert_Random_Float") 
-            { 
-                Random_Mode = true;
+            {
+                Operation_Mode = "Random";
                 Track_Bar_Tag_Value_Scroll(null, null); // Showing the 2 float values in the textbox for us.              
             }
-            else { Disable_Description(); Random_Mode = false; }
+            else { Disable_Description(); Operation_Mode = "Normal"; }
          
         }
 
@@ -1753,7 +1751,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     
             }
 
-            if (Percent_Mode) { Scale_Factor = 10; } // Percentage Override
+            if (Operation_Mode == "Percent") { Scale_Factor = 10; } // Percentage Override
           
             if (Last_Combo_Box_Entity_Name == "Faction Name Filter")
             {   
@@ -1937,11 +1935,11 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     Combo_Box_Type_Filter.Text = "Planet";                 
                     break;
                 case "Rebalance_Everything":
-                    if (!Percent_Mode) { Button_Percentage_Click(null, null); Button_Percentage_MouseLeave(null, null); }               
+                    if (Operation_Mode != "Percent") { Button_Percentage_Click(null, null); Button_Percentage_MouseLeave(null, null); }               
                     break;
                  case "Scale_Galaxies":
                     Combo_Box_Type_Filter.Text = "Planet";
-                    if (!Percent_Mode) { Button_Percentage_Click(null, null); Button_Percentage_MouseLeave(null, null); }               
+                    if (Operation_Mode != "Percent") { Button_Percentage_Click(null, null); Button_Percentage_MouseLeave(null, null); }               
                     break;
 
                   
@@ -2160,12 +2158,12 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Track_Bar_Tag_Value.Visible = false;
                 // Combo_Box_Tag_Value.Items.Clear(); // Disabled
 
-                Bool_Mode = false; Percent_Mode = false;
+                Operation_Mode = "Normal";
                 Button_Operator_MouseLeave(null, null);
             }
             else if (Is_Match(Tag_Format, "bool"))
             {
-                Bool_Mode = true; Percent_Mode = false;
+                Operation_Mode = "Bool";
                 Button_Operator_MouseLeave(null, null);
                 Button_Percentage.Visible = false;
                 Track_Bar_Tag_Value.Visible = false;
@@ -2189,7 +2187,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             }
             else // if (Is_Match(Tag_Format, "int")) // It will probably be int
             {
-                if (Percent_Mode) { Scale_Factor = 10; }
+                if (Operation_Mode == "Percent") { Scale_Factor = 10; }
                 else 
                 {
                     int.TryParse(Tag_Format, out Scale_Factor);
@@ -2198,7 +2196,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 // iConsole(400, 200, "Scale is " + Scale_Factor);
 
 
-                Bool_Mode = false;
+                Operation_Mode = "Normal";
                 Button_Operator_MouseLeave(null, null);
 
 
@@ -2231,12 +2229,12 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         { 
             if (User_Input) 
             {   Disable_Description();
-                if (Percent_Mode & !Combo_Box_Tag_Value.Text.Contains("%")) { Combo_Box_Tag_Value.Text += "%"; }
+                if (Operation_Mode == "Percent" & !Combo_Box_Tag_Value.Text.Contains("%")) { Combo_Box_Tag_Value.Text += "%"; }
 
                 if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "False")
                     | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "Yes") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "No"))
-                { Bool_Mode = true; }
-                else { Bool_Mode = false; }
+                { Operation_Mode = "Bool"; }
+                else { Operation_Mode = "Normal"; }
             }
 
             Button_Operator_MouseLeave(null, null); // Check if bool and refresh
@@ -2751,16 +2749,17 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         private void Button_Percentage_Click(object sender, EventArgs e)
         {
-            if (Percent_Mode) 
-            {   Percent_Mode = false;
+            if (Operation_Mode == "Percent")
+            {   
+                Operation_Mode = "Normal";
                 User_Input = false; // Un-Percenting
                 Combo_Box_Tag_Value.Text = Remove_Operators(Combo_Box_Tag_Value.Text);
                 User_Input = true;
 
                 if (Text_Box_Description.Text.StartsWith("While in Percent Mode")) { Text_Box_Description.Visible = false; }
             }
-            else 
-            {   Percent_Mode = true; // Needs to be set BEFORE Process_Tags()
+            else
+            {   Operation_Mode = "Percent"; // Needs to be set BEFORE Process_Tags()
                 Combo_Box_Tag_Value.Text = ""; // Prepare for percent input
                 Process_Tags(Text_Box_Tags.Text);
 
@@ -2782,7 +2781,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         { Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent_Lit); }
 
         private void Button_Percentage_MouseLeave(object sender, EventArgs e)
-        {   if (Percent_Mode) { Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent_Lit);  }
+        {
+            if (Operation_Mode == "Percent") { Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent_Lit); }
             else { Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent); }
         }
 
@@ -3000,7 +3000,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         private void Button_Operator_Click(object sender, EventArgs e)
         {   
-            if (Bool_Mode)
+            if ( Operation_Mode == "Bool")
             {   if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True"))
                 {   Combo_Box_Tag_Value.Text = "False";
                     Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool);
@@ -3021,7 +3021,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool_Lit);
                 }        
             }
-            else if (Combo_Box_Tag_Value.Text != "") // & Percent_Mode)  // Toggle
+            else if (Combo_Box_Tag_Value.Text != "") // & Operation_Mode == "Percent")  // Toggle
             {
                 string The_Value = Combo_Box_Tag_Value.Text;
 
@@ -3034,7 +3034,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         private void Button_Operator_MouseHover(object sender, EventArgs e)
         {
-            if (Bool_Mode)
+            if (Operation_Mode == "Bool")
             {   if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "Yes"))
                 { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool_Lit); }
                 else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool); }
@@ -3048,7 +3048,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         private void Button_Operator_MouseLeave(object sender, EventArgs e)
         {
-            if (Bool_Mode)
+            if (Operation_Mode == "Bool")
             {   if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "Yes")) 
                 { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool_Lit); }
                 else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool); }
