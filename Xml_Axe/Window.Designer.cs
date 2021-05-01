@@ -251,7 +251,8 @@
             this.Combo_Box_Entity_Name.FormattingEnabled = true;
             this.Combo_Box_Entity_Name.IntegralHeight = false;
             this.Combo_Box_Entity_Name.Items.AddRange(new object[] {
-            "None"});
+            "None",
+            "Insert_Random_Float"});
             this.Combo_Box_Entity_Name.Location = new System.Drawing.Point(31, 272);
             this.Combo_Box_Entity_Name.Name = "Combo_Box_Entity_Name";
             this.Combo_Box_Entity_Name.Size = new System.Drawing.Size(178, 26);

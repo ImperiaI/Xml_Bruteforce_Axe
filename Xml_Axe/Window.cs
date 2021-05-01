@@ -45,13 +45,20 @@ namespace Xml_Axe
 
 
         int Scale_Factor = 10;
+        float Min_Float_Range = 0.1F;
+        float Max_Float_Range = 1.0F;
+
         string Tag_List = "";
         bool User_Input = false;
         bool Xml_List_Mode = true;
+
         bool Percent_Mode = false;
-        bool EAW_Mode = true;
-        bool Backup_Mode = false;
         bool Bool_Mode = false;
+        bool Random_Mode = false;
+
+        bool EAW_Mode = true;
+        bool Backup_Mode = false;  
+
         bool Script_Mode = false;
         string Temporal_A, Temporal_B = "";
         string Queried_Attribute = "Name"; // Preseting
@@ -350,19 +357,35 @@ namespace Xml_Axe
 
         private void Track_Bar_Tag_Value_Scroll(object sender, EventArgs e)
         {   User_Input = false;
-            string Operator = "";
-            string Percentage = "";
 
+            string Operator = "";     
             if (Combo_Box_Tag_Value.Text.StartsWith("-")) { Operator = "-"; } // Remain -
 
-            if (Percent_Mode) 
-            {   if (!Combo_Box_Tag_Value.Text.StartsWith("-")) { Operator = "+"; } // Defaulting Prefix to + 
-                Percentage = "%";
+
+            if (Random_Mode)
+            {   Max_Float_Range = (float)Track_Bar_Tag_Value.Value;
+                Min_Float_Range = (float)Track_Bar_Tag_Value.Value / 10;
+
+                string Prefix = "1.";
+                if (Track_Bar_Tag_Value.Value == 10) { Prefix = ""; Max_Float_Range = 2; }
+
+                Combo_Box_Tag_Value.Text = (Operator + Min_Float_Range + " | " + Operator + Prefix + Max_Float_Range).Replace(",", ".");             
+            }
+            else
+            {                
+                string Percentage = "";
+           
+                if (Percent_Mode) // Don't place this above!
+                {
+                    if (!Combo_Box_Tag_Value.Text.StartsWith("-")) { Operator = "+"; } // Defaulting Prefix to + 
+                    Percentage = "%";
+                }
+
+                Combo_Box_Tag_Value.Text = Operator + (Track_Bar_Tag_Value.Value * Scale_Factor) + Percentage;
             }
 
-            Combo_Box_Tag_Value.Text = Operator + (Track_Bar_Tag_Value.Value * Scale_Factor) + Percentage;
-            User_Input = true;
 
+            User_Input = true;
 
             // Check to disable Bool_Mode
             Combo_Box_Tag_Value_TextChanged(null, null); // This must run with User_Input
@@ -450,7 +473,7 @@ namespace Xml_Axe
 
 
             // Storing last search
-            if (Combo_Box_Entity_Name.Text == "None") { Properties.Settings.Default.Entity_Name = ""; }
+            if (Combo_Box_Entity_Name.Text == "None" | Combo_Box_Entity_Name.Text == "Insert_Random_Float") { Properties.Settings.Default.Entity_Name = ""; }
             else { Properties.Settings.Default.Entity_Name = Wash_String(Combo_Box_Entity_Name.Text); }
 
 
@@ -485,7 +508,7 @@ namespace Xml_Axe
                     string Error_Text = "\nI'm sorry, no entries with Attribute Name \"" + Queried_Attribute
                     + "\"\nand Attribute Value \"" + Combo_Box_Entity_Name.Text + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
 
-                    if (Combo_Box_Entity_Name.Text == "" | Combo_Box_Entity_Name.Text == "None") // Then the query went by filter, which is name of the Entities root tag
+                    if (Combo_Box_Entity_Name.Text == "" | Combo_Box_Entity_Name.Text == "None" | Combo_Box_Entity_Name.Text == "Insert_Random_Float") // Then the query went by filter, which is name of the Entities root tag
                     {
                         Error_Text = "\nI'm sorry, no entries with Entity Parent Tag Name \"" + Combo_Box_Type_Filter.Text
                         + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
@@ -888,7 +911,18 @@ namespace Xml_Axe
                             }
                             else if (Combo_Box_Tag_Name.Text == "Major_Heroes_To_Minor")
                             { Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Is_Named_Hero", Apply_Changes); }
+                            
+                            else if (Combo_Box_Tag_Name.Text == "Scale_Galaxies")
+                            {
+                                if (Instance.Name == "Planet")  // Scale Factor is only supposed to affect Planets in this context
+                                { Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Scale_Factor", Apply_Changes); }
+                                
+                                Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Galactic_Position", Apply_Changes); 
+                            }
+                                   
+
                                   
+
                             else if (Combo_Box_Tag_Name.Text != "Rebalance_Everything") // This one would usually trigger
                             {                            
                                 Set_Tag(Changed_Xmls, Instance, Selected_Xml, Selected_Tag, Apply_Changes);
@@ -977,6 +1011,7 @@ namespace Xml_Axe
                                 { return; } // Failsafe, we must not apply "true" to planets that have no ground maps - or the game will crash!
                             }
                         }
+                                    
 
                
 
@@ -984,24 +1019,46 @@ namespace Xml_Axe
                         foreach (XElement Target in Instance.Descendants(Selected_Tag))
                         {
                             if (Percent_Mode)
-                            {
-                                if (Selected_Tag == "Max_Speed")  
-                                {   Target.Value = Process_Percentage(Target.Value);
+                            {   string Full_Value = "";
+
+
+                                if (Selected_Tag == "Galactic_Position")
+                                {
+                                    string[] Position = Wash_String(Target.Value).Split(',');
+
+                                    for (int i = 0; i < Position.Count(); i++)
+                                    {                                     
+                                        // Only after first entry, add two emptyspace as new seperators
+                                        if (i < Position.Count() - 1) { Full_Value += Process_Percentage(Position[i]) + ", "; }
+                                        else { Full_Value += Process_Percentage(Position[i]); break; }
+                                    }
+                                    Target.Value = Full_Value;
+
+                                }
+                                else if (Selected_Tag == "Scale_Factor")
+                                {
+                                    int Weaker = 1; // In Galaxy scale the scaling is weakened, in order to have this value weaker then the full 100%
+                                    if (Combo_Box_Tag_Name.Text == "Scale_Galaxies") { Weaker = 8; } // 3 means 33% of the amount it would usually scale.
+
+                                    Target.Value = Process_Percentage(Target.Value, Weaker);                                   
+                                }
+
+                                else if (Selected_Tag == "Max_Speed")
+                                {
+                                    Target.Value = Process_Percentage(Target.Value);
 
                                     if (Instance.Descendants("Min_Speed").Any()) // Min_Speed is bundled to Max_Speed
                                     {
                                         string Min_Speed = Instance.Descendants("Min_Speed").Last().Value;
                                         Instance.Descendants("Min_Speed").Last().Value = Process_Percentage(Min_Speed);
-                                    }                                
+                                    }
                                 }
 
                                 // Needs different treatment because its value is seperated by emptyspace
-                                else if (Selected_Tag == "Radar_Icon_Size") 
+                                else if (Selected_Tag == "Radar_Icon_Size")
                                 {
-                                    string Full_Value = "";
-
                                     foreach (string Factor in Target.Value.Split(' '))
-                                    {    
+                                    {
                                         float Test = 0;
 
                                         if (float.TryParse(Factor.Replace(".", ","), out Test)) // Then it contains a number and can be processed
@@ -1031,7 +1088,7 @@ namespace Xml_Axe
 
         //===========================//
 
-        public string Process_Percentage(string The_Value)
+        public string Process_Percentage(string The_Value, int Weakening = 1)
         {   
             try // Refactoring the old value!
             {   
@@ -1043,10 +1100,13 @@ namespace Xml_Axe
                 Int32.TryParse(Remove_Operators(Combo_Box_Tag_Value.Text), out Percentage);
 
                 if (Combo_Box_Tag_Value.Text.Contains("-")) // Shrink Value
-                { The_Value = (Original_Value - ((Original_Value / 100) * Percentage)).ToString(); }
+                { The_Value = (Original_Value - ((Original_Value / 100) * (float)(Percentage / Weakening))).ToString(); }
+                    
 
                 else // if (Combo_Box_Tag_Value.Text.Contains("+")) // Grow Value
-                { The_Value = (Original_Value + ((Original_Value / 100) * Percentage)).ToString(); }
+                { The_Value = (Original_Value + ((Original_Value / 100) * (float)(Percentage / Weakening))).ToString(); }
+
+                // iConsole(400, 100, Original_Value + " +- (" + (Original_Value / 100) + " / " + (float)(Percentage / Weakening) + ") = " + The_Value);
 
             } catch {}
 
@@ -1530,6 +1590,10 @@ int Max_Speed = 1 # In Percent Mode this is bundled to the <Min_Speed> tag, it g
 
 int Scale_Factor = 1 # Use this in Percent Mode to scale all units in a Mod. NOTE: The *All Types* filter only means SpaceUnit, UniqueUnit and StarBase. You need to select all other entities explicitly as Filter Type: TransportUnit, Space Heroes, Projectile, Particle and Planet will be ignored, unless you scale them type by type. Keep in mind to not scale too much, because the Particles in models are not scaled by this. Reversible.
 
+int Randomise_Planet_Scales = 10 # This value sets the maximal scale value for planets. They are randomly assigned a size between 0.6 and X.
+
+int Scale_Galaxies = 100 # Adjusts size of Planets and their *Galaxy_Core_Art_Model* and scales their relative position to each other through the Galactic_Position tag. If you are lucky and single GCs are sorted within certain files you can *ignore their files and scale GCs individually.
+
 Int Select_Box_Scale = 100 # Set to 0 and all Ships and Troops will have their select box deactivated. Not reversible because all values in the selection become 0 which can't be scalled. In percent mode this scales the size of all select box circles.
 
 int Radar_Icon_Size = 100 # You can scale this double value tag in Percent Mode, along with Scale_Factor to match the new model sizes on the radar. 
@@ -1644,7 +1708,15 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         //===========================//
         private void Combo_Box_Entity_Name_TextChanged(object sender, EventArgs e)
-        { Disable_Description(); }
+        {          
+            if (Combo_Box_Entity_Name.Text == "Insert_Random_Float") 
+            { 
+                Random_Mode = true;
+                Track_Bar_Tag_Value_Scroll(null, null); // Showing the 2 float values in the textbox for us.              
+            }
+            else { Disable_Description(); Random_Mode = false; }
+         
+        }
 
 
         private void Combo_Box_Entity_Name_KeyPress(object sender, KeyPressEventArgs e)
@@ -1688,7 +1760,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Last_Combo_Box_Entity_Name = "";
                 Combo_Box_Entity_Name.Text = "";
                 Combo_Box_Entity_Name.Items.Clear();
-                Combo_Box_Entity_Name.Items.Add("None");           
+                Combo_Box_Entity_Name.Items.Add("None");
+                Combo_Box_Entity_Name.Items.Add("Insert_Random_Float");  
             } // Don't chain here!
 
 
@@ -1853,7 +1926,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             bool Reset_Type_Filter = false;
 
 
-            if (Last_Combo_Box_Tag_Name == "Rebalance_Everything") // Auto-Deactivating Percent mode
+            // Auto-Deactivating Percent mode// Auto-Deactivating Percent mode
+            if (Last_Combo_Box_Tag_Name == "Rebalance_Everything" || Last_Combo_Box_Tag_Name == "Scale_Galaxies") 
             { Button_Percentage_Click(null, null); Button_Percentage_MouseLeave(null, null); }
 
 
@@ -1865,6 +1939,11 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 case "Rebalance_Everything":
                     if (!Percent_Mode) { Button_Percentage_Click(null, null); Button_Percentage_MouseLeave(null, null); }               
                     break;
+                 case "Scale_Galaxies":
+                    Combo_Box_Type_Filter.Text = "Planet";
+                    if (!Percent_Mode) { Button_Percentage_Click(null, null); Button_Percentage_MouseLeave(null, null); }               
+                    break;
+
                   
                 case "Is_Targetable":
                     Combo_Box_Type_Filter.Text = "HardPoint";
@@ -2947,8 +3026,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 string The_Value = Combo_Box_Tag_Value.Text;
 
                 if (The_Value.Contains("-")) { Combo_Box_Tag_Value.Text = The_Value.Replace("-", "+"); }
-                else if (The_Value.Contains("+")) { Combo_Box_Tag_Value.Text = The_Value.Replace("+", "-"); }
-                else { Combo_Box_Tag_Value.Text = "-" + The_Value; }               
+                else if (The_Value.Contains("+")) { Combo_Box_Tag_Value.Text = The_Value.Replace("+", "-"); }         
+                else { Combo_Box_Tag_Value.Text = "-" + The_Value; }
             }
 
         }
