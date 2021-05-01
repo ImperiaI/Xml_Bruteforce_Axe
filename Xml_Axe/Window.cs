@@ -48,6 +48,9 @@ namespace Xml_Axe
         float Min_Float_Range = 0.1F;
         float Max_Float_Range = 1.0F;
 
+        int Min_Int_Range = 1;
+        int Max_Int_Range = 10;
+
         string Tag_List = "";
         bool User_Input = false;
         bool Xml_List_Mode = true;
@@ -70,6 +73,7 @@ namespace Xml_Axe
         public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
         public List<string> Found_Scripts = null;
         public List<string> Found_Factions = new List<string>();
+        public List<string> Category_Masks = new List<string>();
         public List<string> Found_Entities = new List<string>();
         public List<string> File_Collection = new List<string>();
         public List<string> Blacklisted_Xmls = new List<string>();
@@ -361,6 +365,11 @@ namespace Xml_Axe
 
 
             if (Operation_Mode == "Random")
+            {   Min_Int_Range = 1;
+                Max_Int_Range = Track_Bar_Tag_Value.Value;       
+                Combo_Box_Tag_Value.Text = (Operator + Min_Int_Range + " | " + Operator + Max_Int_Range).Replace(",", ".");
+            }
+            else if (Operation_Mode == "Random_Float")
             {   Max_Float_Range = (float)Track_Bar_Tag_Value.Value;
                 Min_Float_Range = (float)Track_Bar_Tag_Value.Value / 10;
 
@@ -369,6 +378,7 @@ namespace Xml_Axe
 
                 Combo_Box_Tag_Value.Text = (Operator + Min_Float_Range + " | " + Operator + Prefix + Max_Float_Range).Replace(",", ".");             
             }
+   
             else
             {                
                 string Percentage = "";
@@ -471,7 +481,8 @@ namespace Xml_Axe
 
 
             // Storing last search
-            if (Combo_Box_Entity_Name.Text == "None" | Combo_Box_Entity_Name.Text == "Insert_Random_Float") { Properties.Settings.Default.Entity_Name = ""; }
+            if (Combo_Box_Entity_Name.Text == "None" | Combo_Box_Entity_Name.Text == "Insert_Random_Int" | Combo_Box_Entity_Name.Text == "Insert_Random_Float")
+            { Properties.Settings.Default.Entity_Name = ""; }
             else { Properties.Settings.Default.Entity_Name = Wash_String(Combo_Box_Entity_Name.Text); }
 
 
@@ -506,7 +517,7 @@ namespace Xml_Axe
                     string Error_Text = "\nI'm sorry, no entries with Attribute Name \"" + Queried_Attribute
                     + "\"\nand Attribute Value \"" + Combo_Box_Entity_Name.Text + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
 
-                    if (Combo_Box_Entity_Name.Text == "" | Combo_Box_Entity_Name.Text == "None" | Combo_Box_Entity_Name.Text == "Insert_Random_Float") // Then the query went by filter, which is name of the Entities root tag
+                    if (Combo_Box_Entity_Name.Text == "" | Combo_Box_Entity_Name.Text == "None" | Combo_Box_Entity_Name.Text == "Insert_Random_Int" | Combo_Box_Entity_Name.Text == "Insert_Random_Float") // Then the query went by filter, which is name of the Entities root tag
                     {
                         Error_Text = "\nI'm sorry, no entries with Entity Parent Tag Name \"" + Combo_Box_Type_Filter.Text
                         + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
@@ -764,9 +775,20 @@ namespace Xml_Axe
                            select All_Tags; // Last() because it overwrites the first occurances ingame
                     }
 
-                    else if (Entity_Name != "" & Entity_Name != "None") // Select a single Entity by Name
+                    else if (Combo_Box_Type_Filter.Text == "Category Mask Filter")
                     {
                         Query = 3;
+
+                        Instances =
+                           from All_Tags in Xml_File.Root.Descendants() // Entity_Name means the Faction name here
+                           where All_Tags.Descendants("CategoryMask").Any() // We need this to prevent null exceptions
+                           where All_Tags.Descendants("CategoryMask").Last().Value.Contains(Entity_Name)
+                           select All_Tags; // Last() because it overwrites the first occurances ingame
+                    }
+
+                    else if (Entity_Name != "" & Entity_Name != "None") // Select a single Entity by Name
+                    {
+                        Query = 4;
 
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
@@ -777,7 +799,7 @@ namespace Xml_Axe
                     // Match by Tag Value
                     else if (Selected_Type == "FighterUnit") // If Fighter Locomotor can be found we spoof the fake tagname "FighterUnit"
                     {
-                        Query = 4;
+                        Query = 5;
                         
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
@@ -789,7 +811,7 @@ namespace Xml_Axe
 
                     else if (Selected_Type != "" & Combo_Box_Type_Filter.Text != "All Types") // By Entity Type
                     {
-                        Query = 5;
+                        Query = 6;
 
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
@@ -799,7 +821,7 @@ namespace Xml_Axe
                      
                     else if (Selected_Tag == "Max_Speed")
                     {
-                        Query = 6;
+                        Query = 7;
 
                         Instances =
                            from All_Tags in Xml_File.Root.Descendants()
@@ -813,7 +835,7 @@ namespace Xml_Axe
 
                     else if (Selected_Tag == "Scale_Factor")
                     {
-                        Query = 7;
+                        Query = 8;
 
                         /*
                         Only this Scale_Factor_List matches to "All Types", because otherwise the change of Scale_Factor would affect all of these types:
@@ -842,7 +864,7 @@ namespace Xml_Axe
                         string Required_Tag = "Unit_Abilities_Data";
                         if (Selected_Tag == "Enable_Passive_Abilities") { Required_Tag = "Abilities"; }
 
-                        Query = 8;
+                        Query = 9;
 
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
@@ -851,7 +873,7 @@ namespace Xml_Axe
                     }
                     else // Target all entities in the whole Mod!
                     {
-                        Query = 9;
+                        Query = 10;
 
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
@@ -1137,8 +1159,9 @@ namespace Xml_Axe
         private void Button_Toggle_Settings_Click(object sender, EventArgs e)
         {
             if (Text_Box_Tags.Visible == true)
-            {   
-                if (Combo_Box_Type_Filter.Text != "Faction Name Filter") { Button_Search.Visible = true; }
+            {
+                if (Combo_Box_Type_Filter.Text != "Faction Name Filter" && Combo_Box_Type_Filter.Text != "Category Mask Filter") 
+                { Button_Search.Visible = true; }
                 Text_Box_Tags.Visible = false;
                 Set_UI_Into_Settings_Mode(true);    
                 Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller);
@@ -1174,11 +1197,18 @@ namespace Xml_Axe
                     Label_Type_Filter.Text = "Parent Name";
                 }
 
+
+             
+                else if (Combo_Box_Type_Filter.Text == "Category Mask Filter")
+                {   
+                    EAW_Mode = true;
+                    Label_Entity_Name.Text = "Category Mask";
+                }
+
                 // This Check needs to run AFTER Reset_Tag_Box();
                 else if (Combo_Box_Type_Filter.Text == "Faction Name Filter")
                 {
-                    EAW_Mode = true;
-                   
+                    EAW_Mode = true;                 
                     Label_Entity_Name.Text = "Faction Name";
                 } 
                 else
@@ -1588,8 +1618,6 @@ int Max_Speed = 1 # In Percent Mode this is bundled to the <Min_Speed> tag, it g
 
 int Scale_Factor = 1 # Use this in Percent Mode to scale all units in a Mod. NOTE: The *All Types* filter only means SpaceUnit, UniqueUnit and StarBase. You need to select all other entities explicitly as Filter Type: TransportUnit, Space Heroes, Projectile, Particle and Planet will be ignored, unless you scale them type by type. Keep in mind to not scale too much, because the Particles in models are not scaled by this. Reversible.
 
-int Randomise_Planet_Scales = 10 # This value sets the maximal scale value for planets. They are randomly assigned a size between 0.6 and X.
-
 int Scale_Galaxies = 100 # Adjusts size of Planets and their *Galaxy_Core_Art_Model* and scales their relative position to each other through the Galactic_Position tag. If you are lucky and single GCs are sorted within certain files you can *ignore their files and scale GCs individually.
 
 Int Select_Box_Scale = 100 # Set to 0 and all Ships and Troops will have their select box deactivated. Not reversible because all values in the selection become 0 which can't be scalled. In percent mode this scales the size of all select box circles.
@@ -1670,9 +1698,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             if (!EAW_Mode) // Only for EAW Mode
             { Combo_Box_Type_Filter.Items.Add("All Types"); }
 
-            else  
+            else   
             {
-                string[] Entries = new string[] {"All Types", "All in loaded Xml", "Faction Name Filter", "", "SpaceUnit", "FighterUnit", "UniqueUnit", 
+                string[] Entries = new string[] {"All Types", "All in loaded Xml", "Faction Name Filter", "Category Mask Filter", "", "SpaceUnit", "FighterUnit", "UniqueUnit", 
                     "TransportUnit", "GroundInfantry", "GroundVehicle", "HeroUnit", "", "Squadron", "HeroCompany", "GroundCompany", "Planet",
                     "Faction", "HardPoint", "Projectile", "Particle", "", "StarBase", "SpaceBuildable", "SpecialStructure", "SpaceProp", "Prop", "TechBuilding", "GroundBase", 
                     "GroundStructure", "GroundBuildable", "", "Container", "Marker", "MiscObject", "SecondaryStructure", "MultiplayerStructureMarker", "", 
@@ -1707,10 +1735,34 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //===========================//
         private void Combo_Box_Entity_Name_TextChanged(object sender, EventArgs e)
         {          
-            if (Combo_Box_Entity_Name.Text == "Insert_Random_Float") 
+            if (Combo_Box_Entity_Name.Text == "Insert_Random_Int") 
             {
                 Operation_Mode = "Random";
-                Track_Bar_Tag_Value_Scroll(null, null); // Showing the 2 float values in the textbox for us.              
+                Track_Bar_Tag_Value_Scroll(null, null); // Showing the 2 float values in the textbox for us.  
+
+                Label_Tag_Value.Text = "Range of Int values";
+
+                if (Match_Setting("Show_Tooltip"))
+                {   Text_Box_Description.Visible = true;
+
+                    // Special Tooltip, that describes the Percent Mode                   
+                    Text_Box_Description.Text = "The two entries in the value text box define the range of random values to fill into each selected xml tag while the Axe runns in Random Mode. Please watch out to not use this for tags that expect any other variable type then int.";                   
+                }
+            }
+            else if (Combo_Box_Entity_Name.Text == "Insert_Random_Float")
+            {
+                Operation_Mode = "Random_Float";
+                Track_Bar_Tag_Value_Scroll(null, null); // Showing the 2 float values in the textbox for us.  
+
+                Label_Tag_Value.Text = "Range of float values";
+
+                if (Match_Setting("Show_Tooltip"))
+                {
+                    Text_Box_Description.Visible = true;
+
+                    // Special Tooltip, that describes the Percent Mode                   
+                    Text_Box_Description.Text = "The two entries in the value text box define the range of random values to fill into each selected xml tag while the Axe runns in Random Mode. Please watch out to not use this for tags that expect any other variable type then float.";
+                }
             }
             else { Disable_Description(); Operation_Mode = "Normal"; }
          
@@ -1752,16 +1804,17 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             }
 
             if (Operation_Mode == "Percent") { Scale_Factor = 10; } // Percentage Override
-          
-            if (Last_Combo_Box_Entity_Name == "Faction Name Filter")
+
+            if (Last_Combo_Box_Entity_Name == "Faction Name Filter" | Last_Combo_Box_Entity_Name == "Category Mask Filter")
             {   
                 Last_Combo_Box_Entity_Name = "";
                 Combo_Box_Entity_Name.Text = "";
                 Combo_Box_Entity_Name.Items.Clear();
                 Combo_Box_Entity_Name.Items.Add("None");
+                Combo_Box_Entity_Name.Items.Add("Insert_Random_Int"); 
                 Combo_Box_Entity_Name.Items.Add("Insert_Random_Float");  
             } // Don't chain here!
-
+    
 
 
             if (Combo_Box_Type_Filter.Text == "Faction Name Filter")
@@ -1789,14 +1842,49 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     Combo_Box_Entity_Name.DroppedDown = true; // Show results to the User                  
                 }
             }
+            else if (Combo_Box_Type_Filter.Text == "Category Mask Filter")
+            {
+                Label_Entity_Name.Text = "Category Mask";
+                Label_Type_Filter.Text = "Filter Type";
+                Button_Search.Visible = false;
+
+                /* Todo
+                if (Category_Masks.Count() == 0)
+                { Category_Masks = Query_For_Entity_Parent("CategoryMask"); }
+
+                if (Found_Factions.Count() > 0)
+                {
+                    foreach (string Categories in Category_Masks)
+                    {
+                        string[] Category = Wash_String(Categories).Split('|');
+
+                        for (int i = Category.Count() - 1; i >= 0; --i)
+                        {
+                            if (!Combo_Box_Matches(Combo_Box_Entity_Name, Category[i]))
+                            { Combo_Box_Entity_Name.Items.Add(Category[i]); }
+                        }
+                    }
+
+
+                    User_Input = false; // Preventing Recursion
+                    Combo_Box_Entity_Name.Text = "";
+                    User_Input = true;
+
+                    Last_Combo_Box_Entity_Name = "Category Mask Filter";
+                    Combo_Box_Entity_Name.DroppedDown = true;                
+                }
+                */
+            }
 
             else if (!EAW_Mode)
-            {   Label_Entity_Name.Text = "Attribute";
+            {
+                Label_Entity_Name.Text = "Attribute";
                 Label_Type_Filter.Text = "Parent Name";
                 Button_Search.Visible = true;
-            } 
-            else 
-            {   Label_Entity_Name.Text = "Entity Name";
+            }
+            else
+            {
+                Label_Entity_Name.Text = "Entity Name";
                 Label_Type_Filter.Text = "Filter Type";
                 Button_Search.Visible = true;
             }
@@ -2196,7 +2284,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 // iConsole(400, 200, "Scale is " + Scale_Factor);
 
 
-                Operation_Mode = "Normal";
+                if (Operation_Mode == "Bool") { Operation_Mode = "Normal"; }
                 Button_Operator_MouseLeave(null, null);
 
 
@@ -2228,16 +2316,20 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         private void Combo_Box_Tag_Value_TextChanged(object sender, EventArgs e)
         { 
             if (User_Input) 
-            {   Disable_Description();
-                if (Operation_Mode == "Percent" & !Combo_Box_Tag_Value.Text.Contains("%")) { Combo_Box_Tag_Value.Text += "%"; }
-
+            {   Disable_Description();                
+               
                 if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "False")
                     | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "Yes") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "No"))
                 { Operation_Mode = "Bool"; }
-                else { Operation_Mode = "Normal"; }
+                else if (Operation_Mode == "Percent")
+                {   // Don't move this to above.
+                    if (!Combo_Box_Tag_Value.Text.Contains("%")) { Combo_Box_Tag_Value.Text += "%"; }
+                }
+                else if (Operation_Mode != "Random") { Operation_Mode = "Normal"; }
             }
 
             Button_Operator_MouseLeave(null, null); // Check if bool and refresh
+            Button_Percentage_MouseLeave(null, null);
         }
 
 
@@ -2578,6 +2670,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //=====================//
         private void Button_Undo_Click(object sender, EventArgs e)
         {
+            // iConsole(300, 200, Operation_Mode); return;
+
+
             if (Backup_Mode) 
             { 
                 Backup_Mode = false;
