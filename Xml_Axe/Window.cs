@@ -79,7 +79,7 @@ namespace Xml_Axe
         public List<string> Blacklisted_Xmls = new List<string>();
         public List<string> Temporal_E = new List<string>();
 
-        string[] Ignored_Attribute_Values = new string[] { "", "None", "Insert_Random_Int", "Insert_Random_Float" };
+        string[] Ignored_Attribute_Values = new string[] { "", "None", "Find_And_Replace", "Insert_Random_Int", "Insert_Random_Float" };
      
 
 
@@ -91,6 +91,7 @@ namespace Xml_Axe
 
             Set_Resource_Button(Drop_Zone, Get_Start_Image()); 
             Set_Resource_Button(Button_Browse, Properties.Resources.Button_File);
+            Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder); 
             Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs);
             Set_Resource_Button(Button_Undo, Properties.Resources.Button_Clock);
             Set_Resource_Button(Button_Search, Properties.Resources.Button_Search);
@@ -102,8 +103,8 @@ namespace Xml_Axe
             Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller);
 
 
-            Control[] Controls = { Button_Browse, Button_Start, Button_Undo, Button_Run, Button_Search, Button_Percentage,
-                                   Button_Scripts, Button_Operator, Button_Reset_Blacklist, Button_Toggle_Settings };
+            Control[] Controls = { Button_Browse, Button_Browse_Folder, Button_Start, Button_Undo, Button_Run, Button_Search, 
+                                   Button_Percentage, Button_Scripts, Button_Operator, Button_Reset_Blacklist, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.BackColor = Color.Transparent; }   
     
      
@@ -405,6 +406,19 @@ namespace Xml_Axe
         //===========================//
         private void Button_Browse_Click(object sender, EventArgs e)
         {
+            Execute(Properties.Settings.Default.Last_File);       
+        }
+
+        private void Button_Browse_MouseHover(object sender, EventArgs e)
+        { Set_Resource_Button(Button_Browse, Properties.Resources.Button_File_Lit); }
+
+        private void Button_Browse_MouseLeave(object sender, EventArgs e)
+        { Set_Resource_Button(Button_Browse, Properties.Resources.Button_File); }
+
+
+
+        private void Button_Browse_Folder_Click(object sender, EventArgs e)
+        {
             if (Script_Mode) { Execute(Script_Directory); return; }
 
 
@@ -421,19 +435,21 @@ namespace Xml_Axe
             try
             {   // If the Open Dialog found a File
                 if (Open_File_Dialog_1.ShowDialog() == DialogResult.OK)
-                {   Text_Box_Original_Path.Text = Open_File_Dialog_1.FileName;
+                {
+                    Text_Box_Original_Path.Text = Open_File_Dialog_1.FileName;
                     Set_Paths(Open_File_Dialog_1.FileName);
                 }
-            }  catch {}
+            }
+            catch { }
         }
 
-        private void Button_Browse_MouseHover(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Browse, Properties.Resources.Button_File_Lit); }
+        private void Button_Browse_Folder_MouseHover(object sender, EventArgs e)
+        { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Lit); }
 
-        private void Button_Browse_MouseLeave(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Browse, Properties.Resources.Button_File); }
+        private void Button_Browse_Folder_MouseLeave(object sender, EventArgs e)
+        { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder); }
 
-       
+
         //===========================//
         private void Button_Start_Click(object sender, EventArgs e)
         {
@@ -806,10 +822,11 @@ namespace Xml_Axe
                     {
                         Query = 5;
 
-                        Instances =
-                          from All_Tags in Xml_File.Root.Descendants()
-                          where All_Tags.Descendants().FirstOrDefault().Value.Contains(Combo_Box_Tag_Name.Text)
-                          select All_Tags;
+                          Instances =
+                            from All_Tags in Xml_File.Root.Descendants()
+                            where All_Tags.Descendants().Any(x => x.Value == Combo_Box_Tag_Name.Text)
+                            select All_Tags;
+                        // if (Instances.Count() > 0) { iConsole(400, 100, (string)Instances.First().FirstAttribute); }                   
                     }
 
                     // Match by Tag Value (= fake entity type)
@@ -940,27 +957,35 @@ namespace Xml_Axe
                     
                         else if (Instance.Descendants().Any())
                         {
+                            string The_Tag = "";
 
-                            if (Combo_Box_Tag_Name.Text == "Minor_Heroes_To_Major")
+                            if (Combo_Box_Entity_Name.Text == "Find_And_Replace")
+                            {
+                                The_Tag = Instance.Descendants().First(x => x.Value == Combo_Box_Tag_Name.Text).Name.ToString();
+                                Set_Tag(Changed_Xmls, Instance, Selected_Xml, The_Tag, Apply_Changes);
+                              
+
+                                // iConsole(400, 100, Instance.Descendants().First(x => x.Value == Combo_Box_Tag_Name.Text).Name.ToString());
+                            }
+                            else if (Combo_Box_Tag_Name.Text == "Minor_Heroes_To_Major")
                             {   // Changing Selected_Tag from  "Minor_Heroes_To_Major" to "Show_Hero_Head" here, to match the right units!
                                 Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Show_Hero_Head", Apply_Changes);
                             }
                             else if (Combo_Box_Tag_Name.Text == "Major_Heroes_To_Minor")
-                            { Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Is_Named_Hero", Apply_Changes); }
-                            
+                            { Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Is_Named_Hero", Apply_Changes); }                      
+
                             else if (Combo_Box_Tag_Name.Text == "Scale_Galaxies")
                             {
                                 if (Instance.Name == "Planet")  // Scale Factor is only supposed to affect Planets in this context
                                 { Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Scale_Factor", Apply_Changes); }
-                                
-                                Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Galactic_Position", Apply_Changes); 
-                            }
-                                   
 
-                                  
+                                Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Galactic_Position", Apply_Changes);
+                            }
+
+
 
                             else if (Combo_Box_Tag_Name.Text != "Rebalance_Everything") // This one would usually trigger
-                            {                            
+                            {
                                 Set_Tag(Changed_Xmls, Instance, Selected_Xml, Selected_Tag, Apply_Changes);
                             }
                             else if (Balancing_Tags != null)
@@ -998,7 +1023,13 @@ namespace Xml_Axe
    
 
             try
-            {   // Selected_Instance = Instance;                         
+            {   
+                if (Combo_Box_Entity_Name.Text == "Find_And_Replace")
+                { 
+
+                }
+                
+                // Selected_Instance = Instance;                         
                 if (Instance.Descendants(Selected_Tag).Any()) // Set the new tag value(s)
                 {
                     Temporal_A = Selected_Xml.Replace(Xml_Directory, ""); // Removing Path
@@ -2979,8 +3010,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Script_Mode = false;
                 Drop_Zone.Visible = true;
                 Zoom_List_View(false);    
-                Set_UI_Into_Script_Mode(!Script_Mode);                                  
-                Button_Browse.Location = new Point(1, 193);
+                Set_UI_Into_Script_Mode(!Script_Mode);
+                Button_Browse_Folder.Location = new Point(1, 193);
 
                 // Loading the Xml instead of the available scripts in script mode
                 Load_Xml_Content(Properties.Settings.Default.Last_File);
@@ -2992,8 +3023,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Drop_Zone.Visible = false;
                 List_View_Selection.Visible = true;
                 Zoom_List_View(true);
-                Set_UI_Into_Script_Mode(!Script_Mode);               
-                Button_Browse.Location = new Point(1, 350);
+                Set_UI_Into_Script_Mode(!Script_Mode);
+                Button_Browse_Folder.Location = new Point(1, 350);
 
 
                 Found_Scripts = Get_All_Files(Script_Directory);
@@ -3241,7 +3272,6 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus); }
             }
         }
-
 
 
 

@@ -56,6 +56,7 @@
             this.Button_Search = new System.Windows.Forms.PictureBox();
             this.Button_Scripts = new System.Windows.Forms.PictureBox();
             this.Button_Undo = new System.Windows.Forms.PictureBox();
+            this.Button_Browse_Folder = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.Drop_Zone)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Track_Bar_Tag_Value)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Start)).BeginInit();
@@ -68,6 +69,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.Button_Search)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Scripts)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Undo)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Browse_Folder)).BeginInit();
             this.SuspendLayout();
             // 
             // Drop_Zone
@@ -87,10 +89,10 @@
             // 
             this.Text_Box_Original_Path.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.Text_Box_Original_Path.Font = new System.Drawing.Font("Georgia", 12F);
-            this.Text_Box_Original_Path.Location = new System.Drawing.Point(31, 195);
+            this.Text_Box_Original_Path.Location = new System.Drawing.Point(73, 195);
             this.Text_Box_Original_Path.Name = "Text_Box_Original_Path";
             this.Text_Box_Original_Path.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.Text_Box_Original_Path.Size = new System.Drawing.Size(367, 26);
+            this.Text_Box_Original_Path.Size = new System.Drawing.Size(325, 26);
             this.Text_Box_Original_Path.TabIndex = 2;
             // 
             // Track_Bar_Tag_Value
@@ -140,7 +142,7 @@
             // Button_Browse
             // 
             this.Button_Browse.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.Button_Browse.Location = new System.Drawing.Point(1, 193);
+            this.Button_Browse.Location = new System.Drawing.Point(37, 193);
             this.Button_Browse.Name = "Button_Browse";
             this.Button_Browse.Size = new System.Drawing.Size(30, 30);
             this.Button_Browse.TabIndex = 8;
@@ -394,12 +396,25 @@
             this.Button_Undo.MouseLeave += new System.EventHandler(this.Button_Undo_MouseLeave);
             this.Button_Undo.MouseHover += new System.EventHandler(this.Button_Undo_MouseHover);
             // 
+            // Button_Browse_Folder
+            // 
+            this.Button_Browse_Folder.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.Button_Browse_Folder.Location = new System.Drawing.Point(1, 193);
+            this.Button_Browse_Folder.Name = "Button_Browse_Folder";
+            this.Button_Browse_Folder.Size = new System.Drawing.Size(30, 30);
+            this.Button_Browse_Folder.TabIndex = 38;
+            this.Button_Browse_Folder.TabStop = false;
+            this.Button_Browse_Folder.Click += new System.EventHandler(this.Button_Browse_Folder_Click);
+            this.Button_Browse_Folder.MouseLeave += new System.EventHandler(this.Button_Browse_Folder_MouseLeave);
+            this.Button_Browse_Folder.MouseHover += new System.EventHandler(this.Button_Browse_Folder_MouseHover);
+            // 
             // Window
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.ClientSize = new System.Drawing.Size(428, 542);
+            this.Controls.Add(this.Text_Box_Tags);
             this.Controls.Add(this.Button_Undo);
             this.Controls.Add(this.Button_Scripts);
             this.Controls.Add(this.Button_Search);
@@ -424,7 +439,7 @@
             this.Controls.Add(this.Track_Bar_Tag_Value);
             this.Controls.Add(this.Text_Box_Original_Path);
             this.Controls.Add(this.Drop_Zone);
-            this.Controls.Add(this.Text_Box_Tags);
+            this.Controls.Add(this.Button_Browse_Folder);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximumSize = new System.Drawing.Size(444, 580);
             this.MinimumSize = new System.Drawing.Size(444, 580);
@@ -443,6 +458,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.Button_Search)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Scripts)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Undo)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Browse_Folder)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -477,6 +493,7 @@
         private System.Windows.Forms.PictureBox Button_Search;
         private System.Windows.Forms.PictureBox Button_Scripts;
         private System.Windows.Forms.PictureBox Button_Undo;
+        private System.Windows.Forms.PictureBox Button_Browse_Folder;
     }
 }
 

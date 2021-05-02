@@ -127,6 +127,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Axe_Icon.ico" />
+    <None Include="Resources\Button_Folder.png" />
+    <None Include="Resources\Button_Folder_Lit.png" />
     <None Include="Resources\Button_Clock_Lit.png" />
     <None Include="Resources\Button_Clock.png" />
     <None Include="Resources\Button_Run.png" />
