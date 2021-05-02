@@ -520,7 +520,7 @@ namespace Xml_Axe
                     string Error_Text = "\nI'm sorry, no entries with Attribute Name \"" + Queried_Attribute
                     + "\"\nand Attribute Value \"" + Combo_Box_Entity_Name.Text + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
 
-                    if (!Array_Matches(Ignored_Attribute_Values, Combo_Box_Entity_Name.Text)) // Then the query went by filter, which is name of the Entities root tag
+                    if (Array_Matches(Ignored_Attribute_Values, Combo_Box_Entity_Name.Text)) // Then the query went by filter, which is name of the Entities root tag
                     {
                         Error_Text = "\nI'm sorry, no entries with Entity Parent Tag Name \"" + Combo_Box_Type_Filter.Text
                         + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
@@ -802,11 +802,20 @@ namespace Xml_Axe
                           where (string)All_Tags.Attribute(Queried_Attribute) == Entity_Name
                           select All_Tags;
                     }
-
-                    // Match by Tag Value
-                    else if (Selected_Type == "FighterUnit") // If Fighter Locomotor can be found we spoof the fake tagname "FighterUnit"
+                    else if (Combo_Box_Entity_Name.Text == "Find_And_Replace") 
                     {
                         Query = 5;
+
+                        Instances =
+                          from All_Tags in Xml_File.Root.Descendants()
+                          where All_Tags.Descendants().FirstOrDefault().Value.Contains(Combo_Box_Tag_Name.Text)
+                          select All_Tags;
+                    }
+
+                    // Match by Tag Value (= fake entity type)
+                    else if (Selected_Type == "FighterUnit") // If Fighter Locomotor can be found we spoof the fake tagname "FighterUnit"
+                    {
+                        Query = 6;
                         
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
@@ -818,7 +827,7 @@ namespace Xml_Axe
 
                     else if (Selected_Type != "" & Combo_Box_Type_Filter.Text != "All Types") // By Entity Type
                     {
-                        Query = 6;
+                        Query = 7;
 
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
@@ -828,7 +837,7 @@ namespace Xml_Axe
                      
                     else if (Selected_Tag == "Max_Speed")
                     {
-                        Query = 7;
+                        Query = 8;
 
                         Instances =
                            from All_Tags in Xml_File.Root.Descendants()
@@ -842,7 +851,7 @@ namespace Xml_Axe
 
                     else if (Selected_Tag == "Scale_Factor")
                     {
-                        Query = 8;
+                        Query = 9;
 
                         /*
                         Only this Scale_Factor_List matches to "All Types", because otherwise the change of Scale_Factor would affect all of these types:
@@ -871,7 +880,7 @@ namespace Xml_Axe
                         string Required_Tag = "Unit_Abilities_Data";
                         if (Selected_Tag == "Enable_Passive_Abilities") { Required_Tag = "Abilities"; }
 
-                        Query = 9;
+                        Query = 10;
 
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
@@ -880,7 +889,7 @@ namespace Xml_Axe
                     }
                     else // Target all entities in the whole Mod!
                     {
-                        Query = 10;
+                        Query = 11;
 
                         Instances =
                           from All_Tags in Xml_File.Root.Descendants()
@@ -1100,9 +1109,42 @@ namespace Xml_Axe
 
                                 else { Target.Value = Process_Percentage(Target.Value); }
                             }
+
+
+
                             else
                             {   if (Combo_Box_Tag_Value.Text.Contains("%")) { Combo_Box_Tag_Value.Text = Combo_Box_Tag_Value.Text.Replace("%", ""); } // Removing Mistakes
-                                Target.Value = Combo_Box_Tag_Value.Text.Replace("+", "");
+
+                                string Result = Combo_Box_Tag_Value.Text.Replace("+", "");
+
+
+                                if (Operation_Mode.Contains("Random")) // Don't chain this to the statement above.
+                                {
+                                    string[] Input = Wash_String(Result).Split('|');
+                                    int Value_1 = 0;
+                                    int Value_2 = 0;
+
+                                    Int32.TryParse(Input[0], out Value_1);
+                                    Int32.TryParse(Input[1], out Value_2);
+                                    Random Randomize = new Random();
+
+                                    try
+                                    {
+                                        if (Operation_Mode == "Random") { Result = (Randomize.Next(Value_1, Value_2)).ToString(); }
+
+                                        else if (Operation_Mode == "Random_Float") // Don't chain this to the statement above.
+                                        {                                           
+                                            string Before_Point = Randomize.Next(Value_1, Value_2).ToString();//number before decimal point
+                                            string After_Point_1 = Randomize.Next(Value_1, Value_2).ToString();//1st decimal point
+                                            //string After_Point_2 = Randomize.Next(Value_1, Value_2).ToString();//2nd decimal point
+                                            string Combined = Before_Point + "." + After_Point_1; // + After_Point_2;
+
+                                            Result = float.Parse(Combined).ToString();
+                                        }
+                                    } catch {}
+                                }
+
+                                Target.Value = Result;
                             }
                      
                            
@@ -1218,6 +1260,12 @@ namespace Xml_Axe
                     EAW_Mode = true;                 
                     Label_Entity_Name.Text = "Faction Name";
                 } 
+                else if (Combo_Box_Entity_Name.Text == "Find_And_Replace")
+                {
+                    EAW_Mode = true;
+                    Label_Entity_Name.Text = "Old Tag Value";
+                    Label_Type_Filter.Text = "Filter Type";
+                }
                 else
                 {
                     EAW_Mode = true;
@@ -1741,7 +1789,12 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         //===========================//
         private void Combo_Box_Entity_Name_TextChanged(object sender, EventArgs e)
-        {          
+        {
+
+            if (Combo_Box_Entity_Name.Text == "Find_And_Replace") { Label_Tag_Name.Text = "Old Tag Value"; }
+            else { Label_Tag_Name.Text = "Entity Name"; }
+
+
             if (Combo_Box_Entity_Name.Text == "Insert_Random_Int") 
             {
                 Operation_Mode = "Random";
@@ -1771,7 +1824,11 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     Text_Box_Description.Text = "The two entries in the value text box define the range of random values to fill into each selected xml tag while the Axe runns in Random Mode. Please watch out to not use this for tags that expect any other variable type then float.";
                 }
             }
-            else { Disable_Description(); Operation_Mode = "Normal"; }
+            else 
+            {   Disable_Description(); 
+                Operation_Mode = "Normal";
+                Label_Tag_Value.Text = "New Tag Value";
+            }
          
         }
 
@@ -1818,6 +1875,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Combo_Box_Entity_Name.Text = "";
                 Combo_Box_Entity_Name.Items.Clear();
                 Combo_Box_Entity_Name.Items.Add("None");
+                Combo_Box_Entity_Name.Items.Add("Find_And_Replace"); 
                 Combo_Box_Entity_Name.Items.Add("Insert_Random_Int"); 
                 Combo_Box_Entity_Name.Items.Add("Insert_Random_Float");  
             } // Don't chain here!
@@ -1889,14 +1947,17 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             }
 
             else if (!EAW_Mode)
-            {
-                Label_Entity_Name.Text = "Attribute";
+            {   Label_Entity_Name.Text = "Attribute";
                 Label_Type_Filter.Text = "Parent Name";
                 Button_Search.Visible = true;
             }
+            else if (Combo_Box_Entity_Name.Text == "Find_And_Replace")
+            {   Label_Entity_Name.Text = "Old Tag Value";
+                Label_Type_Filter.Text = "Filter Type";
+                Button_Search.Visible = true;
+            }
             else
-            {
-                Label_Entity_Name.Text = "Entity Name";
+            {   Label_Entity_Name.Text = "Entity Name";
                 Label_Type_Filter.Text = "Filter Type";
                 Button_Search.Visible = true;
             }

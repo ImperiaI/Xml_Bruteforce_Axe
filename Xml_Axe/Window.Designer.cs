@@ -252,6 +252,7 @@
             this.Combo_Box_Entity_Name.IntegralHeight = false;
             this.Combo_Box_Entity_Name.Items.AddRange(new object[] {
             "None",
+            "Find_And_Replace",
             "Insert_Random_Int",
             "Insert_Random_Float"});
             this.Combo_Box_Entity_Name.Location = new System.Drawing.Point(31, 272);
