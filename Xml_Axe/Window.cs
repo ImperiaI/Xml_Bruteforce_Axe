@@ -486,7 +486,8 @@ namespace Xml_Axe
             else { Properties.Settings.Default.Entity_Name = Wash_String(Combo_Box_Entity_Name.Text); }
 
 
-            if (Combo_Box_Tag_Name.Text != "Rebalance_Everything") // We don't want the user to accidently re-apply such a powerfull setting
+            if (Combo_Box_Tag_Name.Text != "Rebalance_Everything" & Combo_Box_Type_Filter.Text != "Faction Name Filter" 
+                & Combo_Box_Type_Filter.Text != "Category Mask Filter") // We don't want the user to accidently re-apply such a powerfull setting
             {
                 Properties.Settings.Default.Type_Filter = Combo_Box_Type_Filter.Text;
 
@@ -1828,7 +1829,10 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 { Found_Factions = Query_For_Entity_Parent("Faction"); }
 
                 if (Found_Factions.Count() > 0)
-                {   foreach (string Faction_Name in Found_Factions)
+                {
+                    // Combo_Box_Entity_Name.Items.Clear();
+
+                    foreach (string Faction_Name in Found_Factions)
                     {   if (!Combo_Box_Matches(Combo_Box_Entity_Name, Faction_Name))
                         { Combo_Box_Entity_Name.Items.Add(Faction_Name); }
                     }
@@ -1848,12 +1852,14 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Label_Type_Filter.Text = "Filter Type";
                 Button_Search.Visible = false;
 
-                /* Todo
+               
                 if (Category_Masks.Count() == 0)
-                { Category_Masks = Query_For_Entity_Parent("CategoryMask"); }
+                { Category_Masks = Query_For_Tag("CategoryMask", "", true); }
 
-                if (Found_Factions.Count() > 0)
+                if (Category_Masks.Count() > 0)
                 {
+                    // Combo_Box_Entity_Name.Items.Clear();
+
                     foreach (string Categories in Category_Masks)
                     {
                         string[] Category = Wash_String(Categories).Split('|');
@@ -1873,7 +1879,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     Last_Combo_Box_Entity_Name = "Category Mask Filter";
                     Combo_Box_Entity_Name.DroppedDown = true;                
                 }
-                */
+                
             }
 
             else if (!EAW_Mode)
@@ -1964,7 +1970,11 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
         //===========================//
-        private List<string> Query_For_Tag_Value(string Tag_Name, string Tag_Value)
+        // Query_For_Tag(Tag_Name, Tag_Value) = Return Name of entities that contain this value in its Tag_Name
+        // Query_For_Tag(Tag_Name) = Return Name of entities that contain this Tag_Name
+        //  Query_For_Tag(Tag_Name, "", true) = return the Value inside of the tag
+
+        private List<string> Query_For_Tag(string Tag_Name, string Tag_Value = "", bool Return_Tag_Content = false)
         {
             IEnumerable<XElement> Instances = null;
             Found_Entities = new List<string>();
@@ -1976,11 +1986,21 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 {   // ===================== Opening Xml File =====================                            
                     XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
 
-                    Instances =
-                      from All_Tags in Xml_File.Root.Descendants()
-                      where All_Tags.Descendants(Tag_Name).Any() // We need this to prevent null exceptions! And it increases speed a lot.
-                      where All_Tags.Descendants(Tag_Name).Last().Value.Contains(Tag_Value)
-                      select All_Tags;
+                    if (Tag_Value == "") // Then just search for entities with this child tag
+                    {
+                        Instances =
+                         from All_Tags in Xml_File.Root.Descendants()
+                         where All_Tags.Descendants(Tag_Name).Any()
+                         select All_Tags;
+                    }
+                    else
+                    {
+                        Instances =
+                         from All_Tags in Xml_File.Root.Descendants()
+                         where All_Tags.Descendants(Tag_Name).Any() // We need this to prevent null exceptions! And it increases speed a lot.
+                         where All_Tags.Descendants(Tag_Name).Last().Value.Contains(Tag_Value)
+                         select All_Tags;
+                    }
                 }
                 catch {}
 
@@ -1991,10 +2011,11 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     {
                         try
                         {   // Be aware Queried_Attribute is a variable that decides the outcome!
-                            string Faction_Name = (string)Instance.Attribute(Queried_Attribute);
+                            string Current_Name = (string)Instance.Attribute(Queried_Attribute);
+                            if (Return_Tag_Content) { Current_Name = (string)Instance.Descendants(Tag_Name).Last().Value; }
 
-                            if (!Found_Entities.Contains(Faction_Name))
-                            { Found_Entities.Add(Faction_Name); }
+                            if (!Found_Entities.Contains(Current_Name))
+                            { Found_Entities.Add(Current_Name); }
                         }
                         catch { }
                     }
@@ -2718,7 +2739,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             else if (Combo_Box_Type_Filter.Focused) 
             {
                 if (Combo_Box_Type_Filter.Text == "") { return; }
-                else if (Combo_Box_Type_Filter.Text == "FighterUnit") { Query_For_Tag_Value("SpaceBehavior", "FIGHTER_LOCOMOTOR"); }
+                else if (Combo_Box_Type_Filter.Text == "FighterUnit") { Query_For_Tag("SpaceBehavior", "FIGHTER_LOCOMOTOR"); }
                 else
                 {   // Caution, Query_For_Entity_Parent() only returns a list of Entity Names, nothing more!            
                     Query_For_Entity_Parent(Combo_Box_Type_Filter.Text);
