@@ -78,6 +78,8 @@ namespace Xml_Axe
         public List<string> File_Collection = new List<string>();
         public List<string> Blacklisted_Xmls = new List<string>();
         public List<string> Temporal_E = new List<string>();
+
+        string[] Ignored_Attribute_Values = new string[] { "", "None", "Insert_Random_Int", "Insert_Random_Float" };
      
 
 
@@ -481,7 +483,7 @@ namespace Xml_Axe
 
 
             // Storing last search
-            if (Combo_Box_Entity_Name.Text == "None" | Combo_Box_Entity_Name.Text == "Insert_Random_Int" | Combo_Box_Entity_Name.Text == "Insert_Random_Float")
+            if (Array_Matches(Ignored_Attribute_Values, Combo_Box_Entity_Name.Text)) 
             { Properties.Settings.Default.Entity_Name = ""; }
             else { Properties.Settings.Default.Entity_Name = Wash_String(Combo_Box_Entity_Name.Text); }
 
@@ -518,7 +520,7 @@ namespace Xml_Axe
                     string Error_Text = "\nI'm sorry, no entries with Attribute Name \"" + Queried_Attribute
                     + "\"\nand Attribute Value \"" + Combo_Box_Entity_Name.Text + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
 
-                    if (Combo_Box_Entity_Name.Text == "" | Combo_Box_Entity_Name.Text == "None" | Combo_Box_Entity_Name.Text == "Insert_Random_Int" | Combo_Box_Entity_Name.Text == "Insert_Random_Float") // Then the query went by filter, which is name of the Entities root tag
+                    if (!Array_Matches(Ignored_Attribute_Values, Combo_Box_Entity_Name.Text)) // Then the query went by filter, which is name of the Entities root tag
                     {
                         Error_Text = "\nI'm sorry, no entries with Entity Parent Tag Name \"" + Combo_Box_Type_Filter.Text
                         + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
@@ -569,7 +571,7 @@ namespace Xml_Axe
         private string Get_Setting_Value(string Entry)
         {
             foreach (string Line in Properties.Settings.Default.Tags.Split('\n'))
-            { if (Line != "" & Line.Contains(Entry)) { return Remove_Emptyspace_Prefix(Line.Split('=')[1]); } }
+            { if (Line != "" & Line.Contains(Entry)) { return Remove_Emptyspace_Prefix(Line.Split('=')[1]).Replace("\r", ""); } }
 
             return "";
         }
@@ -688,15 +690,20 @@ namespace Xml_Axe
         }
 
 
-        public bool Combo_Box_Matches(ComboBox The_List, string Item)
+        public bool Combo_Box_Matches(ComboBox The_List, string Item, bool Case_Sensitive = false)
         {
-            bool Is_Match = false;
-            foreach (string Entry in The_List.Items)
-            {
-                if (Entry == Item) { Is_Match = true; }
+            if (Case_Sensitive)
+            {   foreach (string Entry in The_List.Items)
+                { if (Entry.ToLower() == Item.ToLower()) { return true; } }
+            }
+            else
+            {   foreach (string Entry in The_List.Items)
+                {
+                    if (Entry == Item) { return true; }
+                }
             }
 
-            return Is_Match;
+            return false;
         }
 
 
@@ -743,8 +750,7 @@ namespace Xml_Axe
                     Selected_Xml = Xml;
                     // Ignoring blacklisted Xmls
                     if (Blacklisted_Xmls != null) { if (Blacklisted_Xmls.Contains(Selected_Xml.Replace(Xml_Directory, ""))) { continue; } }
-                    
-                    
+                
 
                     XDocument Xml_File = XDocument.Load(Selected_Xml, LoadOptions.PreserveWhitespace);
                   
@@ -787,7 +793,7 @@ namespace Xml_Axe
                            select All_Tags; // Last() because it overwrites the first occurances ingame
                     }
 
-                    else if (Entity_Name != "" & Entity_Name != "None") // Select a single Entity by Name
+                    else if (!Array_Matches(Ignored_Attribute_Values, Combo_Box_Entity_Name.Text)) // Select a single Entity by Name
                     {
                         Query = 4;
 
@@ -1830,10 +1836,10 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
                 if (Found_Factions.Count() > 0)
                 {
-                    // Combo_Box_Entity_Name.Items.Clear();
+                    Combo_Box_Entity_Name.Items.Clear();
 
                     foreach (string Faction_Name in Found_Factions)
-                    {   if (!Combo_Box_Matches(Combo_Box_Entity_Name, Faction_Name))
+                    {   if (Faction_Name != "" & !Combo_Box_Matches(Combo_Box_Entity_Name, Faction_Name, true))
                         { Combo_Box_Entity_Name.Items.Add(Faction_Name); }
                     }
 
@@ -1855,18 +1861,18 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                
                 if (Category_Masks.Count() == 0)
                 { Category_Masks = Query_For_Tag("CategoryMask", "", true); }
+                
 
                 if (Category_Masks.Count() > 0)
                 {
-                    // Combo_Box_Entity_Name.Items.Clear();
-
+                    Combo_Box_Entity_Name.Items.Clear();
                     foreach (string Categories in Category_Masks)
                     {
                         string[] Category = Wash_String(Categories).Split('|');
-
+ 
                         for (int i = Category.Count() - 1; i >= 0; --i)
                         {
-                            if (!Combo_Box_Matches(Combo_Box_Entity_Name, Category[i]))
+                            if (Category[i] != "" & !Combo_Box_Matches(Combo_Box_Entity_Name, Category[i], true))
                             { Combo_Box_Entity_Name.Items.Add(Category[i]); }
                         }
                     }
@@ -2691,7 +2697,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //=====================//
         private void Button_Undo_Click(object sender, EventArgs e)
         {
-            // iConsole(300, 200, Operation_Mode); return;
+            iConsole(300, 200, Operation_Mode); return;
 
 
             if (Backup_Mode) 
@@ -2746,7 +2752,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 }
 
 
-                // Found_Entities because that is the list used in Query_For_Entity_Parent() & Query_For_Tag_Value()
+                // Found_Entities because that is the list used in Query_For_Entity_Parent() & Query_For_Tag()
                 if (Found_Entities.Count > 0) 
                 { 
                     List_View_Selection.Items.Clear();
@@ -2771,7 +2777,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
             string Entity_Name = Wash_String(Combo_Box_Entity_Name.Text);
-            if (Entity_Name == "" | Entity_Name == "None") { return; }
+            if (Array_Matches(Ignored_Attribute_Values, Combo_Box_Entity_Name.Text)) { return; }
 
 
             // Matched in selected XML, so just show that one
