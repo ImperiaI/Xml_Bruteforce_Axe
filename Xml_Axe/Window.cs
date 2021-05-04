@@ -593,8 +593,7 @@ namespace Xml_Axe
 
 
         private bool Match_Without_Emptyspace(string Entry_1, string Entry_2)
-        {
-            if (Regex.IsMatch(Entry_1.Replace(" ", ""), "(?i)" + Entry_2.Replace(" ", ""))) { return true; }
+        {   try { if (Regex.IsMatch(Entry_1.Replace(" ", ""), "(?i)" + Entry_2.Replace(" ", ""))) { return true; } } catch {}    
             return false;
         }
 
@@ -606,8 +605,7 @@ namespace Xml_Axe
 
       
         private bool Is_Match(string Entry_1, string Entry_2)
-        {
-            if (Regex.IsMatch(Entry_1, "(?i)" + Entry_2)) { return true; }
+        {   try { if (Regex.IsMatch(Entry_1, "(?i)" + Entry_2)) { return true; } } catch {}          
             return false;
         }
 
@@ -653,6 +651,7 @@ namespace Xml_Axe
                 {   if (Instance.Descendants().Any())
                     {
                         string Entity_Name = (string)Instance.Attribute(Queried_Attribute);
+                        if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Entity_Name = (string)Instance.FirstAttribute; }
 
                         if (Entity_Name != null)
                         {
@@ -779,10 +778,21 @@ namespace Xml_Axe
                         Xml_File = XDocument.Load(Selected_Xml, LoadOptions.PreserveWhitespace);
                         List<string> Selected_Entities = Select_List_View_Items(List_View_Selection);
 
-                       Instances =
-                         from All_Tags in Xml_File.Root.Descendants()
-                         where List_Matches(Selected_Entities, (string)All_Tags.Attribute(Queried_Attribute))
-                         select All_Tags;
+
+                        if (Match_Without_Emptyspace(Queried_Attribute, "first"))
+                        {
+                            Instances =
+                               from All_Tags in Xml_File.Root.Descendants()
+                               where List_Matches(Selected_Entities, (string)All_Tags.FirstAttribute)
+                               select All_Tags;
+                        }
+                        else
+                        {
+                            Instances =
+                              from All_Tags in Xml_File.Root.Descendants()
+                              where List_Matches(Selected_Entities, (string)All_Tags.Attribute(Queried_Attribute))
+                              select All_Tags;
+                        }
                     }
 
 
@@ -812,10 +822,19 @@ namespace Xml_Axe
                     {
                         Query = 4;
 
-                        Instances =
-                          from All_Tags in Xml_File.Root.Descendants()
-                          where (string)All_Tags.Attribute(Queried_Attribute) == Entity_Name
-                          select All_Tags;
+
+                        if (Match_Without_Emptyspace(Queried_Attribute, "first"))
+                        {   Instances =
+                              from All_Tags in Xml_File.Root.Descendants()
+                              where (string)All_Tags.FirstAttribute == Entity_Name                 
+                              select All_Tags;        
+                        }
+                        else
+                        {   Instances =
+                              from All_Tags in Xml_File.Root.Descendants()
+                              where (string)All_Tags.Attribute(Queried_Attribute) == Entity_Name
+                              select All_Tags;
+                        }
                     }
                     else if (Combo_Box_Entity_Name.Text == "Find_And_Replace") 
                     {
@@ -928,7 +947,7 @@ namespace Xml_Axe
                                 
 
                             if (Selected_Tag == "Enable_Abilities" && Instance.Descendants("Unit_Abilities_Data").Any())
-                            {   The_Value = Instance.Descendants(Ability_Tag_Name).First().FirstAttribute.Value;
+                            {   The_Value = Instance.Descendants(Ability_Tag_Name).First().FirstAttribute.Value; // Always first attribute
                                 // string The_Name = Instance.Attribute("Name").Value;
                                 // iConsole(400, 100, The_Name + ", " + The_Value); // return Changed_Xmls;
 
@@ -2066,6 +2085,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                         try
                         {   // Be aware Queried_Attribute is a variable that decides the outcome!
                             string Faction_Name = (string)Instance.Attribute(Queried_Attribute);
+                            if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Faction_Name = (string)Instance.FirstAttribute; }
 
                             if (!Found_Entities.Contains(Faction_Name))
                             { Found_Entities.Add(Faction_Name); }
@@ -2121,6 +2141,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                         try
                         {   // Be aware Queried_Attribute is a variable that decides the outcome!
                             string Current_Name = (string)Instance.Attribute(Queried_Attribute);
+                            if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Current_Name = (string)Instance.FirstAttribute; }
+
                             if (Return_Tag_Content) { Current_Name = (string)Instance.Descendants(Tag_Name).Last().Value; }
 
                             if (!Found_Entities.Contains(Current_Name))
@@ -2905,10 +2927,18 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 {   // ===================== Opening Xml File =====================                            
                     XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
 
-                    Instances =
-                      from All_Tags in Xml_File.Root.Descendants()
-                      where (string)All_Tags.Attribute(Queried_Attribute) == Entity_Name // Fast Search                    
-                      select All_Tags;
+                    if (Match_Without_Emptyspace(Queried_Attribute, "first"))
+                    {  Instances =
+                          from All_Tags in Xml_File.Root.Descendants()
+                          where (string)All_Tags.FirstAttribute == Entity_Name                 
+                          select All_Tags;        
+                    }
+                    else
+                    {  Instances =
+                          from All_Tags in Xml_File.Root.Descendants()
+                          where (string)All_Tags.Attribute(Queried_Attribute) == Entity_Name // Fast Search                    
+                          select All_Tags;
+                    }
 
 
                     if (Instances.Any() & File.Exists(Xml)) { Set_Paths(Xml, false); Combo_Box_Entity_Name.Text = Entity_Name; break; }
@@ -2923,12 +2953,19 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 {   try
                     {   XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
 
-                        Instances =
-                          from All_Tags in Xml_File.Root.Descendants()
-                          // Regex; This is damn slow - but it delivers results
-                          where Is_Match((string)All_Tags.Attribute(Queried_Attribute), Entity_Name)
-                          select All_Tags;
-
+                        if (Match_Without_Emptyspace(Queried_Attribute, "first"))
+                        {   Instances =
+                               from All_Tags in Xml_File.Root.Descendants()
+                               where Is_Match((string)All_Tags.FirstAttribute, Entity_Name)
+                               select All_Tags;
+                        }
+                        else
+                        {   Instances =
+                              from All_Tags in Xml_File.Root.Descendants()
+                              // Regex; This is damn slow - but it delivers results
+                              where Is_Match((string)All_Tags.Attribute(Queried_Attribute), Entity_Name)
+                              select All_Tags;
+                        }
 
                         if (Instances.Any() & File.Exists(Xml)) { Set_Paths(Xml); break; } // Don't select Entity_Name here because its spelled wrong 
                     } catch {}

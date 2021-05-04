@@ -400,6 +400,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.ClientSize = new System.Drawing.Size(428, 542);
+            this.Controls.Add(this.Text_Box_Tags);
             this.Controls.Add(this.Button_Undo);
             this.Controls.Add(this.Button_Scripts);
             this.Controls.Add(this.Button_Search);
@@ -424,7 +425,6 @@
             this.Controls.Add(this.Text_Box_Original_Path);
             this.Controls.Add(this.Drop_Zone);
             this.Controls.Add(this.Button_Browse_Folder);
-            this.Controls.Add(this.Text_Box_Tags);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximumSize = new System.Drawing.Size(444, 580);
             this.MinimumSize = new System.Drawing.Size(444, 580);
