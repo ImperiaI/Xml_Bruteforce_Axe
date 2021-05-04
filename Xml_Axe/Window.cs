@@ -160,10 +160,12 @@ namespace Xml_Axe
             }
 
 
+            if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Label_Entity_Name.Text = "First Attribute"; }
+            else { Label_Entity_Name.Text = Queried_Attribute; }
+
             if (Match_Setting("Disable_EAW_Mode"))
             {
-                EAW_Mode = false;
-                Label_Entity_Name.Text = "Attribute";
+                EAW_Mode = false;                      
                 Label_Type_Filter.Text = "Parent Name";
             }
 
@@ -543,8 +545,8 @@ namespace Xml_Axe
 
 
                     iConsole(600, 100, Error_Text); return;
-                }
-                else { iDialogue(680, Line_Count, "Yes", "Cancel", "Ignore", "Blacklist", "Are you sure you wish to apply changes to:", Related_Xmls, true); }
+                } // 680
+                else { iDialogue(740, Line_Count, "Yes", "Cancel", "Ignore", "Blacklist", "(Strg + Click to select multiple.)   Are you sure you wish to apply changes to:", Related_Xmls, true); }
 
 
                 if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
@@ -1302,8 +1304,10 @@ namespace Xml_Axe
 
                 if (Match_Setting("Disable_EAW_Mode"))
                 {
-                    EAW_Mode = false;
-                    Label_Entity_Name.Text = "Attribute";
+                    if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Label_Entity_Name.Text = "First Attribute"; }
+                    else { Label_Entity_Name.Text = Queried_Attribute; }
+
+                    EAW_Mode = false;                   
                     Label_Type_Filter.Text = "Parent Name";
                 }
 
@@ -1327,10 +1331,12 @@ namespace Xml_Axe
                     Label_Entity_Name.Text = "Old Tag Value";
                     Label_Type_Filter.Text = "Filter Type";
                 }
-                else
+                else // EAW Mode
                 {
+                    if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Label_Entity_Name.Text = "First Attribute"; }
+                    else { Label_Entity_Name.Text = Queried_Attribute; }
+
                     EAW_Mode = true;
-                    Label_Entity_Name.Text = "Entity Name";
                     Label_Type_Filter.Text = "Filter Type";
                 }
             }
@@ -2008,7 +2014,10 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             }
 
             else if (!EAW_Mode)
-            {   Label_Entity_Name.Text = "Attribute";
+            {
+                if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Label_Entity_Name.Text = "First Attribute"; }
+                else { Label_Entity_Name.Text = Queried_Attribute; }
+
                 Label_Type_Filter.Text = "Parent Name";
                 Button_Search.Visible = true;
             }
@@ -2018,7 +2027,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Button_Search.Visible = true;
             }
             else
-            {   Label_Entity_Name.Text = "Entity Name";
+            {   if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Label_Entity_Name.Text = "First Attribute"; }
+                else { Label_Entity_Name.Text = Queried_Attribute; }
+
                 Label_Type_Filter.Text = "Filter Type";
                 Button_Search.Visible = true;
             }
@@ -2526,50 +2537,54 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             // Using Theme colors for Text and Background
             Display.Text_Box_Caution_Window.BackColor = Color.Gray;
             Display.Text_Box_Caution_Window.ForeColor = Color.White;
+            Display.List_View_Info.BackColor = Color.Gray;
 
 
-               
+            int Button_Y = 88; // 96
+            Display.Button_Invert_Selection.Location = new Point(670, Display.Size.Height - (Button_Y - 7));
+
+           
 
             if (Button_D_Text != "false")
             {
                 // The first 2 buttons moves aside to free space for this one
                 Display.Button_Caution_Box_1.Visible = true;
                 Display.Button_Caution_Box_1.Text = Button_A_Text;
-                Display.Button_Caution_Box_1.Location = new Point(30, Display.Size.Height - 96);
+                Display.Button_Caution_Box_1.Location = new Point(30, Display.Size.Height - Button_Y);
 
                 Display.Button_Caution_Box_2.Visible = true;
                 Display.Button_Caution_Box_2.Text = Button_B_Text;
-                Display.Button_Caution_Box_2.Location = new Point(350, Display.Size.Height - 96);
+                Display.Button_Caution_Box_2.Location = new Point(350, Display.Size.Height - Button_Y);
 
                 Display.Button_Caution_Box_3.Visible = true;
                 Display.Button_Caution_Box_3.Text = Button_C_Text;
-                Display.Button_Caution_Box_3.Location = new Point(190, Display.Size.Height - 96);
+                Display.Button_Caution_Box_3.Location = new Point(190, Display.Size.Height - Button_Y);
 
                 Display.Button_Caution_Box_4.Visible = true;
                 Display.Button_Caution_Box_4.Text = Button_D_Text;
-                Display.Button_Caution_Box_4.Location = new Point(510, Display.Size.Height - 96);
+                Display.Button_Caution_Box_4.Location = new Point(510, Display.Size.Height - Button_Y);
             }
             else if (Button_C_Text != "false")
             {
                 // The first 2 buttons moves aside to free space for this one
                 Display.Button_Caution_Box_1.Visible = true;
                 Display.Button_Caution_Box_1.Text = Button_A_Text;
-                Display.Button_Caution_Box_1.Location = new Point(60, Display.Size.Height - 96);
+                Display.Button_Caution_Box_1.Location = new Point(60, Display.Size.Height - Button_Y);
 
                 Display.Button_Caution_Box_2.Visible = true;
                 Display.Button_Caution_Box_2.Text = Button_B_Text;
-                Display.Button_Caution_Box_2.Location = new Point(380, Display.Size.Height - 96);
+                Display.Button_Caution_Box_2.Location = new Point(380, Display.Size.Height - Button_Y);
 
                 Display.Button_Caution_Box_3.Visible = true;
                 Display.Button_Caution_Box_3.Text = Button_C_Text;
-                Display.Button_Caution_Box_3.Location = new Point(220, Display.Size.Height - 96);
+                Display.Button_Caution_Box_3.Location = new Point(220, Display.Size.Height - Button_Y);
             }
 
             else if (Button_B_Text != "false")
             {
                 Display.Button_Caution_Box_2.Visible = true;
                 Display.Button_Caution_Box_2.Text = Button_B_Text;
-                Display.Button_Caution_Box_2.Location = new Point(280, Display.Size.Height - 96);
+                Display.Button_Caution_Box_2.Location = new Point(280, Display.Size.Height - Button_Y);
             }
 
 
@@ -2577,7 +2592,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             {
                 Display.Button_Caution_Box_1.Visible = true;
                 Display.Button_Caution_Box_1.Text = Button_A_Text;
-                Display.Button_Caution_Box_1.Location = new Point(120, Display.Size.Height - 96);
+                Display.Button_Caution_Box_1.Location = new Point(120, Display.Size.Height - Button_Y);
             }
 
 
@@ -2591,8 +2606,10 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             }
             else
             {
+                Display.MinimumSize = new Size(Window_Size_X, Window_Size_Y);
                 Display.List_Exclusion_Mode = List_Exclusion_Mode;
                 Display.List_View_Info.Visible = true;
+                Display.Button_Invert_Selection.Visible = true;
                 Display.List_View_Info.Items.Add(Text); // Text serves as Header here
                 Display.List_View_Info.Items.Add("");
                 Display.List_View_Info.Items.Add("");

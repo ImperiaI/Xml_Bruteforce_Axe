@@ -127,6 +127,10 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Axe_Icon.ico" />
+    <None Include="Resources\Button_Ying.png" />
+    <None Include="Resources\Button_Yang_Lit.png" />
+    <None Include="Resources\Button_Yang.png" />
+    <None Include="Resources\Button_Ying_Lit.png" />
     <None Include="Resources\Button_XY.png" />
     <None Include="Resources\Button_XY_Lit.png" />
     <None Include="Resources\Button_Y.png" />

@@ -453,6 +453,46 @@ namespace Xml_Axe.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Button_Yang {
+            get {
+                object obj = ResourceManager.GetObject("Button_Yang", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Yang_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_Yang_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Ying {
+            get {
+                object obj = ResourceManager.GetObject("Button_Ying", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Ying_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_Ying_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Done_01 {
             get {
                 object obj = ResourceManager.GetObject("Done_01", resourceCulture);
