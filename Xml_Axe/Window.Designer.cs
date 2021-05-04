@@ -35,7 +35,6 @@
             this.Label_Tag_Value = new System.Windows.Forms.Label();
             this.Label_Tag_Name = new System.Windows.Forms.Label();
             this.Button_Start = new System.Windows.Forms.PictureBox();
-            this.Button_Browse = new System.Windows.Forms.PictureBox();
             this.Open_File_Dialog_1 = new System.Windows.Forms.OpenFileDialog();
             this.Button_Toggle_Settings = new System.Windows.Forms.PictureBox();
             this.Button_Reset_Blacklist = new System.Windows.Forms.PictureBox();
@@ -60,7 +59,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.Drop_Zone)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Track_Bar_Tag_Value)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Start)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.Button_Browse)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Toggle_Settings)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Reset_Blacklist)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Run)).BeginInit();
@@ -89,10 +87,10 @@
             // 
             this.Text_Box_Original_Path.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.Text_Box_Original_Path.Font = new System.Drawing.Font("Georgia", 12F);
-            this.Text_Box_Original_Path.Location = new System.Drawing.Point(73, 195);
+            this.Text_Box_Original_Path.Location = new System.Drawing.Point(31, 195);
             this.Text_Box_Original_Path.Name = "Text_Box_Original_Path";
             this.Text_Box_Original_Path.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.Text_Box_Original_Path.Size = new System.Drawing.Size(325, 26);
+            this.Text_Box_Original_Path.Size = new System.Drawing.Size(367, 26);
             this.Text_Box_Original_Path.TabIndex = 2;
             // 
             // Track_Bar_Tag_Value
@@ -138,18 +136,6 @@
             this.Button_Start.Click += new System.EventHandler(this.Button_Start_Click);
             this.Button_Start.MouseLeave += new System.EventHandler(this.Button_Start_MouseLeave);
             this.Button_Start.MouseHover += new System.EventHandler(this.Button_Start_MouseHover);
-            // 
-            // Button_Browse
-            // 
-            this.Button_Browse.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.Button_Browse.Location = new System.Drawing.Point(37, 193);
-            this.Button_Browse.Name = "Button_Browse";
-            this.Button_Browse.Size = new System.Drawing.Size(30, 30);
-            this.Button_Browse.TabIndex = 8;
-            this.Button_Browse.TabStop = false;
-            this.Button_Browse.Click += new System.EventHandler(this.Button_Browse_Click);
-            this.Button_Browse.MouseLeave += new System.EventHandler(this.Button_Browse_MouseLeave);
-            this.Button_Browse.MouseHover += new System.EventHandler(this.Button_Browse_MouseHover);
             // 
             // Open_File_Dialog_1
             // 
@@ -404,9 +390,9 @@
             this.Button_Browse_Folder.Size = new System.Drawing.Size(30, 30);
             this.Button_Browse_Folder.TabIndex = 38;
             this.Button_Browse_Folder.TabStop = false;
-            this.Button_Browse_Folder.Click += new System.EventHandler(this.Button_Browse_Folder_Click);
             this.Button_Browse_Folder.MouseLeave += new System.EventHandler(this.Button_Browse_Folder_MouseLeave);
             this.Button_Browse_Folder.MouseHover += new System.EventHandler(this.Button_Browse_Folder_MouseHover);
+            this.Button_Browse_Folder.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Button_Browse_Folder_MouseUp);
             // 
             // Window
             // 
@@ -414,7 +400,6 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.ClientSize = new System.Drawing.Size(428, 542);
-            this.Controls.Add(this.Text_Box_Tags);
             this.Controls.Add(this.Button_Undo);
             this.Controls.Add(this.Button_Scripts);
             this.Controls.Add(this.Button_Search);
@@ -433,13 +418,13 @@
             this.Controls.Add(this.Label_Tag_Name);
             this.Controls.Add(this.Button_Reset_Blacklist);
             this.Controls.Add(this.Button_Toggle_Settings);
-            this.Controls.Add(this.Button_Browse);
             this.Controls.Add(this.Button_Start);
             this.Controls.Add(this.Label_Tag_Value);
             this.Controls.Add(this.Track_Bar_Tag_Value);
             this.Controls.Add(this.Text_Box_Original_Path);
             this.Controls.Add(this.Drop_Zone);
             this.Controls.Add(this.Button_Browse_Folder);
+            this.Controls.Add(this.Text_Box_Tags);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximumSize = new System.Drawing.Size(444, 580);
             this.MinimumSize = new System.Drawing.Size(444, 580);
@@ -449,7 +434,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.Drop_Zone)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Track_Bar_Tag_Value)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Start)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.Button_Browse)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Toggle_Settings)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Reset_Blacklist)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Run)).EndInit();
@@ -472,7 +456,6 @@
         private System.Windows.Forms.Label Label_Tag_Value;
         private System.Windows.Forms.Label Label_Tag_Name;
         private System.Windows.Forms.PictureBox Button_Start;
-        private System.Windows.Forms.PictureBox Button_Browse;
         private System.Windows.Forms.OpenFileDialog Open_File_Dialog_1;
         private System.Windows.Forms.PictureBox Button_Toggle_Settings;
         private System.Windows.Forms.PictureBox Button_Reset_Blacklist;

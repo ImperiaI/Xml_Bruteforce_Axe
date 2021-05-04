@@ -127,6 +127,16 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Axe_Icon.ico" />
+    <None Include="Resources\Button_XY.png" />
+    <None Include="Resources\Button_XY_Lit.png" />
+    <None Include="Resources\Button_Y.png" />
+    <None Include="Resources\Button_X_Lit.png" />
+    <None Include="Resources\Button_X.png" />
+    <None Include="Resources\Button_Y_Lit.png" />
+    <None Include="Resources\Button_Folder_Red.png" />
+    <None Include="Resources\Button_Folder_Green_Lit.png" />
+    <None Include="Resources\Button_Folder_Green.png" />
+    <None Include="Resources\Button_Folder_Red_Lit.png" />
     <None Include="Resources\Button_Folder.png" />
     <None Include="Resources\Button_Folder_Lit.png" />
     <None Include="Resources\Button_Clock_Lit.png" />

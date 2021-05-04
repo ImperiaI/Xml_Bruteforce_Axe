@@ -56,6 +56,7 @@ namespace Xml_Axe
         bool Xml_List_Mode = true;
 
         string Operation_Mode = "Normal";
+        string Scale_Mode = "XY";
 
         bool EAW_Mode = true;
         bool Backup_Mode = false;  
@@ -90,8 +91,7 @@ namespace Xml_Axe
             List_View_Selection.AllowDrop = true;
 
             Set_Resource_Button(Drop_Zone, Get_Start_Image()); 
-            Set_Resource_Button(Button_Browse, Properties.Resources.Button_File);
-            Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder); 
+            Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Green); 
             Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs);
             Set_Resource_Button(Button_Undo, Properties.Resources.Button_Clock);
             Set_Resource_Button(Button_Search, Properties.Resources.Button_Search);
@@ -103,7 +103,7 @@ namespace Xml_Axe
             Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller);
 
 
-            Control[] Controls = { Button_Browse, Button_Browse_Folder, Button_Start, Button_Undo, Button_Run, Button_Search, 
+            Control[] Controls = { Button_Browse_Folder, Button_Start, Button_Undo, Button_Run, Button_Search, 
                                    Button_Percentage, Button_Scripts, Button_Operator, Button_Reset_Blacklist, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.BackColor = Color.Transparent; }   
     
@@ -404,22 +404,18 @@ namespace Xml_Axe
 
 
         //===========================//
-        private void Button_Browse_Click(object sender, EventArgs e)
-        {
-            Execute(Properties.Settings.Default.Last_File);       
-        }
 
-        private void Button_Browse_MouseHover(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Browse, Properties.Resources.Button_File_Lit); }
-
-        private void Button_Browse_MouseLeave(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Browse, Properties.Resources.Button_File); }
-
-
-
-        private void Button_Browse_Folder_Click(object sender, EventArgs e)
+        private void Button_Browse_Folder_MouseUp(object sender, MouseEventArgs Mouse)
         {
             if (Script_Mode) { Execute(Script_Directory); return; }
+            
+            else if (Mouse.Button == MouseButtons.Right)
+            {
+                Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_File_Lit);
+                Execute(Properties.Settings.Default.Last_File); 
+                System.Threading.Thread.Sleep(2000); // Leave some time to show the File Icon
+                return;
+            }
 
 
             Open_File_Dialog_1.FileName = "";
@@ -439,15 +435,18 @@ namespace Xml_Axe
                     Text_Box_Original_Path.Text = Open_File_Dialog_1.FileName;
                     Set_Paths(Open_File_Dialog_1.FileName);
                 }
-            }
-            catch { }
+            } catch {}
         }
 
         private void Button_Browse_Folder_MouseHover(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Lit); }
+        {   if (Script_Mode) { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Red_Lit); }
+            else { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Green_Lit); }
+        }
 
         private void Button_Browse_Folder_MouseLeave(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder); }
+        {   if (Script_Mode) { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Red); }
+            else { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Green); }
+        }
 
 
         //===========================//
@@ -1089,15 +1088,22 @@ namespace Xml_Axe
                             {   string Full_Value = "";
 
 
-                                if (Selected_Tag == "Galactic_Position")
+                                if (Selected_Tag == "Galactic_Position") // Would usually run in "Scale_Galaxies" mode
                                 {
                                     string[] Position = Wash_String(Target.Value).Split(',');
 
                                     for (int i = 0; i < Position.Count(); i++)
-                                    {                                     
-                                        // Only after first entry, add two emptyspace as new seperators
-                                        if (i < Position.Count() - 1) { Full_Value += Process_Percentage(Position[i]) + ", "; }
-                                        else { Full_Value += Process_Percentage(Position[i]); break; }
+                                    {                                                                 
+                                        if (i == 0 & Scale_Mode.Contains("X")) // XY and X
+                                        { Full_Value += Process_Percentage(Position[i]) + ", "; }
+
+                                        else if (i == 1 & Scale_Mode.Contains("Y")) // XY and Y
+                                        { Full_Value += Process_Percentage(Position[i]) + ", "; }
+
+                                        else 
+                                        {   Full_Value += Position[i];
+                                            if (i < Position.Count() - 1) { Full_Value += ", "; }
+                                        } // Full_Value += Process_Percentage(Position[i]); break; } // Disable any scaling of 3rd entry (Z layer)
                                     }
                                     Target.Value = Full_Value;
 
@@ -1105,9 +1111,14 @@ namespace Xml_Axe
                                 else if (Selected_Tag == "Scale_Factor")
                                 {
                                     int Weaker = 1; // In Galaxy scale the scaling is weakened, in order to have this value weaker then the full 100%
-                                    if (Combo_Box_Tag_Name.Text == "Scale_Galaxies") { Weaker = 8; } // 3 means 33% of the amount it would usually scale.
-
-                                    Target.Value = Process_Percentage(Target.Value, Weaker);                                   
+                                    if (Combo_Box_Tag_Name.Text == "Scale_Galaxies") 
+                                    {
+                                        if (Scale_Mode == "XY") // Don't scale for only X or only Y axis!
+                                        {   Weaker = 8; // 3 means 33% of the amount it would usually scale.
+                                            Target.Value = Process_Percentage(Target.Value, Weaker); 
+                                        } 
+                                       
+                                    } else { Target.Value = Process_Percentage(Target.Value, Weaker); }                                                           
                                 }
 
                                 else if (Selected_Tag == "Max_Speed")
@@ -2133,7 +2144,11 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
             // Auto-Deactivating Percent mode// Auto-Deactivating Percent mode
             if (Last_Combo_Box_Tag_Name == "Rebalance_Everything" || Last_Combo_Box_Tag_Name == "Scale_Galaxies") 
-            { Button_Percentage_Click(null, null); Button_Percentage_MouseLeave(null, null); }
+            { 
+                Button_Percentage_Click(null, null); 
+                Button_Percentage_MouseLeave(null, null);
+                Button_Scripts_MouseLeave(null, null);
+            }
 
 
             switch (Combo_Box_Tag_Name.Text)
@@ -2146,6 +2161,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     break;
                  case "Scale_Galaxies":
                     Combo_Box_Type_Filter.Text = "Planet";
+                    Button_Scripts_MouseLeave(null, null);
                     if (Operation_Mode != "Percent") { Button_Percentage_Click(null, null); Button_Percentage_MouseLeave(null, null); }               
                     break;
 
@@ -3005,6 +3021,16 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         private void Button_Scripts_Click(object sender, EventArgs e)
         {
+            if (Combo_Box_Tag_Name.Text == "Scale_Galaxies") // Cycle
+            {
+                if (Scale_Mode == "XY") { Scale_Mode = "X"; }
+                else if (Scale_Mode == "X") { Scale_Mode = "Y"; }
+                else if (Scale_Mode == "Y") { Scale_Mode = "XY"; }
+                Button_Scripts_MouseLeave(null, null);
+                return;
+            }
+
+
             if (Script_Mode) // Toggle between Script Mode
             {
                 Script_Mode = false;
@@ -3025,7 +3051,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Zoom_List_View(true);
                 Set_UI_Into_Script_Mode(!Script_Mode);
                 Button_Browse_Folder.Location = new Point(1, 350);
-
+               
 
                 Found_Scripts = Get_All_Files(Script_Directory);
                 List<string> Script_Names = new List<string>();
@@ -3049,9 +3075,37 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 }
             }
 
+            Button_Browse_Folder_MouseLeave(null, null); // Ordering the Icon to change color
             try { List_View_Selection.Columns[0].Width = List_View_Selection.Width - 8; } catch {}
                 
         }
+
+        private void Button_Scripts_MouseHover(object sender, EventArgs e)
+        {
+            if (Combo_Box_Tag_Name.Text == "Scale_Galaxies")
+            {
+                if (Scale_Mode == "XY") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_XY_Lit); }
+                else if (Scale_Mode == "X") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_X_Lit); }
+                else if (Scale_Mode == "Y") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Y_Lit); }
+            }
+            else { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash_Lit); }
+        }
+
+        private void Button_Scripts_MouseLeave(object sender, EventArgs e)
+        {
+            if (Script_Mode) { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash_Lit); }
+            else
+            {
+                if (Combo_Box_Tag_Name.Text == "Scale_Galaxies")
+                {
+                    if (Scale_Mode == "XY") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_XY); }
+                    else if (Scale_Mode == "X") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_X); }
+                    else if (Scale_Mode == "Y") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Y); }
+                }
+                else { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash); }
+            }
+        }
+
 
 
         private void Zoom_List_View(bool Large)
@@ -3195,21 +3249,14 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             return New_Script_Directory;
         }
 
-        private void Button_Scripts_MouseHover(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash_Lit); }
-
-        private void Button_Scripts_MouseLeave(object sender, EventArgs e)
-        {   if (Script_Mode) { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash_Lit); }
-            else { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash); }
-        }
+    
 
 
 
       
      
 
-    
-
+  
 
 
         private void Button_Operator_Click(object sender, EventArgs e)
@@ -3272,7 +3319,6 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus); }
             }
         }
-
 
 
 

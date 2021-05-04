@@ -193,9 +193,9 @@ namespace Xml_Axe.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Button_Folder {
+        internal static System.Drawing.Bitmap Button_Folder_Green {
             get {
-                object obj = ResourceManager.GetObject("Button_Folder", resourceCulture);
+                object obj = ResourceManager.GetObject("Button_Folder_Green", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -203,9 +203,29 @@ namespace Xml_Axe.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Button_Folder_Lit {
+        internal static System.Drawing.Bitmap Button_Folder_Green_Lit {
             get {
-                object obj = ResourceManager.GetObject("Button_Folder_Lit", resourceCulture);
+                object obj = ResourceManager.GetObject("Button_Folder_Green_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Folder_Red {
+            get {
+                object obj = ResourceManager.GetObject("Button_Folder_Red", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Folder_Red_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_Folder_Red_Lit", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -366,6 +386,66 @@ namespace Xml_Axe.Properties {
         internal static System.Drawing.Bitmap Button_Settings_Lit {
             get {
                 object obj = ResourceManager.GetObject("Button_Settings_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_X {
+            get {
+                object obj = ResourceManager.GetObject("Button_X", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_X_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_X_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_XY {
+            get {
+                object obj = ResourceManager.GetObject("Button_XY", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_XY_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_XY_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Y {
+            get {
+                object obj = ResourceManager.GetObject("Button_Y", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Y_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_Y_Lit", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

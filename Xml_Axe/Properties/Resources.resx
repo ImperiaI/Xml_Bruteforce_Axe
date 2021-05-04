@@ -157,11 +157,17 @@
   <data name="Button_Flash_Lit" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Button_Flash_Lit.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="Button_Folder" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Button_Folder.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="Button_Folder_Green" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Button_Folder_Green.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="Button_Folder_Lit" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\Button_Folder_Lit.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="Button_Folder_Green_Lit" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Button_Folder_Green_Lit.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Button_Folder_Red" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Button_Folder_Red.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Button_Folder_Red_Lit" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Button_Folder_Red_Lit.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="Button_Logs" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Button_Logs.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -210,6 +216,24 @@
   </data>
   <data name="Button_Settings_Lit" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Button_Settings_Lit.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Button_X" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Button_X.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Button_XY" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Button_XY.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Button_XY_Lit" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Button_XY_Lit.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Button_X_Lit" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Button_X_Lit.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Button_Y" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Button_Y.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Button_Y_Lit" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Button_Y_Lit.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="Done_01" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Done_01.jpg;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
