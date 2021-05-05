@@ -59,7 +59,7 @@ namespace Xml_Axe
         string Scale_Mode = "XY";
 
         bool EAW_Mode = true;
-        bool Backup_Mode = false;  
+       
 
         bool Script_Mode = false;
         string Temporal_A, Temporal_B = "";
@@ -69,9 +69,14 @@ namespace Xml_Axe
         string Last_Combo_Box_Tag_Name = "";
         string Last_Combo_Box_Entity_Name = "";
 
+        
+        string Backup_Dir = "";
+        bool Backup_Mode = false;
+        bool At_Top_Level = false;
         string Last_Fetch_Hour, Current_Hour = "";
         public int Last_Fetch_Minute, Current_Minute = 0;
         public int Fetch_Intervall_Minutes = 3;
+       
 
         string[] Balancing_Tags = null; // new string[] { };
         public Color Theme_Color = Color.CadetBlue;
@@ -148,6 +153,9 @@ namespace Xml_Axe
                 // Trashing after extraction, named the archive "Delete_Me" for the case that its autodeletion fails
                 Deleting(Parent_Dir + @"\Delete_Me.zip");
             }
+
+
+            Backup_Dir = Path.GetDirectoryName(Script_Directory) + @"\Backup\";
 
 
 
@@ -243,15 +251,107 @@ namespace Xml_Axe
 
         private void List_View_Selection_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (Script_Mode) { Run_Script(); return; } // Script Mode override
+            if (Script_Mode) { Run_Script(); } // Script Mode override
 
-
-            if (List_View_Selection.SelectedItems.Count < 2)
-            { Combo_Box_Entity_Name.Text = Select_List_View_First(List_View_Selection); }
-            else
+            else if (Backup_Mode)
             {
-                Combo_Box_Entity_Name.Text = "Multi";
+                string Current = Select_List_View_First(List_View_Selection);
+
+                if (At_Top_Level) { return; }
+                try
+                {
+                    List_View_Selection.Items.Clear();
+                    Temporal_E = Get_All_Directories(Backup_Dir + @"\" + Current, true);
+                    Temporal_E.Reverse();
+
+                    foreach (string Found_Dir in Temporal_E)
+                    {
+                        string Folder_Name = Found_Dir.Replace(Backup_Dir + @"\" + Current + @"\", "");
+                        if (Folder_Name != "" && !List_View_Matches(List_View_Selection, Folder_Name))
+                        { List_View_Selection.Items.Add(Folder_Name); At_Top_Level = true; }
+                    }
+                } catch {}
+
+    
+                Set_Checker(List_View_Selection, Theme_Color);
+                return;
             }
+
+            else // Normal Mode
+            {
+                if (List_View_Selection.SelectedItems.Count < 2)
+                { Combo_Box_Entity_Name.Text = Select_List_View_First(List_View_Selection); }
+                else
+                {
+                    Combo_Box_Entity_Name.Text = "Multi";
+                }
+            }
+
+        }
+
+
+        public void Restore(string Target_Backup, bool All_Files_Since_This = true)
+        {
+            // string Current = Select_List_View_First(List_View_Selection);
+            try
+            {
+                string Root_Directory = Backup_Dir + Path.GetFileName(Properties.Settings.Default.Mod_Directory);
+                string Working_Directory = Root_Directory + @"\Current";
+
+                List<string> Backups = Get_All_Directories(Root_Directory, true);
+                List<string> Backup_Files = new List<string>();
+
+                // iConsole(500, 100, string.Join("\n", Backups));
+                Backups.Reverse(); // Place newest entries at the top of the list stack
+                int Passed_Slots = 0;
+
+
+                foreach (string Found_Dir in Backups)
+                {
+                    if (Found_Dir.EndsWith(Target_Backup)) // Then its the selected directory
+                    { 
+                        foreach (string File_Path in Get_All_Files(Found_Dir))
+                        {   // Collecting all files inside for later.
+                            string Selected_Dir = File_Path.Replace(Found_Dir, "");
+                            if (!Backup_Files.Contains(Selected_Dir)) { Backup_Files.Add(Selected_Dir); }
+                        }
+                        break; // Stop, or the Passed_Slots will continue incrementing evem after we found this folder.
+                    } 
+                    else { Passed_Slots++; } // How many slots are passing until we find the selected dir?                 
+                }
+                iConsole(500, 100, string.Join("\n", Backup_Files));
+
+
+
+                if (Directory.Exists(Working_Directory)) { Deleting(Working_Directory); } // Artifact from last usage
+                Directory.CreateDirectory(Working_Directory);
+
+                int Cycles = 0;
+
+                for (int i = 1; i <= Passed_Slots; i++)
+                {
+                    Cycles++;
+                 
+                    foreach (string File_Path in Backup_Files)
+                    {                    
+                       string Target_Directory = Path.GetDirectoryName(Working_Directory + File_Path);
+                       if (!Directory.Exists(Target_Directory)) { Directory.CreateDirectory(Target_Directory); }
+
+                       string Selected_File = Backups[i] + File_Path; // The file path inside of older or newer backups!
+
+                       if (File.Exists(Selected_File)) 
+                       {
+                           // Overwrite Copy the last iteration inside of the Working Directory!
+                           File.Copy(Selected_File, Working_Directory + File_Path, true);
+                           // iConsole(600, 100, Selected_File + "   To   " + Working_Directory + File_Path);
+                       }
+                    }
+                }
+
+                // iConsole(500, 100, Cycles.ToString()); // Confirming the right amount of directories to pass
+
+
+            } catch {}
         }
 
 
@@ -413,35 +513,44 @@ namespace Xml_Axe
 
         private void Button_Browse_Folder_MouseUp(object sender, MouseEventArgs Mouse)
         {
-            if (Script_Mode) { Execute(Script_Directory); return; }
-            
-            else if (Mouse.Button == MouseButtons.Right)
+            Restore(Select_List_View_First(List_View_Selection), true); return;
+
+
+            if (Script_Mode) { Execute(Script_Directory); }
+
+            else if (Backup_Mode) { Execute(Backup_Dir); }
+
+            else // Normal Mode
             {
-                Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_File_Lit);
-                Execute(Properties.Settings.Default.Last_File); 
-                System.Threading.Thread.Sleep(2000); // Leave some time to show the File Icon
-                return;
-            }
-
-
-            Open_File_Dialog_1.FileName = "";
-            if (Properties.Settings.Default.Last_File != null & Properties.Settings.Default.Last_File != "")
-            { Open_File_Dialog_1.InitialDirectory = Path.GetDirectoryName(Properties.Settings.Default.Last_File); }
-
-            Open_File_Dialog_1.Filter = "xml files (*.xml)|*.xml|Text files (*.txt)|*.txt";
-            //Open_File_Dialog_1.FilterIndex = 1;
-            //Open_File_Dialog_1.RestoreDirectory = true;
-            //Open_File_Dialog_1.CheckFileExists = true;
-            //Open_File_Dialog_1.CheckPathExists = true;
-
-            try
-            {   // If the Open Dialog found a File
-                if (Open_File_Dialog_1.ShowDialog() == DialogResult.OK)
+                if (Mouse.Button == MouseButtons.Right)
                 {
-                    Text_Box_Original_Path.Text = Open_File_Dialog_1.FileName;
-                    Set_Paths(Open_File_Dialog_1.FileName);
+                    Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_File_Lit);
+                    Execute(Properties.Settings.Default.Last_File);
+                    System.Threading.Thread.Sleep(2000); // Leave some time to show the File Icon
+                    return;
                 }
-            } catch {}
+
+
+                Open_File_Dialog_1.FileName = "";
+                if (Properties.Settings.Default.Last_File != null & Properties.Settings.Default.Last_File != "")
+                { Open_File_Dialog_1.InitialDirectory = Path.GetDirectoryName(Properties.Settings.Default.Last_File); }
+
+                Open_File_Dialog_1.Filter = "xml files (*.xml)|*.xml|Text files (*.txt)|*.txt";
+                //Open_File_Dialog_1.FilterIndex = 1;
+                //Open_File_Dialog_1.RestoreDirectory = true;
+                //Open_File_Dialog_1.CheckFileExists = true;
+                //Open_File_Dialog_1.CheckPathExists = true;
+
+                try
+                {   // If the Open Dialog found a File
+                    if (Open_File_Dialog_1.ShowDialog() == DialogResult.OK)
+                    {
+                        Text_Box_Original_Path.Text = Open_File_Dialog_1.FileName;
+                        Set_Paths(Open_File_Dialog_1.FileName);
+                    }
+                } catch {}
+            }
+          
         }
 
         private void Button_Browse_Folder_MouseHover(object sender, EventArgs e)
@@ -458,22 +567,55 @@ namespace Xml_Axe
         //===========================//
         private void Button_Start_Click(object sender, EventArgs e)
         {
-            if (List_View_Selection.Visible) { List_View_Selection.Visible = false; Zoom_List_View(false); }
-            else 
-            {   Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible 
-             
-                if (Text_Box_Description.Visible) { Disable_Description(); }
-            }                            
+            if (Backup_Mode)
+            {
+                iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nAre you sure you wish to delete the \nselected backups?");
+                if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
+
+                Temporal_E = Select_List_View_Items(List_View_Selection);
+
+
+                foreach (string Folder_Path in Temporal_E)
+                {
+                    string Full_Path = Backup_Dir + Path.GetFileName(Properties.Settings.Default.Mod_Directory) + @"\" + Folder_Path;
+                    // iConsole(600, 100, Full_Path);
+
+                    if (Directory.Exists(Full_Path)) 
+                    { 
+                        // Directory.Delete(Full_Path);
+                        Deleting(Full_Path);
+
+                        foreach (ListViewItem Item in List_View_Selection.Items)
+                        { if (Item.Text == Folder_Path) { List_View_Selection.Items.Remove(Item); } }
+                    }                   
+                }
+            }
+            
+            else
+            {   if (List_View_Selection.Visible) { List_View_Selection.Visible = false; Zoom_List_View(false); }
+                else
+                {   Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible 
+
+                    if (Text_Box_Description.Visible) { Disable_Description(); }
+                }     
+            }
+                                 
         }
 
         private void Button_Start_MouseHover(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit); }
+        {
+            if (Backup_Mode) { Set_Resource_Button(Button_Start, Properties.Resources.Button_Delete_Lit); }
+            else { Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit); }
+        }
 
         private void Button_Start_MouseLeave(object sender, EventArgs e)
         {
-            if (List_View_Selection.Visible) // Use its visability as bool toggle ;)
-            { Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit); }
-            else { Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs); } 
+            if (Backup_Mode) { Set_Resource_Button(Button_Start, Properties.Resources.Button_Delete); }
+            else
+            {   if (List_View_Selection.Visible) // Use its visability as bool toggle ;)
+                { Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit); }
+                else { Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs); }
+            }
         }
 
       
@@ -743,20 +885,17 @@ namespace Xml_Axe
             string Entity_Name = Wash_String(Combo_Box_Entity_Name.Text);
             string Selected_Tag = Regex.Replace(Combo_Box_Tag_Name.Text, "[\n\r\t </>]", ""); // Also removing </> tag values
             string Selected_Type = Wash_String(Combo_Box_Type_Filter.Text);
-           
-            string Backup_Dir = Path.GetDirectoryName(Script_Directory) + @"\Backups\";
-            string Backup_Name = Path.GetFileName(Properties.Settings.Default.Mod_Directory) + "_" + Backup_Time();
+
+          
+            string Backup_Name = Path.GetFileName(Properties.Settings.Default.Mod_Directory); // + "_" + Backup_Time();
             string Backup_File = "";
 
             // XElement Selected_Instance = null;
             IEnumerable<XElement> Instances = null;
             List <string> Changed_Xmls = new List<string>();
 
-          
-
-            
-            if (!Directory.Exists(Xml_Directory))
-            { iConsole(200, 100, "\nCan't find the Xml Directory."); return null; }
+                   
+            if (!Directory.Exists(Xml_Directory)) { iConsole(200, 100, "\nCan't find the Xml Directory."); return null; }
 
 
 
@@ -765,7 +904,7 @@ namespace Xml_Axe
                 // iConsole(560, 600, Xml_Directory + string.Join("\n", File_Collection)); // return null; // Debug Code
 
                 if (!Directory.Exists(Backup_Dir)) { Directory.CreateDirectory(Backup_Dir); }
-                if (!Directory.Exists(Backup_Dir + Backup_Name)) { Directory.CreateDirectory(Backup_Dir + Backup_Name); }
+                // if (!Directory.Exists(Backup_Dir + Backup_Name)) { Directory.CreateDirectory(Backup_Dir + Backup_Name); }
             } else { File_Collection = Get_All_Files(Xml_Directory, "xml"); }
 
         
@@ -1033,21 +1172,20 @@ namespace Xml_Axe
 
                         }
                     }
-
+                    
                     if (Apply_Changes) 
-                    {                                                                
-                        Backup_File = Backup_Dir + Backup_Name + @"\" + (Selected_Xml.Replace(Xml_Directory, "")); // Creating Sub-Directories
+                    {                      
+                        Backup_File = Backup_Dir + Backup_Name + @"\" + Backup_Time() + @"\" + (Selected_Xml.Replace(Xml_Directory, "")); // Creating Sub-Directories:                        
                         if (!Directory.Exists(Path.GetDirectoryName(Backup_File))) { Directory.CreateDirectory(Path.GetDirectoryName(Backup_File)); }
 
-                        // Creating a Backup  
-                        File.Copy(Selected_Xml, Backup_Dir + Backup_Name + @"\" + (Selected_Xml.Replace(Xml_Directory, "")), true);
 
-                        // iConsole(300, 200, Selected_Xml + ",  " + Backup_Dir + Backup_Name + @"\" + (Selected_Xml.Replace(Xml_Directory, ""))); // return null;
-                        iConsole(560, 600, Path.GetDirectoryName(Backup_File)); // return null;
+                        File.Copy(Selected_Xml, Backup_File, true);  // Creating a Backup  
+                        // iConsole(560, 600, Backup_File); // return null;
                        
+                        Xml_File.Save(Selected_Xml);
+                        //  iConsole(500, 100, "\nSaving to " + Xml); }
+                    } 
 
-                        Xml_File.Save(Selected_Xml); 
-                    } //  iConsole(500, 100, "\nSaving to " + Xml); }
                     if (In_Selected_Xml(Entity_Name)) { return Changed_Xmls; } // Exiting after the first (and only) Xml File.
       
                 } catch {}
@@ -2679,6 +2817,32 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
         //===========================//
+        public List<string> Get_All_Directories(string Dir_Path, bool Only_Root = false) // Extension defaults to all files of all types
+        {
+            List<string> All_Folders = new List<string>();
+            string The_Error = "No Directory Path was specified.";
+            if (Dir_Path == "" | Dir_Path == null) { iConsole(600, 100, The_Error); return null; }
+
+            string[] Found_Folders = null;
+            if (Only_Root) { Found_Folders = Directory.GetDirectories(Dir_Path, "*.*", System.IO.SearchOption.TopDirectoryOnly); }
+            else { Found_Folders = Directory.GetDirectories(Dir_Path, "*.*", System.IO.SearchOption.AllDirectories); }
+
+            try
+            {   if (Directory.Exists(Dir_Path))
+                {
+                    foreach (string Folder in Found_Folders)
+                    { All_Folders.Add(Folder); }
+                }
+                else { iConsole(600, 100, The_Error); return null; }
+
+            } catch {}
+
+            return All_Folders;
+        }
+
+
+
+        //===========================//
         // This returns all, even the unselected ones
         public List<string> Get_All_List_View_Items(ListView List_View)
         {
@@ -2870,18 +3034,10 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         //=====================//
         private void Button_Undo_Click(object sender, EventArgs e)
-        {
-
-            string Backup_Dir = Path.GetDirectoryName(Script_Directory) + @"\Backups\";
-            string File_Name = Path.GetFileName(Properties.Settings.Default.Mod_Directory) + "_" + Backup_Time();
-
-
-            // iConsole(300, 200, "The_Xml_Path" + Backup_Dir + File_Name + @"\" + ((Xml_Directory + @"\Xml_Name").Replace(Xml_Directory, ""))); return;
-
-
+        {          
             if (Backup_Mode) 
-            { 
-                Backup_Mode = false;
+            {
+                Backup_Mode = false; At_Top_Level = false;
                 Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible 
 
                 if (Text_Box_Description.Visible) { Disable_Description(); }
@@ -2890,11 +3046,22 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             {   Backup_Mode = true;
                 List_View_Selection.Items.Clear();
                 List_View_Selection.Visible = true;
+
+             
+                foreach (string Folder in Get_All_Directories(Backup_Dir, true))
+                {
+                    string Folder_Name = Folder.Replace(Backup_Dir, "");
+                    if (Folder_Name != "" && !List_View_Matches(List_View_Selection, Folder_Name))
+                    { List_View_Selection.Items.Add(Folder_Name); }                   
+                }
+
+                Set_Checker(List_View_Selection, Theme_Color);
             }
 
 
             Zoom_List_View(Backup_Mode);
             Set_UI_Backup_Mode(!Backup_Mode);
+            Button_Start_MouseLeave(null, null); // Toggeling Delete Button for this mode
         }
 
         private void Button_Undo_MouseHover(object sender, EventArgs e)
@@ -2939,7 +3106,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
             if (Backup_Mode) // Just show the last results
             {
-                Backup_Mode = false;
+                Backup_Mode = false; At_Top_Level = false;
                 List_View_Selection.Items.Clear();
                
                 foreach (string Entry in Found_Entities)
@@ -3233,13 +3400,15 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             {   Drop_Zone.Visible = true;
                 List_View_Selection.Size = new Size(404, 164);
                 List_View_Selection.Location = new Point(12, 12);               
-            }     
+            }
+
+            List_View_Selection.Columns[0].Width = List_View_Selection.Size.Width - 8;
         }
 
 
         private void Set_UI_Backup_Mode(bool Mode)
         {
-            Control[] Controls = { Button_Start, Button_Run, Button_Scripts, Button_Percentage, Button_Operator, Button_Toggle_Settings };
+            Control[] Controls = { Button_Run, Button_Scripts, Button_Percentage, Button_Operator, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
         }
 
