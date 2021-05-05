@@ -53,7 +53,6 @@
             this.Text_Box_Caution_Window.Margin = new System.Windows.Forms.Padding(4);
             this.Text_Box_Caution_Window.Name = "Text_Box_Caution_Window";
             this.Text_Box_Caution_Window.ReadOnly = true;
-            this.Text_Box_Caution_Window.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
             this.Text_Box_Caution_Window.ShowSelectionMargin = true;
             this.Text_Box_Caution_Window.Size = new System.Drawing.Size(758, 320);
             this.Text_Box_Caution_Window.TabIndex = 0;
@@ -110,7 +109,7 @@
             this.List_View_Info.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.None;
             this.List_View_Info.Location = new System.Drawing.Point(-5, -5);
             this.List_View_Info.Name = "List_View_Info";
-            this.List_View_Info.Size = new System.Drawing.Size(703, 320);
+            this.List_View_Info.Size = new System.Drawing.Size(758, 320);
             this.List_View_Info.TabIndex = 99;
             this.List_View_Info.UseCompatibleStateImageBehavior = false;
             this.List_View_Info.View = System.Windows.Forms.View.Details;

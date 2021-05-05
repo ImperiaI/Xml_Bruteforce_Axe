@@ -69,6 +69,10 @@ namespace Xml_Axe
         string Last_Combo_Box_Tag_Name = "";
         string Last_Combo_Box_Entity_Name = "";
 
+        string Last_Fetch_Hour, Current_Hour = "";
+        public int Last_Fetch_Minute, Current_Minute = 0;
+        public int Fetch_Intervall_Minutes = 3;
+
         string[] Balancing_Tags = null; // new string[] { };
         public Color Theme_Color = Color.CadetBlue;
         public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
@@ -739,6 +743,10 @@ namespace Xml_Axe
             string Entity_Name = Wash_String(Combo_Box_Entity_Name.Text);
             string Selected_Tag = Regex.Replace(Combo_Box_Tag_Name.Text, "[\n\r\t </>]", ""); // Also removing </> tag values
             string Selected_Type = Wash_String(Combo_Box_Type_Filter.Text);
+           
+            string Backup_Dir = Path.GetDirectoryName(Script_Directory) + @"\Backups\";
+            string Backup_Name = Path.GetFileName(Properties.Settings.Default.Mod_Directory) + "_" + Backup_Time();
+            string Backup_File = "";
 
             // XElement Selected_Instance = null;
             IEnumerable<XElement> Instances = null;
@@ -755,18 +763,23 @@ namespace Xml_Axe
             if (Apply_Changes) // File_Collection is a global variable, feeded from the remaining filenames in the Caution_Window 
             {   if (File_Collection == null | File_Collection.Count == 0) { File_Collection = Get_All_Files(Xml_Directory, "xml"); } // Failsafe
                 // iConsole(560, 600, Xml_Directory + string.Join("\n", File_Collection)); // return null; // Debug Code
-            }
-            else { File_Collection = Get_All_Files(Xml_Directory, "xml"); }
+
+                if (!Directory.Exists(Backup_Dir)) { Directory.CreateDirectory(Backup_Dir); }
+                if (!Directory.Exists(Backup_Dir + Backup_Name)) { Directory.CreateDirectory(Backup_Dir + Backup_Name); }
+            } else { File_Collection = Get_All_Files(Xml_Directory, "xml"); }
 
         
 
             foreach (var Xml in File_Collection)
             {   
                 try {
+                    Instances = null; // Reset from last cycle
+
                     Selected_Xml = Xml;
                     // Ignoring blacklisted Xmls
                     if (Blacklisted_Xmls != null) { if (Blacklisted_Xmls.Contains(Selected_Xml.Replace(Xml_Directory, ""))) { continue; } }
-                
+
+
 
                     XDocument Xml_File = XDocument.Load(Selected_Xml, LoadOptions.PreserveWhitespace);
                   
@@ -935,7 +948,8 @@ namespace Xml_Axe
                           select All_Tags;
                     }
 
-                    
+
+                    if (Instances.Count() == 0) { continue; } 
 
                     // =================== Checking Xml Instance ===================
                     foreach (XElement Instance in Instances)
@@ -1020,7 +1034,20 @@ namespace Xml_Axe
                         }
                     }
 
-                    if (Apply_Changes) { Xml_File.Save(Selected_Xml); } //  iConsole(500, 100, "\nSaving to " + Xml); }
+                    if (Apply_Changes) 
+                    {                                                                
+                        Backup_File = Backup_Dir + Backup_Name + @"\" + (Selected_Xml.Replace(Xml_Directory, "")); // Creating Sub-Directories
+                        if (!Directory.Exists(Path.GetDirectoryName(Backup_File))) { Directory.CreateDirectory(Path.GetDirectoryName(Backup_File)); }
+
+                        // Creating a Backup  
+                        File.Copy(Selected_Xml, Backup_Dir + Backup_Name + @"\" + (Selected_Xml.Replace(Xml_Directory, "")), true);
+
+                        // iConsole(300, 200, Selected_Xml + ",  " + Backup_Dir + Backup_Name + @"\" + (Selected_Xml.Replace(Xml_Directory, ""))); // return null;
+                        iConsole(560, 600, Path.GetDirectoryName(Backup_File)); // return null;
+                       
+
+                        Xml_File.Save(Selected_Xml); 
+                    } //  iConsole(500, 100, "\nSaving to " + Xml); }
                     if (In_Selected_Xml(Entity_Name)) { return Changed_Xmls; } // Exiting after the first (and only) Xml File.
       
                 } catch {}
@@ -2844,7 +2871,12 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //=====================//
         private void Button_Undo_Click(object sender, EventArgs e)
         {
-            iConsole(300, 200, Operation_Mode); return;
+
+            string Backup_Dir = Path.GetDirectoryName(Script_Directory) + @"\Backups\";
+            string File_Name = Path.GetFileName(Properties.Settings.Default.Mod_Directory) + "_" + Backup_Time();
+
+
+            // iConsole(300, 200, "The_Xml_Path" + Backup_Dir + File_Name + @"\" + ((Xml_Directory + @"\Xml_Name").Replace(Xml_Directory, ""))); return;
 
 
             if (Backup_Mode) 
@@ -2870,6 +2902,34 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         private void Button_Undo_MouseLeave(object sender, EventArgs e)
         { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Clock); }
+
+
+
+
+        public string Backup_Time()
+        {   try // Setting Timestamp
+            {   Last_Fetch_Hour = DateTime.Now.ToString("yyyy/MM/dd'_'HH/mm");
+                Int32.TryParse(DateTime.Now.ToString("mm"), out Last_Fetch_Minute); // Getting Minute 
+                return Last_Fetch_Hour;
+            } catch {}
+
+            return "";
+        }
+
+
+        public bool Is_Time_To_Backup()
+        {   try
+            {   Current_Hour = DateTime.Now.ToString("yyyy/MM/dd'_'HH/mm");
+                Int32.TryParse(DateTime.Now.ToString("mm"), out Current_Minute); // Getting Minute 
+
+                // Different hour means we need to refresh -- Or if more then X min passed since last fetch
+                if (Current_Hour != Last_Fetch_Hour | Current_Minute - Last_Fetch_Minute > Fetch_Intervall_Minutes - 1) { return true; }
+            }
+            catch { return true; } // Fetching anyways..
+
+            return false;
+        }
+
 
 
         //=====================//
