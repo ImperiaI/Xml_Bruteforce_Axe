@@ -656,24 +656,28 @@ namespace Xml_Axe
 
 
 
-
-            if (Related_Xmls.Count() > 0) // Update the Backup Version
+            if (Related_Xmls != null)
             {
-               
-                string Info_File =
-                 @"Directory_Name = " + Mod_Name +
-                 "\nVersion = " + Last_Backup_Time +
-                 "\n\n\n//============================================================\\\\" +
-                 "\nChanged_Files:" +
-                 "\n//============================================================\\\\" +
-                 "\n" + string.Join("\n", Related_Xmls);
+                string Backup_Count = Get_Setting_Value("Backups_Per_Directory");
 
-                // This does not happen below because it needs to write this file once only.
-                File.WriteAllText(Backup_Dir + Mod_Name + @"\Info.txt", Info_File);
+                if (Related_Xmls.Count() > 0 && Backup_Count != "0" && Backup_Count != "" && !Match_Without_Emptyspace(Backup_Count, "false"))
+                {  // Update the Backup Version
 
-                File.Copy(Backup_Dir + Mod_Name + @"\Info.txt", Backup_Dir + Mod_Name + @"\" + Last_Backup_Time + @"\Info.txt", true);
+                    string Info_File =
+                     @"Directory_Name = " + Mod_Name +
+                     "\nVersion = " + Last_Backup_Time +
+                     "\n\n\n//============================================================\\\\" +
+                     "\nChanged_Files:" +
+                     "\n//============================================================\\\\" +
+                     "\n" + string.Join("\n", Related_Xmls);
 
-                // File.WriteAllText(Backup_Dir + Mod_Name + @"\" + Last_Backup_Time + @"\Info.txt", Info_File);
+                    // This does not happen below because it needs to write this file once only.
+                    File.WriteAllText(Backup_Dir + Mod_Name + @"\Info.txt", Info_File);
+
+                    File.Copy(Backup_Dir + Mod_Name + @"\Info.txt", Backup_Dir + Mod_Name + @"\" + Last_Backup_Time + @"\Info.txt", true);
+
+                    // File.WriteAllText(Backup_Dir + Mod_Name + @"\" + Last_Backup_Time + @"\Info.txt", Info_File);
+                }
             }
 
 
@@ -858,7 +862,7 @@ namespace Xml_Axe
 
           
             string Backup_File = "";
-
+            string Backup_Count = Get_Setting_Value("Backups_Per_Directory");
 
 
             // XElement Selected_Instance = null;
@@ -876,6 +880,19 @@ namespace Xml_Axe
 
                 if (!Directory.Exists(Backup_Dir)) { Directory.CreateDirectory(Backup_Dir); }
                 // if (!Directory.Exists(Backup_Dir + Mod_Name)) { Directory.CreateDirectory(Backup_Dir + Mod_Name); }
+
+
+                if (Backup_Count != "0" && Backup_Count != "" && !Match_Without_Emptyspace(Backup_Count, "false"))
+                {
+                    int Maximal_Backups = Int32.Parse(Backup_Count);
+                    Temporal_E = Get_All_Directories(Backup_Dir + Mod_Name, true);
+
+                    if (Temporal_E.Count() >= Maximal_Backups) // If reached max count, we need to delete the last one!
+                    {   // iConsole(400, 200, Temporal_E.First()); return null; // Thats the one we're targeting for deletion                   
+                        Deleting(Temporal_E.First()); // Trash ONLY the last one
+                    }
+                }
+
             } else { File_Collection = Get_All_Files(Xml_Directory, "xml"); }
 
         
@@ -1152,13 +1169,15 @@ namespace Xml_Axe
                     
                     if (Apply_Changes) 
                     {
-                        Backup_File = Backup_Dir + Mod_Name + @"\" + Last_Backup_Time + @"\" + (Selected_Xml.Replace(Xml_Directory, "")); // Creating Sub-Directories:                        
-                        if (!Directory.Exists(Path.GetDirectoryName(Backup_File))) { Directory.CreateDirectory(Path.GetDirectoryName(Backup_File)); }
+                        if (Backup_Count != "0" && Backup_Count != "" && !Match_Without_Emptyspace(Backup_Count, "false")) // Then backup feature is disabled in general
+                        {   Backup_File = Backup_Dir + Mod_Name + @"\" + Last_Backup_Time + @"\" + (Selected_Xml.Replace(Xml_Directory, "")); // Creating Sub-Directories:                        
+                            if (!Directory.Exists(Path.GetDirectoryName(Backup_File))) { Directory.CreateDirectory(Path.GetDirectoryName(Backup_File)); }
 
 
-                        File.Copy(Selected_Xml, Backup_File, true);  // Creating a Backup  
-                        // iConsole(560, 600, Backup_File); // return null;
-                       
+                            File.Copy(Selected_Xml, Backup_File, true);  // Creating a Backup  
+                            // iConsole(560, 600, Backup_File); // return null;
+                        }
+
                         Xml_File.Save(Selected_Xml);
                         //  iConsole(500, 100, "\nSaving to " + Xml); }
                     } 
@@ -1839,6 +1858,7 @@ namespace Xml_Axe
 # Set_Launch_Affinity = true
 # High_Launch_Priority = true
 # Custom_Start_Parameters = false
+# Backups_Per_Directory = 20
 # Script_Directory = %AppData%\Local\Xml_Axe\Scripts
 # Disable_EAW_Mode = false
 # Text_Format_Delimiter = ;
@@ -2808,12 +2828,12 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             string The_Error = "No Directory Path was specified.";
             if (Dir_Path == "" | Dir_Path == null) { iConsole(600, 100, The_Error); return null; }
 
-            string[] Found_Folders = null;
-            if (Only_Root) { Found_Folders = Directory.GetDirectories(Dir_Path, "*.*", System.IO.SearchOption.TopDirectoryOnly); }
-            else { Found_Folders = Directory.GetDirectories(Dir_Path, "*.*", System.IO.SearchOption.AllDirectories); }
-
             try
-            {   if (Directory.Exists(Dir_Path))
+            {   string[] Found_Folders = null;
+                if (Only_Root) { Found_Folders = Directory.GetDirectories(Dir_Path, "*.*", System.IO.SearchOption.TopDirectoryOnly); }
+                else { Found_Folders = Directory.GetDirectories(Dir_Path, "*.*", System.IO.SearchOption.AllDirectories); }
+                
+                if (Directory.Exists(Dir_Path))
                 {
                     foreach (string Folder in Found_Folders)
                     { All_Folders.Add(Folder); }
@@ -3123,7 +3143,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-            // iConsole(400, 100, Properties.Settings.Default.Xml_Directory + "\n" + Mod_Directory); return;
+
+            // iConsole(400, 100, test.ToString()); return;
+
 
             if (Backup_Mode) // Just show the last results
             {
