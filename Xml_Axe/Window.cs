@@ -139,8 +139,8 @@ namespace Xml_Axe
 
             Queried_Attribute = Get_Setting_Value("Queried_Attribute"); // Needs to run after Reset_Tag_List()!
             Text_Format_Delimiter = Get_Setting_Value("Text_Format_Delimiter");
+            if (Text_Format_Delimiter == "\\t" | Text_Format_Delimiter == "t") { Text_Format_Delimiter = "\"\t\""; } // Correction Override
             
-            if (Text_Format_Delimiter == "t") { Text_Format_Delimiter = "\\t"; } // Correction Overwrite
 
 
             // ================== INSTALLATION ==================
@@ -746,11 +746,13 @@ namespace Xml_Axe
 
         // public List <string> Load_Xml_Content(string Xml_Path)
         public void Load_Xml_Content(string Xml_Path, bool Show_List = true)
-        {       
+        {
+            List_View_Selection.Items.Clear();
+
             // List<string> Found_Entities = null;
             IEnumerable<XElement> Instances = null;
             if (!File.Exists(Xml_Path)) { iConsole(200, 100, "\nCan't find the Xml."); return; }
-            List_View_Selection.Items.Clear();
+        
             List_View_Selection.Visible = true;
 
 
@@ -1428,7 +1430,7 @@ namespace Xml_Axe
                     Queried_Attribute = Get_Setting_Value("Queried_Attribute");
                     Text_Format_Delimiter = Get_Setting_Value("Text_Format_Delimiter");
 
-                    if (Text_Format_Delimiter == "t") { Text_Format_Delimiter = "\\t"; } // Correction Override
+                    if (Text_Format_Delimiter == "\\t" | Text_Format_Delimiter == "t") { Text_Format_Delimiter = "\"\t\""; } // Correction Override
 
 
                     string New_Script_Dir = Get_Scripts_Dir(true);
@@ -3341,6 +3343,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 // Loading the Xml instead of the available scripts in script mode
                 Load_Xml_Content(Properties.Settings.Default.Last_File);
                 Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit);
+
+                if (Text_Box_Description.Visible) { Disable_Description(); }
             }
 
             else if (Backup_Mode)
@@ -3381,7 +3385,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Zoom_List_View(true);
                 Set_UI_Into_Script_Mode(!Script_Mode);
                 Button_Browse_Folder.Location = new Point(1, 350);
-               
+                if (Text_Box_Description.Visible) { Disable_Description(); }
+
 
                 Found_Scripts = Get_All_Files(Script_Directory);
                 List<string> Script_Names = new List<string>();
@@ -3594,7 +3599,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                             if (Match_Without_Emptyspace_2(Selection, File_Name))                              
                             {
                                 string Extension = "txt";
-                                if (Text_Format_Delimiter == "\\t") { Extension = "tsv"; }                             
+                                if (Text_Format_Delimiter == "\"\t\"") { Extension = "tsv"; }                             
                                 else if (Text_Format_Delimiter == "," | Text_Format_Delimiter == ";") { Extension = "csv"; }
 
                                 Execute(File_Path, "\"" + Mod_Directory + "\\Data\" " + Text_Format_Delimiter + " " + Extension, Script_Directory);                               
