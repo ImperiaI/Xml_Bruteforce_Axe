@@ -260,25 +260,38 @@ namespace Xml_Axe
 
             else if (Backup_Mode) // Just move into the Xml Directory that is currently selected 
             {
-                string Current = Select_List_View_First(List_View_Selection);
+                string Selection = Select_List_View_First(List_View_Selection);
+
 
                 if (At_Top_Level) { return; }
                 try
                 {
+                    string Current_Version = Get_Backup_Info()[1];
+                    //Label_Entity_Name.Text = Current_Version; // Obsolete because I highlight bg color now
+                    //Label_Entity_Name.Location = new Point(86, -2);
+
+
                     List_View_Selection.Items.Clear();
-                    Temporal_E = Get_All_Directories(Backup_Dir + @"\" + Current, true);
+                    Temporal_E = Get_All_Directories(Backup_Dir + @"\" + Selection, true);
                     Temporal_E.Reverse();
 
                     foreach (string Found_Dir in Temporal_E)
                     {
-                        string Folder_Name = Found_Dir.Replace(Backup_Dir + @"\" + Current + @"\", "");
-                        if (Folder_Name != "" && Folder_Name != "Current" && !List_View_Matches(List_View_Selection, Folder_Name))
+                        string Folder_Name = Found_Dir.Replace(Backup_Dir + @"\" + Selection + @"\", "");
+
+                        if (Folder_Name != "" && Folder_Name != Selection && !List_View_Matches(List_View_Selection, Folder_Name))
                         { List_View_Selection.Items.Add(Folder_Name); At_Top_Level = true; }
                     }
-                } catch {}
 
-    
-                Set_Checker(List_View_Selection, Theme_Color);
+
+                    Set_Checker(List_View_Selection, Theme_Color);
+
+                    foreach (ListViewItem Item in List_View_Selection.Items)
+                    {
+                        if (Item.Text == Current_Version) { Item.BackColor = Color.Orange; break; } // Highlighting Selection
+                    }
+
+                } catch {}              
             }
 
             else // Normal Mode
@@ -459,7 +472,25 @@ namespace Xml_Axe
         {         
             if (Script_Mode) { Execute(Script_Directory); }
 
-            else if (Backup_Mode) { Execute(Backup_Dir); }
+            else if (Backup_Mode) 
+            {   if (At_Top_Level)
+                {  
+                    string Selection = Select_List_View_First(List_View_Selection);
+                    if (Selection == null) { Execute(Backup_Dir); return; } // Failsafe
+
+                    Temporal_E = Get_All_Directories(Backup_Dir + Mod_Name, true);
+                    Temporal_E.Reverse();
+
+
+                    foreach (string Found_Dir in Temporal_E)
+                    {
+                        string Folder_Name = Found_Dir.Replace(Backup_Dir + Mod_Name + @"\", "");
+
+                        if (Folder_Name != "" && Folder_Name == Selection)
+                        { Execute(Found_Dir); return; }
+                    }
+                } else { Execute(Backup_Dir); }           
+            }
 
             else // Normal Mode
             {
@@ -2177,28 +2208,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     Combo_Box_Entity_Name.DroppedDown = true;                
                 }
                 
-            }
-
-            else if (!EAW_Mode)
-            {
-                if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Label_Entity_Name.Text = "First Attribute"; }
-                else { Label_Entity_Name.Text = Queried_Attribute; }
-
-                Label_Type_Filter.Text = "Parent Name";
-                Button_Search.Visible = true;
-            }
-            else if (Combo_Box_Entity_Name.Text == "Find_And_Replace")
-            {   Label_Entity_Name.Text = "Old Tag Value";
-                Label_Type_Filter.Text = "Filter Type";
-                Button_Search.Visible = true;
-            }
-            else
-            {   if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Label_Entity_Name.Text = "First Attribute"; }
-                else { Label_Entity_Name.Text = Queried_Attribute; }
-
-                Label_Type_Filter.Text = "Filter Type";
-                Button_Search.Visible = true;
-            }
+            } else { Set_Label_Entity_Name_Text(); }
 
         
 
@@ -2228,6 +2238,32 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         }
 
+
+        public void Set_Label_Entity_Name_Text()
+        {
+            if (!EAW_Mode)
+            {
+                if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Label_Entity_Name.Text = "First Attribute"; }
+                else { Label_Entity_Name.Text = Queried_Attribute; }
+
+                Label_Type_Filter.Text = "Parent Name";
+                Button_Search.Visible = true;
+            }
+            else if (Combo_Box_Entity_Name.Text == "Find_And_Replace")
+            {
+                Label_Entity_Name.Text = "Old Tag Value";
+                Label_Type_Filter.Text = "Filter Type";
+                Button_Search.Visible = true;
+            }
+            else
+            {
+                if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Label_Entity_Name.Text = "First Attribute"; }
+                else { Label_Entity_Name.Text = Queried_Attribute; }
+
+                Label_Type_Filter.Text = "Filter Type";
+                Button_Search.Visible = true;
+            }
+        }
       
 
         //===========================//
@@ -3077,10 +3113,15 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             if (Backup_Mode) 
             {               
                 Backup_Mode = false; At_Top_Level = false;
-                Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible             
+                Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible  
+
+                //Set_Label_Entity_Name_Text();
+                //Label_Entity_Name.Location = new Point(31, 238);
             }            
             else
-            {   Backup_Mode = true;              
+            {   Backup_Mode = true;
+
+              
                 List_View_Selection.Items.Clear();
                 List_View_Selection.Visible = true;
                 if (Text_Box_Description.Visible) { Disable_Description(); }
@@ -3373,29 +3414,45 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             {             
                 string Selected_Backup = Select_List_View_First(List_View_Selection);
                 string Working_Directory = Backup_Dir + Mod_Name + @"\Current";
-                string Directory_Name = "";
-                string Current_Version = "";
+                // string Directory_Name = "";
+                string Current_Version = Get_Backup_Info()[1];
 
 
-                foreach (string Line in File.ReadAllLines(Backup_Dir + Mod_Name + @"\Info.txt"))
-                {   if (Line == "") { continue; }
-                    string Content = Remove_Emptyspace_Prefix(Line.Split('=')[1]).Replace("\r\t", "");
 
-                    if (Line.Contains("Directory_Name")) { Directory_Name = Content; }
-                    else if (Line.Contains("Version")) { Current_Version = Content; break; }  
-                    // Need to break after the 2nd setting was loaded, otherwise it would loop through many files, which isn't necessary.           
+                bool Move_Backwards = false;
+
+                foreach (ListViewItem Item in List_View_Selection.Items)
+                {
+                    if (Item.Text == Selected_Backup) { break; }
+
+                    // Find out whether Current_Version comes before Selected_Backup
+                    else if (Item.Text == Current_Version) { Move_Backwards = true; break; }                                         
                 }
+
+
 
 
                 if (Current_Version != "" && Current_Version != Selected_Backup) 
                 {
-                    iDialogue(580, 220, "Restore All", "Cancel", "Only Inside", "false", "\nDo you wish to restore to the backup " + Selected_Backup +
-                        "?\nAnd for all changed files since this backup or only for \nthe files inside of " +
-                         Properties.Settings.Default.Xml_Directory.Replace(Properties.Settings.Default.Mod_Directory, ""));
+                    if (!Move_Backwards)
+                    {
+                        iDialogue(580, 240, "Restore All", "Cancel", "Only Inside", "false", "\nDo you wish to restore to the backup " +
+                           Selected_Backup + "?\n\nFor all changed files between this backup and the \ncurrent state, or only for the files inside of this backup?"
+                            // + Xml_Directory.Replace(Mod_Directory, "") + "?"
+                           );
+                    }
+                    else
+                    {
+                        iDialogue(540, 200, "Restore", "Cancel", "false", "false", 
+                            "\nDo you wish to restore to the backup \n" + Selected_Backup + "?");
+                    }
+
 
                     if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
 
-                    Restore(Current_Version, Selected_Backup, true);
+                    else if (Caution_Window.Passed_Value_A.Text_Data == "else" | Move_Backwards) { Restore(Current_Version, Selected_Backup, false); }
+
+                    else { Restore(Current_Version, Selected_Backup, true); } // Current_Version is allowed to be remaining "" here.
                 }
             }
 
@@ -3437,6 +3494,34 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 
         }
 
+
+        private string[] Get_Backup_Info()
+        {
+            string [] Backup_Info = new string [2]; 
+            // Directory_Name = "";
+            // string Current_Version = "";
+
+            try
+            {
+                foreach (string Line in File.ReadAllLines(Backup_Dir + Mod_Name + @"\Info.txt"))
+                {
+                    if (Line == "") { continue; }
+                    string Content = Remove_Emptyspace_Prefix(Line.Split('=')[1]).Replace("\r\t", "");
+
+                    if (Line.Contains("Directory_Name")) { Backup_Info[0] = Content; }
+                    else if (Line.Contains("Version")) { Backup_Info[1] = Content; break; }
+                    // Need to break after the 2nd setting was loaded, otherwise it would loop through many files, which isn't necessary.           
+                }
+            }
+            catch
+            {   Backup_Info[0] = "None";
+                Backup_Info[1] = "None"; 
+            }
+
+            return Backup_Info;
+        }
+
+
         private void Button_Scripts_MouseHover(object sender, EventArgs e)
         {
             if (Combo_Box_Tag_Name.Text == "Scale_Galaxies")
@@ -3466,6 +3551,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         }
 
 
+        // All_Files_Since_This means all files in other Backups then this one, that are between the Current_Version and the Target_Backup.
 
         public void Restore(string Current_Version, string Target_Backup, bool All_Files_Since_This = true)
         {   // string Current = Select_List_View_First(List_View_Selection);
@@ -3482,25 +3568,33 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 List<string> Backup_Files = new List<string>();
 
 
+                /* Obsolete because Move_Backwards already covers this, and isn't required as well.
                 string First_Of_Them = "";
+                //int Start_At = 0;
 
                 foreach (string Found_Dir in Backups)
                 {   // Find out the position of the Current_Version within the history table
-                    if (Found_Dir.EndsWith(Current_Version)) { First_Of_Them = Current_Version; }
-                    else if (Found_Dir.EndsWith(Target_Backup)) { First_Of_Them = Target_Backup; }
+                    if (Found_Dir.EndsWith(Current_Version) && Current_Version != "None") { First_Of_Them = Current_Version; break; }
+                    else if (Found_Dir.EndsWith(Target_Backup)) { First_Of_Them = Target_Backup; break; }
+                    // else { Start_At++; }
                 }
 
 
                 if (First_Of_Them == "") { return; }
                 // Place newest entries at the top of the list stack, if the Current Version was found first
                 // Either reverting or NOT reverting here, does the trick to move forward or backward in the history!
-                else if (First_Of_Them == Current_Version) { Backups.Reverse(); }
+                else if (First_Of_Them == Target_Backup) { Backups.Reverse(); All_Files_Since_This = false; } // iConsole(200, 100, "Reverse"); }
+
+                // All_Files_Since_This = false; because they would need to be deleted when we move back the timeline, so we not include them at all.
 
                 // iConsole(500, 100, string.Join("\n", Backups));
                 // iConsole(500, 100, First_Of_Them + "  is at the Top"); 
+                */
 
 
+                int Start_At = 1;
                 int Passed_Slots = 0;
+                
 
                 foreach (string Found_Dir in Backups)
                 {
@@ -3510,12 +3604,15 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                         {   // Collecting all files inside for later.
                             string Selected_File = File_Path.Replace(Found_Dir, "");
                             if (!Backup_Files.Contains(Selected_File)) { Backup_Files.Add(Selected_File); }
-                        }
-                        // break; // Stop, or the Passed_Slots will continue incrementing evem after we found this folder.
-
-                        if (Found_Dir.EndsWith(Target_Backup)) { break; }
-                        else { Passed_Slots++; } // How many slots are passing until we find the selected dir?          
+                        }                
                     }
+
+                    // break; // Stop, or the Passed_Slots will continue incrementing even after we found this folder.                       
+                    if (Found_Dir.EndsWith(Target_Backup)) { break; }
+                    else { Passed_Slots++; } // How many slots are passing until we find the selected dir?  
+
+                    if (Found_Dir.EndsWith(Current_Version))
+                    { Start_At = Passed_Slots; } // To leap over unnecessary ones
                 }
                 // iConsole(500, 100, string.Join("\n", Backup_Files));
 
@@ -3529,7 +3626,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
                 int Cycles = 0;
 
-                for (int i = 1; i <= Passed_Slots; i++)
+                for (int i = Start_At; i <= Passed_Slots; i++)
                 {
                     Cycles++;
 
@@ -3550,14 +3647,29 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 }
 
 
-                // iConsole(500, 100, Cycles.ToString()); // Confirming the right amount of directories to pass
+                //string s = "";
+                //if (Cycles > 1) { s = "s"; }
+                //iConsole(500, 100, "\nJumped by " + Cycles + " slot" + s + "."); // Confirming the right amount of directories to pass
+
 
                 string Info_File =
                 @"Directory_Name = " + Mod_Name +
                 "\nVersion = " + Target_Backup;
 
                 File.WriteAllText(Backup_Dir + Mod_Name + @"\Info.txt", Info_File);
-                
+
+
+                // Label_Entity_Name.Text = Target_Backup; // Updating UI Info (outdated)
+                Set_Checker(List_View_Selection, Theme_Color); // Erasing last selection
+
+                foreach (ListViewItem Item in List_View_Selection.Items)
+                {   if (Item.Text == Target_Backup) 
+                    {   Item.BackColor = Color.Orange;
+                        Item.Selected = false; // So it can be seen in orange
+                        break; 
+                    } // Highlighting Selection
+                }
+
 
                 // iConsole(600, 100, Working_Directory + "   To   " + Xml_Directory + "This");
                 if (Directory.Exists(Working_Directory)) 

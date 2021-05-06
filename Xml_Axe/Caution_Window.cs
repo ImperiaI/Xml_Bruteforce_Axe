@@ -197,7 +197,7 @@ namespace Xml_Axe
         {
             // Important or occasions that expect false to not continue would missunderstand the user here!
             // Also if the User just blacklisted or ignored entries before pressing X this must not trigger.
-            if (Passed_Value_A.Text_Data != "true") { Passed_Value_A.Text_Data = "false"; }
+            if (List_Exclusion_Mode && Passed_Value_A.Text_Data != "true") { Passed_Value_A.Text_Data = "false"; }
         }
 
 
