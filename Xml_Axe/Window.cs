@@ -81,6 +81,9 @@ namespace Xml_Axe
         string[] Balancing_Tags = null; // new string[] { };
         public Color Theme_Color = Color.CadetBlue;
         public string Xml_Directory = Properties.Settings.Default.Xml_Directory;
+        public string Mod_Directory = Properties.Settings.Default.Mod_Directory;
+        public string Mod_Name = Path.GetFileName(Properties.Settings.Default.Mod_Directory);
+
         public List<string> Found_Scripts = null;
         public List<string> Found_Factions = new List<string>();
         public List<string> Category_Masks = new List<string>();
@@ -136,6 +139,8 @@ namespace Xml_Axe
 
             Queried_Attribute = Get_Setting_Value("Queried_Attribute"); // Needs to run after Reset_Tag_List()!
             Text_Format_Delimiter = Get_Setting_Value("Text_Format_Delimiter");
+            
+            if (Text_Format_Delimiter == "t") { Text_Format_Delimiter = "\\t"; } // Correction Overwrite
 
 
             // ================== INSTALLATION ==================
@@ -362,7 +367,9 @@ namespace Xml_Axe
                         Xml_Directory = Temporal_A + @"\xml\"; // Updating 
                         Properties.Settings.Default.Xml_Directory = Xml_Directory;
                         // Leaping back for a directy, to get the name of the Modpath
-                        Properties.Settings.Default.Mod_Directory = Path.GetDirectoryName(Temporal_A); ;
+                        Properties.Settings.Default.Mod_Directory = Path.GetDirectoryName(Temporal_A);
+                        Mod_Directory = Properties.Settings.Default.Mod_Directory;
+                        Mod_Name = Path.GetFileName(Mod_Directory);
 
                         // iConsole(600, 100, Path.GetDirectoryName(Path.GetDirectoryName(Temporal_A)));
                         break;
@@ -376,6 +383,8 @@ namespace Xml_Axe
 
                         // Leaping back by 2 directoies, to get the name of the Modpath
                         Properties.Settings.Default.Mod_Directory = Path.GetDirectoryName(Path.GetDirectoryName(Temporal_A)); ;
+                        Mod_Directory = Properties.Settings.Default.Mod_Directory;
+                        Mod_Name = Path.GetFileName(Mod_Directory);
 
                         // iConsole(600, 100, Path.GetDirectoryName(Path.GetDirectoryName(Temporal_A)));
                         break;
@@ -501,15 +510,19 @@ namespace Xml_Axe
         {
             if (Backup_Mode) // Deletion Function
             {
-                iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nAre you sure you wish to delete the \nselected backups?");
+                Temporal_E = Select_List_View_Items(List_View_Selection);
+                string s = "";
+                if (Temporal_E.Count > 1) { s = "s"; }
+
+                iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nAre you sure you wish to delete the \nselected backup" + s + "?");
                 if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
 
-                Temporal_E = Select_List_View_Items(List_View_Selection);
+             
 
 
                 foreach (string Folder_Path in Temporal_E)
                 {
-                    string Full_Path = Backup_Dir + Path.GetFileName(Properties.Settings.Default.Mod_Directory) + @"\" + Folder_Path;
+                    string Full_Path = Backup_Dir + Mod_Name + @"\" + Folder_Path;
                     // iConsole(600, 100, Full_Path);
 
                     if (Directory.Exists(Full_Path)) 
@@ -646,22 +659,21 @@ namespace Xml_Axe
 
             if (Related_Xmls.Count() > 0) // Update the Backup Version
             {
-                string Directory_Name = Path.GetFileName(Properties.Settings.Default.Mod_Directory);
-
+               
                 string Info_File =
-                 @"Directory_Name = " + Directory_Name +
+                 @"Directory_Name = " + Mod_Name +
                  "\nVersion = " + Last_Backup_Time +
                  "\n\n\n//============================================================\\\\" +
                  "\nChanged_Files:" +
                  "\n//============================================================\\\\" +
                  "\n" + string.Join("\n", Related_Xmls);
 
-                // This does not happen below because it needs to write this file onece only.
-                File.WriteAllText(Backup_Dir + Directory_Name + @"\Info.txt", Info_File);
+                // This does not happen below because it needs to write this file once only.
+                File.WriteAllText(Backup_Dir + Mod_Name + @"\Info.txt", Info_File);
 
-                File.Copy(Backup_Dir + Directory_Name + @"\Info.txt", Backup_Dir + Directory_Name + @"\" + Last_Backup_Time + @"\Info.txt", true); 
+                File.Copy(Backup_Dir + Mod_Name + @"\Info.txt", Backup_Dir + Mod_Name + @"\" + Last_Backup_Time + @"\Info.txt", true);
 
-                // File.WriteAllText(Backup_Dir + Directory_Name + @"\" + Last_Backup_Time + @"\Info.txt", Info_File);
+                // File.WriteAllText(Backup_Dir + Mod_Name + @"\" + Last_Backup_Time + @"\Info.txt", Info_File);
             }
 
 
@@ -834,10 +846,7 @@ namespace Xml_Axe
         //-----------------------------------------------------------------------------
       
         private List<string> Slice(bool Apply_Changes = true)
-        {
-            // iConsole(500, 100, Properties.Settings.Default.Xml_Directory);
-            // iConsole(500, 100, Properties.Settings.Default.Mod_Directory);         
-
+        {      
             int Query = 0;
             string Selected_Xml = "";
             string Xml_Directory = Properties.Settings.Default.Xml_Directory;
@@ -845,8 +854,7 @@ namespace Xml_Axe
             string Selected_Tag = Regex.Replace(Combo_Box_Tag_Name.Text, "[\n\r\t </>]", ""); // Also removing </> tag values
             string Selected_Type = Wash_String(Combo_Box_Type_Filter.Text);
 
-
-            string Backup_Name = Path.GetFileName(Properties.Settings.Default.Mod_Directory); // + "_" + Last_Backup;
+          
             string Backup_File = "";
 
 
@@ -865,7 +873,7 @@ namespace Xml_Axe
                 // iConsole(560, 600, Xml_Directory + string.Join("\n", File_Collection)); // return null; // Debug Code
 
                 if (!Directory.Exists(Backup_Dir)) { Directory.CreateDirectory(Backup_Dir); }
-                // if (!Directory.Exists(Backup_Dir + Backup_Name)) { Directory.CreateDirectory(Backup_Dir + Backup_Name); }
+                // if (!Directory.Exists(Backup_Dir + Mod_Name)) { Directory.CreateDirectory(Backup_Dir + Mod_Name); }
             } else { File_Collection = Get_All_Files(Xml_Directory, "xml"); }
 
         
@@ -1115,6 +1123,12 @@ namespace Xml_Axe
 
                                 Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Galactic_Position", Apply_Changes);
                             }
+                            else if (Combo_Box_Tag_Name.Text == "All_Damage")
+                            {
+                                Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Damage", Apply_Changes);
+                                Set_Tag(Changed_Xmls, Instance, Selected_Xml, "Projectile_Damage", Apply_Changes);
+                            }
+
 
 
 
@@ -1136,7 +1150,7 @@ namespace Xml_Axe
                     
                     if (Apply_Changes) 
                     {
-                        Backup_File = Backup_Dir + Backup_Name + @"\" + Last_Backup_Time + @"\" + (Selected_Xml.Replace(Xml_Directory, "")); // Creating Sub-Directories:                        
+                        Backup_File = Backup_Dir + Mod_Name + @"\" + Last_Backup_Time + @"\" + (Selected_Xml.Replace(Xml_Directory, "")); // Creating Sub-Directories:                        
                         if (!Directory.Exists(Path.GetDirectoryName(Backup_File))) { Directory.CreateDirectory(Path.GetDirectoryName(Backup_File)); }
 
 
@@ -1279,6 +1293,7 @@ namespace Xml_Axe
                                     }
                                 }
 
+
                                 // Needs different treatment because its value is seperated by emptyspace
                                 else if (Selected_Tag == "Radar_Icon_Size")
                                 {
@@ -1412,6 +1427,8 @@ namespace Xml_Axe
                     // Refreshing Values:
                     Queried_Attribute = Get_Setting_Value("Queried_Attribute");
                     Text_Format_Delimiter = Get_Setting_Value("Text_Format_Delimiter");
+
+                    if (Text_Format_Delimiter == "t") { Text_Format_Delimiter = "\\t"; } // Correction Override
 
 
                     string New_Script_Dir = Get_Scripts_Dir(true);
@@ -1552,8 +1569,7 @@ namespace Xml_Axe
                 {
                     string Steam_Path = Properties.Settings.Default.Steam_Exe_Path;
                     string Program_Path = Path.GetDirectoryName(Steam_Path) + @"\steamapps\common\Star Wars Empire at War\corruption\StarWarsG.exe";
-
-                    string Mod_Name = Path.GetFileName(Properties.Settings.Default.Mod_Directory);
+             
                     string Arguments = @"Modpath=Mods\" + Mod_Name + " Ignoreasserts";
 
 
@@ -1561,7 +1577,7 @@ namespace Xml_Axe
                     if (!Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Custom_Modpath = false"))
                     {
                         Arguments = "Modpath=" + Get_Setting_Value("Custom_Modpath") + " Ignoreasserts";
-                        //  Arguments = "Modpath=" + Properties.Settings.Default.Mod_Directory.Replace(" ", "\\ ") + " Ignoreasserts";
+                        //  Arguments = "Modpath=" + Mod_Directory.Replace(" ", "\\ ") + " Ignoreasserts";
                     }
                     else if (Mod_Name.All(char.IsDigit)) // If all characters are numbers, that means we target a Workshop mod
                     {   // So argument 1 targets now the Workshop dir            
@@ -1863,6 +1879,8 @@ Shield_Points = 100
 int Shield_Refresh_Rate = 5 # Usually about 30 for capital ships and less for weaker classes.
 
 int Max_Speed = 1 # In Percent Mode this is bundled to the <Min_Speed> tag, it grows or shrinks both values by the same amount. This Setting ignores objects of Projectile type, unless you explicitly select them as Filter Type.
+
+int All_Damage = 10 # This setting bundles Damage and Projectile_Damage as one scalable setting.
 
 int Scale_Factor = 1 # Use this in Percent Mode to scale all units in a Mod. NOTE: The *All Types* filter only means SpaceUnit, UniqueUnit and StarBase. You need to select all other entities explicitly as Filter Type: TransportUnit, Space Heroes, Projectile, Particle and Planet will be ignored, unless you scale them type by type. Keep in mind to not scale too much, because the Particles in models are not scaled by this. Reversible.
 
@@ -2302,7 +2320,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
             // Auto-Deactivating Percent mode// Auto-Deactivating Percent mode
-            if (Last_Combo_Box_Tag_Name == "Rebalance_Everything" || Last_Combo_Box_Tag_Name == "Scale_Galaxies") 
+            if (Last_Combo_Box_Tag_Name == "Rebalance_Everything" || Last_Combo_Box_Tag_Name == "Scale_Galaxies" ||
+                Last_Combo_Box_Tag_Name == "All_Damage") 
             { 
                 Button_Percentage_Click(null, null); 
                 Button_Percentage_MouseLeave(null, null);
@@ -2317,6 +2336,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     break;
                 case "Rebalance_Everything":
                     if (Operation_Mode != "Percent") { Button_Percentage_Click(null, null); Button_Percentage_MouseLeave(null, null); }               
+                    break;
+                case "All_Damage":
+                    if (Operation_Mode != "Percent") { Button_Percentage_Click(null, null); Button_Percentage_MouseLeave(null, null); }
                     break;
                  case "Scale_Galaxies":
                     Combo_Box_Type_Filter.Text = "Planet";
@@ -2882,8 +2904,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         // Move_Unused_Files("models"); Move_Unused_Files("textures"); or just Move_Unused_Files(); to move all of them
         private void Move_Unused_Files(string Mode = "all")
         {                      
-            string Model_Directory = Properties.Settings.Default.Mod_Directory + @"\Data\Art\Models";
-            string Texture_Directory = Properties.Settings.Default.Mod_Directory + @"\Data\Art\Textures";
+            string Model_Directory = Mod_Directory + @"\Data\Art\Models";
+            string Texture_Directory = Mod_Directory + @"\Data\Art\Textures";
             string Extension = ".alo"; // Defaulting to .alo
             string Unused_Dir = Model_Directory + @"\Unused";       
 
@@ -2976,6 +2998,40 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         }
 
 
+        //========= Thanks to jaysponsored form Stackoverfl0w ==========//
+        // I almost can't believe Microsoft doesent provide a proper Copy function for Directories !! 
+        public void Copy_Now(string Source_Directory, string Destination_Directory)
+        {
+            // substring is to remove Destination_Directory absolute path (E:\).
+            try
+            {   // Create subdirectory structure in destination    
+                foreach (string dir in Directory.GetDirectories(Source_Directory, "*", System.IO.SearchOption.AllDirectories))
+                {
+                    Directory.CreateDirectory(Destination_Directory + dir.Substring(Source_Directory.Length));
+                    // Example:
+                    //     > C:\sources (and not C:\E:\sources)
+                }
+            } catch {}
+
+            try
+            {
+                foreach (string file_name in Directory.GetFiles(Source_Directory, "*.*", System.IO.SearchOption.AllDirectories))
+                {
+                    File.Copy(file_name, Destination_Directory + file_name.Substring(Source_Directory.Length), true);
+                }
+            } catch {}              
+        }
+
+        //=====================//
+        // If exists in source path copy and OVERWRITE that to target
+        public void Verify_Copy(string Source_Path_and_File, string New_Path_and_File)
+        {      if (!Directory.Exists(Path.GetDirectoryName(New_Path_and_File)))
+                { Directory.CreateDirectory(Path.GetDirectoryName(New_Path_and_File)); }
+
+                File.Copy(Source_Path_and_File, New_Path_and_File, true); 
+                     
+        }
+
         //=====================//
         public void Deleting(string Data)
         {
@@ -2997,16 +3053,15 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         private void Button_Undo_Click(object sender, EventArgs e)
         {          
             if (Backup_Mode) 
-            {
+            {               
                 Backup_Mode = false; At_Top_Level = false;
-                Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible 
-
-                if (Text_Box_Description.Visible) { Disable_Description(); }
+                Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible             
             }            
             else
-            {   Backup_Mode = true;
+            {   Backup_Mode = true;              
                 List_View_Selection.Items.Clear();
                 List_View_Selection.Visible = true;
+                if (Text_Box_Description.Visible) { Disable_Description(); }
 
              
                 foreach (string Folder in Get_All_Directories(Backup_Dir, true))
@@ -3066,7 +3121,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-            // iConsole(400, 100, Properties.Settings.Default.Xml_Directory + "\n" + Properties.Settings.Default.Mod_Directory); return;
+            // iConsole(400, 100, Properties.Settings.Default.Xml_Directory + "\n" + Mod_Directory); return;
 
             if (Backup_Mode) // Just show the last results
             {
@@ -3289,30 +3344,27 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             }
 
             else if (Backup_Mode)
-            {
+            {             
                 string Selected_Backup = Select_List_View_First(List_View_Selection);
-                string Root_Directory = Backup_Dir + Path.GetFileName(Properties.Settings.Default.Mod_Directory);
-                string Working_Directory = Root_Directory + @"\Current";
+                string Working_Directory = Backup_Dir + Mod_Name + @"\Current";
                 string Directory_Name = "";
                 string Current_Version = "";
-             
 
-                foreach (string Line in File.ReadAllLines(Root_Directory + @"\Info.txt"))
-                {
-                    if (Line == "") { continue; }
 
-                    string Content = Current_Version = Remove_Emptyspace_Prefix(Line.Split('=')[1]).Replace("\r\t", ""); 
+                foreach (string Line in File.ReadAllLines(Backup_Dir + Mod_Name + @"\Info.txt"))
+                {   if (Line == "") { continue; }
+                    string Content = Remove_Emptyspace_Prefix(Line.Split('=')[1]).Replace("\r\t", "");
 
-                    if (Line.Contains("Version")) { Current_Version = Content; }
-                    else if (Line.Contains("Directory_Name")) { Directory_Name = Content; break; }  
+                    if (Line.Contains("Directory_Name")) { Directory_Name = Content; }
+                    else if (Line.Contains("Version")) { Current_Version = Content; break; }  
                     // Need to break after the 2nd setting was loaded, otherwise it would loop through many files, which isn't necessary.           
                 }
 
 
                 if (Current_Version != "" && Current_Version != Selected_Backup) 
                 {
-                    iDialogue(720, 200, "Restore All", "Cancel", "Only Inside", "false", "\nDo you wish to restore to the backup " + Selected_Backup +
-                        "?\nAnd for all changed files since this backup or only for the files inside of it?\nIn " +
+                    iDialogue(580, 220, "Restore All", "Cancel", "Only Inside", "false", "\nDo you wish to restore to the backup " + Selected_Backup +
+                        "?\nAnd for all changed files since this backup or only for \nthe files inside of " +
                          Properties.Settings.Default.Xml_Directory.Replace(Properties.Settings.Default.Mod_Directory, ""));
 
                     if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
@@ -3391,15 +3443,15 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         public void Restore(string Current_Version, string Target_Backup, bool All_Files_Since_This = true)
         {   // string Current = Select_List_View_First(List_View_Selection);
 
-            if (Current_Version == Target_Backup) { return; } // Nothing to do
+            if (Current_Version == Target_Backup) 
+            { iConsole(400, 160, "\n" + Current_Version + " is already the loaded version."); return; } // Nothing to do
 
 
             try
             {
-                string Root_Directory = Backup_Dir + Path.GetFileName(Properties.Settings.Default.Mod_Directory);
-                string Working_Directory = Root_Directory + @"\Current";
+                string Working_Directory = Backup_Dir + Mod_Name + @"\Current";
 
-                List<string> Backups = Get_All_Directories(Root_Directory, true);
+                List<string> Backups = Get_All_Directories(Backup_Dir + Mod_Name, true);
                 List<string> Backup_Files = new List<string>();
 
 
@@ -3474,13 +3526,18 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 // iConsole(500, 100, Cycles.ToString()); // Confirming the right amount of directories to pass
 
                 string Info_File =
-                @"Directory_Name = " + Path.GetFileName(Properties.Settings.Default.Mod_Directory) +
+                @"Directory_Name = " + Mod_Name +
                 "\nVersion = " + Target_Backup;
 
-                File.WriteAllText(Root_Directory + @"\Info.txt", Info_File);
+                File.WriteAllText(Backup_Dir + Mod_Name + @"\Info.txt", Info_File);
+                
 
-
-            } catch {}
+                // iConsole(600, 100, Working_Directory + "   To   " + Xml_Directory + "This");
+                if (Directory.Exists(Working_Directory)) 
+                {   Copy_Now(Working_Directory, Xml_Directory);
+                    Deleting(Working_Directory);
+                }
+            } catch {}         
         }
 
 
@@ -3537,15 +3594,15 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                             if (Match_Without_Emptyspace_2(Selection, File_Name))                              
                             {
                                 string Extension = "txt";
-                                if (Text_Format_Delimiter == "\\t") { Extension = "tsv"; }
+                                if (Text_Format_Delimiter == "\\t") { Extension = "tsv"; }                             
                                 else if (Text_Format_Delimiter == "," | Text_Format_Delimiter == ";") { Extension = "csv"; }
 
-                                Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\" " + Text_Format_Delimiter + " " + Extension, Script_Directory);                               
+                                Execute(File_Path, "\"" + Mod_Directory + "\\Data\" " + Text_Format_Delimiter + " " + Extension, Script_Directory);                               
 
                                 // Alternate way: Specify path to the .json file as argument:
-                                // Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\"" + " " + Script_Directory + "\\vanilla_dump.json");
+                                // Execute(File_Path, "\"" + Mod_Directory + "\\Data\"" + " " + Script_Directory + "\\vanilla_dump.json");
 
-                                // iConsole(400, 100, File_Path + " \"" + Properties.Settings.Default.Mod_Directory + "\\Data\"" + "\npause");  
+                                // iConsole(400, 100, File_Path + " \"" + Mod_Directory + "\\Data\"" + "\npause");  
                                 return;                            
                             }
                         }
@@ -3555,7 +3612,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
                         string Vanilla_Dir = Path.GetDirectoryName(Properties.Settings.Default.Steam_Exe_Path) + @"\steamapps\common\Star Wars Empire at War\Data";
-                        Execute(File_Path, "\"" + Properties.Settings.Default.Mod_Directory + "\\Data\" \"" + Vanilla_Dir + "\"", Script_Directory);
+                        Execute(File_Path, "\"" + Mod_Directory + "\\Data\" \"" + Vanilla_Dir + "\"", Script_Directory);
 
                         Possible_Files = new string[] { "Mod_Cleanup.py", "01_mod_cleanup.py", "Test.py" };
 
