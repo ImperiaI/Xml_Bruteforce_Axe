@@ -279,7 +279,8 @@ namespace Xml_Axe
                     {
                         string Folder_Name = Found_Dir.Replace(Backup_Dir + @"\" + Selection + @"\", "");
 
-                        if (Folder_Name != "" && Folder_Name != Selection && !List_View_Matches(List_View_Selection, Folder_Name))
+                        // "Current" here means the Current directory in .\Backup, this program assembles new patches inside of it.
+                        if (Folder_Name != "" && Folder_Name != "Current" && Folder_Name != Selection && !List_View_Matches(List_View_Selection, Folder_Name))
                         { List_View_Selection.Items.Add(Folder_Name); At_Top_Level = true; }
                     }
 
@@ -3418,7 +3419,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 string Current_Version = Get_Backup_Info()[1];
 
 
-
+  
+            
                 bool Move_Backwards = false;
 
                 foreach (ListViewItem Item in List_View_Selection.Items)
@@ -3428,31 +3430,35 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     // Find out whether Current_Version comes before Selected_Backup
                     else if (Item.Text == Current_Version) { Move_Backwards = true; break; }                                         
                 }
-
+                
 
 
 
                 if (Current_Version != "" && Current_Version != Selected_Backup) 
                 {
-                    if (!Move_Backwards)
-                    {
+                    //if (!Move_Backwards) // Changed my mind about this
+                    //{
                         iDialogue(580, 240, "Restore All", "Cancel", "Only Inside", "false", "\nDo you wish to restore to the backup " +
                            Selected_Backup + "?\n\nFor all changed files between this backup and the \ncurrent state, or only for the files inside of this backup?"
                             // + Xml_Directory.Replace(Mod_Directory, "") + "?"
                            );
+                    /*
                     }
                     else
                     {
                         iDialogue(540, 200, "Restore", "Cancel", "false", "false", 
                             "\nDo you wish to restore to the backup \n" + Selected_Backup + "?");
                     }
+                    */
 
 
-                    if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
+                    if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; } // User Abbort
 
-                    else if (Caution_Window.Passed_Value_A.Text_Data == "else" | Move_Backwards) { Restore(Current_Version, Selected_Backup, false); }
+                    // Moving backwards in the history means we better not change the newest version of files that are not inside of the target patch
+                    // We also ignore all files outside of this patch if the user decided "else" while moving forward  | Move_Backwards)
+                    else if (Caution_Window.Passed_Value_A.Text_Data == "else") { Restore(Current_Version, Selected_Backup, Move_Backwards, false); }
 
-                    else { Restore(Current_Version, Selected_Backup, true); } // Current_Version is allowed to be remaining "" here.
+                    else { Restore(Current_Version, Selected_Backup, Move_Backwards, true); } // Current_Version is allowed to be remaining "" here.
                 }
             }
 
@@ -3553,7 +3559,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         // All_Files_Since_This means all files in other Backups then this one, that are between the Current_Version and the Target_Backup.
 
-        public void Restore(string Current_Version, string Target_Backup, bool All_Files_Since_This = true)
+        public void Restore(string Current_Version, string Target_Backup, bool Move_Backwards, bool All_Files_Since_This = true)
         {   // string Current = Select_List_View_First(List_View_Selection);
 
             if (Current_Version == Target_Backup) 
@@ -3567,6 +3573,14 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 List<string> Backups = Get_All_Directories(Backup_Dir + Mod_Name, true);
                 List<string> Backup_Files = new List<string>();
 
+
+                foreach(string Entry in Backups)
+                {
+                    if (Entry.EndsWith("Current")) { Backups.Remove(Entry); break; }
+                }
+
+
+                if (Move_Backwards) { Backups.Reverse(); }
 
                 /* Obsolete because Move_Backwards already covers this, and isn't required as well.
                 string First_Of_Them = "";
@@ -3592,7 +3606,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 */
 
 
-                int Start_At = 1;
+                int Start_At = 0;
                 int Passed_Slots = 0;
                 
 
@@ -3625,18 +3639,24 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Directory.CreateDirectory(Working_Directory);
 
                 int Cycles = 0;
+                List<string> Stack_History = new List<string>();
+
 
                 for (int i = Start_At; i <= Passed_Slots; i++)
                 {
                     Cycles++;
+                    Stack_History.Add(Path.GetFileName(Backups[i]));
+                  
 
                     foreach (string File_Path in Backup_Files)
                     {
                         string Target_Directory = Path.GetDirectoryName(Working_Directory + File_Path);
                         if (!Directory.Exists(Target_Directory)) { Directory.CreateDirectory(Target_Directory); }
 
-                        string Selected_File = Backups[i] + File_Path; // The file path inside of older or newer backups!
+                        
 
+                        string Selected_File = Backups[i] + File_Path; // The file path inside of older or newer backups!
+                        
                         if (File.Exists(Selected_File))
                         {
                             // Overwrite Copy the last iteration inside of the Working Directory!
@@ -3645,6 +3665,21 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                         }
                     }
                 }
+
+
+                string Update = "UPDATED";
+
+                string Intruduction = "\nMoved up the Backup stack in Historical order.";
+                if (Move_Backwards) { Update = "DOWNGRADED";  Intruduction = "\nMoved down the Backup stack in Historical order."; }
+
+                if (All_Files_Since_This) { Intruduction += "\nAnd " + Update + " changes in all files inbetween,\nthat are not part of the target backup.\n\n"; }
+                else { Intruduction += "\nWithout changing any files inbetween, \nthat are not part of the target backup.\n\n"; }
+
+
+                int Line_Count = (Stack_History.Count() * 30) + 190;
+                if (Line_Count > 680) { Line_Count = 680; }
+
+                iConsole(480, Line_Count, Intruduction + string.Join("\n", Stack_History));
 
 
                 //string s = "";
