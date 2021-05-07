@@ -3949,34 +3949,39 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             // And so the directory with files of interest is the one you want to either return if matched or not.
             foreach (string File_A in Return_If_Not_Matched)
             {   try
-                {   bool Has_Matched = false;
-
+                {   bool Name_Matched = false;
+                    bool Size_Matched = false;
 
                     foreach (string File_B in Return_If_Matched)
                     {   try
                         {   if (Path.GetFileName(File_A) == Path.GetFileName(File_B)) // If the Paths do match
                             {
+                                Name_Matched = true;
+
                                 long Length_A = new System.IO.FileInfo(File_A).Length;
                                 long Length_B = new System.IO.FileInfo(File_B).Length;
 
                                 // iConsole(400, 100, Path.GetFileName(File_A) + "  and  " + Path.GetFileName(File_B));
 
                                 if (Length_A == Length_B) // If file sizes match 
-                                {   Has_Matched = true;
+                                {   Size_Matched = true;
 
-                                    if (Shall_Match && !Results.Contains(File_B)) 
+                                    if (Shall_Match && !Results.Contains(File_B) && !File_A.EndsWith("Axe_Info.txt")) 
                                     {
                                         if (Return_Full_Path && !Results.Contains(File_B)) { Results.Add(File_B); }
                                         else if (!Results.Contains(Path.GetFileName(File_B))) { Results.Add(Path.GetFileName(File_B)); } 
                                     }                           
                                     continue; // to the next file
-                                }                                                            
+                                }
+
+                                continue; // Due to the matched name, we stop searching here
                             }
                         } catch {}
                     }
 
 
-                    if (!Shall_Match && !Has_Matched)
+                    // Name_Matched means it is existing but different
+                    if (!Shall_Match && !Size_Matched && Name_Matched && !File_A.EndsWith("Axe_Info.txt")) // Excllusion of my log file
                     {
                         if (Return_Full_Path && !Results.Contains(File_A)) { Results.Add(File_A); }
                         else if (!Results.Contains(Path.GetFileName(File_A))) { Results.Add(Path.GetFileName(File_A)); }                   
@@ -4042,12 +4047,19 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 // =============================================             
                 // return;
 
+                Matches_List.Clear();
+
                 foreach (string Entry in Difference_List)
-                { Verify_Copy(Entry, Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\" + Entry.Replace(Xml_Directory, "")); }
+                {
+                    Matches_List.Add(Entry.Replace(Xml_Directory, "")); // Gonna use this in the Info report below
+                    Verify_Copy(Entry, Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\" + Entry.Replace(Xml_Directory, ""));
+                }
 
                 // Copy_Now(Xml_Directory, Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\"); // Outdated, this just copies all of them.
 
-                Create_Backup_Info(Time_Stamp + User_Name, "Created a full copy of the whole directory.");
+
+                Create_Backup_Info(Time_Stamp + User_Name, "Created a backup, based on different file sizes from:\n\n\n" +
+                    string.Join("\n", Matches_List));
 
                 Refresh_Backup_Stack(Mod_Name);
           
