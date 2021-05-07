@@ -73,9 +73,9 @@ namespace Xml_Axe
         string Backup_Dir = "";
         bool Backup_Mode = false;
         bool At_Top_Level = true;
-        string Last_Backup_Time, Current_Hour = "";
-        public int Last_Fetch_Minute, Current_Minute = 0;
-        public int Fetch_Intervall_Minutes = 3;
+        string Last_Backup_Time, Time_Stamp, Current_Hour = "";
+        public int Last_Backup_Minute, Current_Minute = 0;
+        public int Fetch_Intervall_Minutes = 5;
        
 
         string[] Balancing_Tags = null; // new string[] { };
@@ -684,7 +684,7 @@ namespace Xml_Axe
             }
 
 
-            if (Is_Time_To_Backup()) { Backup_Time(); }// This updates the Last_Backup_Time variable we use to define name of the Backup dir!
+            if (Is_Time_To_Backup()) { Backup_Time(); }// This updates the Time_Stamp variable we use to define name of the Backup dir!
 
             Related_Xmls = Slice(true); // This line does the actual Job!
 
@@ -702,7 +702,7 @@ namespace Xml_Axe
                 if (Related_Xmls.Count() > 0 && Backup_Count != "0" && Backup_Count != "" && !Match_Without_Emptyspace(Backup_Count, "false"))
                 {   // Update the Backup Version and
                     // AUTOMATICALLY CREATE BACKUP from the list of Related_Xmls
-                    Create_Backup_Info(Last_Backup_Time, string.Join("\n", Related_Xmls));
+                    Create_Backup_Info(Time_Stamp, string.Join("\n", Related_Xmls));
                 }
             }
 
@@ -875,6 +875,8 @@ namespace Xml_Axe
 
         public bool Remove_Oldest_Backup()
         {
+            if (Is_Time_To_Backup() == false) { return false; } // Abbort if we're too early
+
             string Backup_Count = Get_Setting_Value("Backups_Per_Directory");
 
             if (Backup_Count != "0" && Backup_Count != "" && !Match_Without_Emptyspace(Backup_Count, "false"))
@@ -1208,7 +1210,7 @@ namespace Xml_Axe
                         string Backup_Count = Get_Setting_Value("Backups_Per_Directory");
 
                         if (Backup_Count != "0" && Backup_Count != "" && !Match_Without_Emptyspace(Backup_Count, "false")) // Then backup feature is disabled in general
-                        {   Backup_File = Backup_Dir + Mod_Name + @"\" + Last_Backup_Time + @"\" + (Selected_Xml.Replace(Xml_Directory, "")); // Creating Sub-Directories:                        
+                        {   Backup_File = Backup_Dir + Mod_Name + @"\" + Time_Stamp + @"\" + (Selected_Xml.Replace(Xml_Directory, "")); // Creating Sub-Directories:                        
                             if (!Directory.Exists(Path.GetDirectoryName(Backup_File))) { Directory.CreateDirectory(Path.GetDirectoryName(Backup_File)); }
 
 
@@ -3168,9 +3170,12 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         public string Backup_Time()
         {   try // Setting Timestamp
-            {   Last_Backup_Time = DateTime.Now.ToString("yyyy/MM/dd'_'HH/mm");
-                Int32.TryParse(DateTime.Now.ToString("mm"), out Last_Fetch_Minute); // Getting Minute 
-                return Last_Backup_Time;
+            {   Last_Backup_Time = DateTime.Now.ToString("yyyy/MM/dd'_'HH");
+                Int32.TryParse(DateTime.Now.ToString("mm"), out Last_Backup_Minute); // Getting Minute 
+
+                Time_Stamp = Last_Backup_Time + "." + Last_Backup_Minute;
+
+                return Time_Stamp;
             } catch {}
 
             return "";
@@ -3179,11 +3184,12 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         public bool Is_Time_To_Backup()
         {   try
-            {   Current_Hour = DateTime.Now.ToString("yyyy/MM/dd'_'HH/mm");
+            {   Current_Hour = DateTime.Now.ToString("yyyy/MM/dd'_'HH");
                 Int32.TryParse(DateTime.Now.ToString("mm"), out Current_Minute); // Getting Minute 
-
+           
+                // iConsole(600, 100, Current_Hour + "   Hour   " + Last_Backup_Time + "\nMinute:   " + (Current_Minute - Last_Backup_Minute)); 
                 // Different hour means we need to refresh -- Or if more then X min passed since last fetch
-                if (Current_Hour != Last_Backup_Time | Current_Minute - Last_Fetch_Minute > Fetch_Intervall_Minutes - 1) { return true; }
+                if (Current_Hour != Last_Backup_Time | Current_Minute - Last_Backup_Minute > Fetch_Intervall_Minutes - 1) { return true; }            
             }
             catch { return true; } // Fetching anyways..
 
@@ -3195,7 +3201,10 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-            //iConsole(400, 100, Last_Backup_Time); return;
+
+            if (Is_Time_To_Backup()) { Backup_Time(); }
+
+            iConsole(400, 100, Is_Time_To_Backup().ToString()); return;
 
             if (Backup_Mode) // Just show the last results
             {
@@ -3733,7 +3742,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         }
 
 
-        // Use "Last_Backup_Time" as argument for Target_Backup_Name
+        // Use "Time_Stamp" as argument for Target_Backup_Name
         private void Create_Backup_Info(string Target_Backup_Name, string Append_File_Info = "")
         { 
             string Info_File =
@@ -3752,7 +3761,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             File.WriteAllText(Backup_Dir + Mod_Name + @"\Info.txt", Info_File);
 
             // Adding a Copy into the Backup itself
-            File.Copy(Backup_Dir + Mod_Name + @"\Info.txt", Backup_Dir + Mod_Name + @"\" + Last_Backup_Time + @"\Info.txt", true);
+            File.Copy(Backup_Dir + Mod_Name + @"\Info.txt", Backup_Dir + Mod_Name + @"\" + Time_Stamp + @"\Info.txt", true);
         }
 
 
@@ -3918,14 +3927,15 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 + Path.GetFileName(Xml_Directory.Remove(Xml_Directory.Length - 1)) + " directory?");
 
                 if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
-
-                Remove_Oldest_Backup(); // Trying to remove oldest, if NOT the currently loaded one, that is.
+            
                 string Current_Backup = Get_Backup_Info()[1];
 
                 if (Is_Time_To_Backup()) { Backup_Time(); }
-                Copy_Now(Xml_Directory, Backup_Dir + Mod_Name + @"\" + Last_Backup_Time + @"\");
+                Remove_Oldest_Backup(); // Trying to remove oldest, if NOT the currently loaded one, that is.
 
-                Create_Backup_Info(Last_Backup_Time, "Created a full copy of the whole Xml directory.");
+                Copy_Now(Xml_Directory, Backup_Dir + Mod_Name + @"\" + Time_Stamp + @"\");
+
+                Create_Backup_Info(Time_Stamp, "Created a full copy of the whole Xml directory.");
 
                 Refresh_Backup_Stack(Mod_Name);
           
