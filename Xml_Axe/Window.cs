@@ -72,7 +72,7 @@ namespace Xml_Axe
         
         string Backup_Dir = "";
         bool Backup_Mode = false;
-        bool At_Top_Level = false;
+        bool At_Top_Level = true;
         string Last_Backup_Time, Current_Hour = "";
         public int Last_Fetch_Minute, Current_Minute = 0;
         public int Fetch_Intervall_Minutes = 3;
@@ -258,7 +258,7 @@ namespace Xml_Axe
         {
             if (Script_Mode) { Run_Script(); } // Script Mode override
 
-            else if (Backup_Mode && !At_Top_Level) // Just move into the Xml Directory that is currently selected 
+            else if (Backup_Mode && At_Top_Level) // Just move into the Xml Directory that is currently selected 
             {   Button_Operator_MouseLeave(null, null);
                 Button_Scripts.Visible = true;
                 Button_Operator.Visible = true;
@@ -298,7 +298,7 @@ namespace Xml_Axe
 
                     // "Current" here means the Current directory in .\Backup, this program assembles new patches inside of it.
                     if (Folder_Name != "" && Folder_Name != "Current" && Folder_Name != Selected_Project && !List_View_Matches(List_View_Selection, Folder_Name))
-                    { List_View_Selection.Items.Add(Folder_Name); At_Top_Level = true; }
+                    { List_View_Selection.Items.Add(Folder_Name); At_Top_Level = false; }
                 }
 
 
@@ -479,9 +479,10 @@ namespace Xml_Axe
             if (Script_Mode) { Execute(Script_Directory); }
 
             else if (Backup_Mode) 
-            {   if (At_Top_Level)
-                {  
-                    string Selection = Select_List_View_First(List_View_Selection);
+            {   
+                if (At_Top_Level) { Execute(Backup_Dir); } 
+                else 
+                {   string Selection = Select_List_View_First(List_View_Selection);
                     if (Selection == null) { Execute(Backup_Dir); return; } // Failsafe
 
                     Temporal_E = Get_All_Directories(Backup_Dir + Mod_Name, true);
@@ -495,7 +496,7 @@ namespace Xml_Axe
                         if (Folder_Name != "" && Folder_Name == Selection)
                         { Execute(Found_Dir); return; }
                     }
-                } else { Execute(Backup_Dir); }           
+                }            
             }
 
             else // Normal Mode
@@ -3118,7 +3119,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         {          
             if (Backup_Mode) 
             {               
-                Backup_Mode = false; At_Top_Level = false;
+                Backup_Mode = false; At_Top_Level = true;
                 Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible  
 
                 Button_Operator.Location = new Point(1, 430); // Back to its original location
@@ -3130,7 +3131,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             {   Backup_Mode = true;           
                 List_View_Selection.Items.Clear();
                 List_View_Selection.Visible = true;
-                Button_Scripts.Visible = false;
+
                 if (Text_Box_Description.Visible) { Disable_Description(); }
 
              
@@ -3158,7 +3159,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Clock_Lit); }
 
         private void Button_Undo_MouseLeave(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Clock); }
+        {   if (Backup_Mode) { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Clock_Lit); }
+            else { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Clock); }
+        }
 
 
 
@@ -3196,7 +3199,12 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
             if (Backup_Mode) // Just show the last results
             {
-                Backup_Mode = false; At_Top_Level = false;
+                Backup_Mode = false; 
+                At_Top_Level = true;
+                Button_Undo_MouseLeave(null, null);
+                Button_Scripts.Visible = false;
+                Button_Operator.Visible = false;
+
                 List_View_Selection.Items.Clear();
                
                 foreach (string Entry in Found_Entities)
@@ -3418,7 +3426,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
             else if (Backup_Mode)
             {     
-                if (!At_Top_Level) { return; }
+                if (At_Top_Level) { return; } // Leave this as it is.
 
                 string Selected_Backup = Select_List_View_First(List_View_Selection);
                 string Working_Directory = Backup_Dir + Mod_Name + @"\Current";
@@ -3768,7 +3776,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         private void Set_UI_Backup_Mode(bool Mode)
         {
-            Control[] Controls = { Button_Run, Button_Percentage, Button_Operator, Button_Toggle_Settings };
+            Control[] Controls = { Button_Run, Button_Scripts, Button_Percentage, Button_Operator, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
         }
 
@@ -3906,7 +3914,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         {   
             if(Backup_Mode) // MANUALLY CREATE A NEW BACKUP OF THE FULL XML DIR
             {                         
-                iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nDo you wish to create a new backup \nof the full Xml directory?");
+                iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nDo you wish to create a new backup of the full\n"
+                + Path.GetFileName(Xml_Directory.Remove(Xml_Directory.Length - 1)) + " directory?");
+
                 if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
 
                 Remove_Oldest_Backup(); // Trying to remove oldest, if NOT the currently loaded one, that is.
