@@ -69,7 +69,8 @@ namespace Xml_Axe
         string Last_Combo_Box_Tag_Name = "";
         string Last_Combo_Box_Entity_Name = "";
 
-        
+
+        string User_Name = "";
         string Backup_Dir = "";
         bool Backup_Mode = false;
         bool At_Top_Level = true;
@@ -139,6 +140,7 @@ namespace Xml_Axe
 
             Queried_Attribute = Get_Setting_Value("Queried_Attribute"); // Needs to run after Reset_Tag_List()!
             Text_Format_Delimiter = Get_Setting_Value("Text_Format_Delimiter");
+            User_Name = "_" + Get_Setting_Value("User_Name");
             if (Text_Format_Delimiter == "\\t" | Text_Format_Delimiter == "t") { Text_Format_Delimiter = "\"\t\""; } // Correction Override
             
 
@@ -698,8 +700,8 @@ namespace Xml_Axe
 
             if (Related_Xmls != null)
             {   if (Related_Xmls.Count() > 0 && Is_Backup_Count_Valid())
-                {   
-                    string Backup_Path = Backup_Dir + Mod_Name + @"\" + Time_Stamp;
+                {
+                    string Backup_Path = Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name;
 
                     if (Directory.Exists(Backup_Path)) // Means timestamp is the same
                     {   // iConsole(400, 100, Backup_Path);
@@ -720,10 +722,10 @@ namespace Xml_Axe
 
                         // CAUTION, there are difference between this method and Create_Backup_Info() above.
                         File.WriteAllText(Xml_Directory + "Axe_Info.txt", The_File); // Update it
-                        File.Copy(Xml_Directory + "Axe_Info.txt", Backup_Dir + Mod_Name + @"\" + Time_Stamp + @"\Axe_Info.txt", true);
+                        File.Copy(Xml_Directory + "Axe_Info.txt", Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\Axe_Info.txt", true);
                     }                 
                     // Update the Backup Version and AUTOMATICALLY CREATE BACKUP from the list of Related_Xmls
-                    else { Create_Backup_Info(Time_Stamp, string.Join("\n", Related_Xmls)); }
+                    else { Create_Backup_Info(Time_Stamp + User_Name, string.Join("\n", Related_Xmls)); }
                 }
             }
 
@@ -1238,7 +1240,7 @@ namespace Xml_Axe
                     if (Apply_Changes) 
                     {                       
                         if (Is_Backup_Count_Valid()) // Then backup feature is disabled in general
-                        {   Backup_File = Backup_Dir + Mod_Name + @"\" + Time_Stamp + @"\" + (Selected_Xml.Replace(Xml_Directory, "")); // Creating Sub-Directories:                        
+                        {   Backup_File = Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\" + (Selected_Xml.Replace(Xml_Directory, "")); // Creating Sub-Directories:                        
                             if (!Directory.Exists(Path.GetDirectoryName(Backup_File))) { Directory.CreateDirectory(Path.GetDirectoryName(Backup_File)); }
 
 
@@ -1919,7 +1921,8 @@ namespace Xml_Axe
 # RGBA_Color = 100, 170, 170, 255 # Marine Blue
 # Set_Launch_Affinity = true
 # High_Launch_Priority = true
-# Custom_Start_Parameters = false
+# Custom_Start_Parameters = 
+# User_Name = false
 # Backups_Per_Directory = 20
 # Script_Directory = %AppData%\Local\Xml_Axe\Scripts
 # Disable_EAW_Mode = false
@@ -3227,9 +3230,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         private void Button_Search_Click(object sender, EventArgs e)
         {
 
-            if (Is_Time_To_Backup()) { Backup_Time(); }
+            // iConsole(400, 100, string.Join("\n", Check_Files(Dies, Dasd, true, false))); return;
 
-            iConsole(400, 100, Is_Time_To_Backup().ToString()); return;
 
             if (Backup_Mode) // Just show the last results
             {
@@ -3501,14 +3503,13 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     }
                     */
 
-
                     if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; } // User Abbort
 
                     // Moving backwards in the history means we better not change the newest version of files that are not inside of the target patch
                     // We also ignore all files outside of this patch if the user decided "else" while moving forward  | Move_Backwards)
-                    else if (Caution_Window.Passed_Value_A.Text_Data == "else") { Restore(Current_Version, Selected_Backup, Move_Backwards, false); }
+                    else if (Caution_Window.Passed_Value_A.Text_Data == "else") { Restore(Current_Version + User_Name, Selected_Backup, Move_Backwards, false); }
 
-                    else { Restore(Current_Version, Selected_Backup, Move_Backwards, true); } // Current_Version is allowed to be remaining "" here.
+                    else { Restore(Current_Version + User_Name, Selected_Backup, Move_Backwards, true); } // Current_Version is allowed to be remaining "" here.
                 }
             }
 
@@ -3784,7 +3785,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             File.WriteAllText(Xml_Directory + "Axe_Info.txt", Info_File);
 
             // Adding a Copy into the Backup itself
-            File.Copy(Xml_Directory + "Axe_Info.txt", Backup_Dir + Mod_Name + @"\" + Time_Stamp + @"\Axe_Info.txt", true);
+            File.Copy(Xml_Directory + "Axe_Info.txt", Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\Axe_Info.txt", true);
         }
 
 
@@ -3932,13 +3933,60 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             return New_Script_Directory;
         }
 
-    
 
 
 
-      
-     
 
+
+
+        // Set Shall_Match to false to return a list of files that never matched instead of the matched ones.
+        public List<string> Check_Files(List<string> Return_If_Not_Matched, List<string> Return_If_Matched, bool Shall_Match = true, bool Return_Full_Path = true)
+        {
+            List<string> Results = new List<string>();
+
+
+            // Difference between Return_If_Matched and Return_If_Not_Matched is, that they have different paths at the beginning, 
+            // And so the directory with files of interest is the one you want to either return if matched or not.
+            foreach (string File_A in Return_If_Not_Matched)
+            {   try
+                {   bool Has_Matched = false;
+
+
+                    foreach (string File_B in Return_If_Matched)
+                    {   try
+                        {   if (Path.GetFileName(File_A) == Path.GetFileName(File_B)) // If the Paths do match
+                            {
+                                long Length_A = new System.IO.FileInfo(File_A).Length;
+                                long Length_B = new System.IO.FileInfo(File_B).Length;
+
+                                // iConsole(400, 100, Path.GetFileName(File_A) + "  and  " + Path.GetFileName(File_B));
+
+                                if (Length_A == Length_B) // If file sizes match 
+                                {   Has_Matched = true;
+
+                                    if (Shall_Match && !Results.Contains(File_B)) 
+                                    {
+                                        if (Return_Full_Path && !Results.Contains(File_B)) { Results.Add(File_B); }
+                                        else if (!Results.Contains(Path.GetFileName(File_B))) { Results.Add(Path.GetFileName(File_B)); } 
+                                    }                           
+                                    continue; // to the next file
+                                }                                                            
+                            }
+                        } catch {}
+                    }
+
+
+                    if (!Shall_Match && !Has_Matched)
+                    {
+                        if (Return_Full_Path && !Results.Contains(File_A)) { Results.Add(File_A); }
+                        else if (!Results.Contains(Path.GetFileName(File_A))) { Results.Add(Path.GetFileName(File_A)); }                   
+                    }
+                } catch {}
+            }
+
+
+            return Results;
+        }
   
 
 
@@ -3958,9 +4006,48 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
                 if (Is_Time_To_Backup()) { Backup_Time(); } // This needs to run UNDER Remove_Oldest_Backup();
 
-                Copy_Now(Xml_Directory, Backup_Dir + Mod_Name + @"\" + Time_Stamp + @"\");
 
-                Create_Backup_Info(Time_Stamp, "Created a full copy of the whole directory.");
+
+
+                // ============================================= 
+                // Check files in the Main_Directory for changes that are not contained in any of the Backups:
+                // ============================================= 
+
+                List<string> Backup_Folders = Get_All_Directories(Backup_Dir + Mod_Name, true);
+                Backup_Folders.Reverse(); // In order to stay synchronous with the UI view.
+
+                List<string> Backup_File_List = new List<string>();
+                List<string> Main_Directory = Get_All_Files(Xml_Directory);          
+                List<string> Matches_List = new List<string>();
+                List<string> Difference_List = new List<string>();
+
+              
+
+                foreach (string Found_Dir in Backup_Folders)
+                {                   
+                    Backup_File_List = Get_All_Files(Found_Dir);
+                    Matches_List = Check_Files(Main_Directory, Backup_File_List, false, true);
+
+            
+                    if (Found_Dir == Backup_Folders[0]) { Difference_List = Matches_List; } // Just dump the whole list into the other one as its empty.
+                    else
+                    {   foreach (string Entry in Matches_List)
+                        {
+                            if (!Difference_List.Contains(Entry)) { Difference_List.Add(Entry); }
+                        }
+                    }
+                }
+
+                // iConsole(400, 100, string.Join("\n", Difference_List));
+                // =============================================             
+                // return;
+
+                foreach (string Entry in Difference_List)
+                { Verify_Copy(Entry, Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\" + Entry.Replace(Xml_Directory, "")); }
+
+                // Copy_Now(Xml_Directory, Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\"); // Outdated, this just copies all of them.
+
+                Create_Backup_Info(Time_Stamp + User_Name, "Created a full copy of the whole directory.");
 
                 Refresh_Backup_Stack(Mod_Name);
           
