@@ -91,6 +91,7 @@ namespace Xml_Axe
         public List<string> Found_Entities = new List<string>();
         public List<string> File_Collection = new List<string>();
         public List<string> Blacklisted_Xmls = new List<string>();
+        List<string> Difference_List = new List<string>();
         public List<string> Temporal_E = new List<string>();
 
         string[] Ignored_Attribute_Values = new string[] { "", "None", "Find_And_Replace", "Insert_Random_Int", "Insert_Random_Float" };
@@ -961,7 +962,7 @@ namespace Xml_Axe
                 if (!Directory.Exists(Backup_Dir)) { Directory.CreateDirectory(Backup_Dir); }
                 // if (!Directory.Exists(Backup_Dir + Mod_Name)) { Directory.CreateDirectory(Backup_Dir + Mod_Name); }
 
-                Remove_Oldest_Backup();
+                // Remove_Oldest_Backup(); // Dropped Feature
 
             } else { File_Collection = Get_All_Files(Xml_Directory, "xml"); }
 
@@ -3117,11 +3118,11 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //=====================//
         // If exists in source path copy and OVERWRITE that to target
         public void Verify_Copy(string Source_Path_and_File, string New_Path_and_File)
-        {      if (!Directory.Exists(Path.GetDirectoryName(New_Path_and_File)))
-                { Directory.CreateDirectory(Path.GetDirectoryName(New_Path_and_File)); }
+        {  
+            if (!Directory.Exists(Path.GetDirectoryName(New_Path_and_File)))
+            { Directory.CreateDirectory(Path.GetDirectoryName(New_Path_and_File)); }
 
-                File.Copy(Source_Path_and_File, New_Path_and_File, true); 
-                     
+            File.Copy(Source_Path_and_File, New_Path_and_File, true);                    
         }
 
         //=====================//
@@ -3229,7 +3230,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-
+          
             // iConsole(400, 100, string.Join("\n", Check_Files(Dies, Dasd, true, false))); return;
 
 
@@ -3767,7 +3768,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
         // Use "Time_Stamp" as argument for Target_Backup_Name
-        private void Create_Backup_Info(string Target_Backup_Name, string Append_File_Info = "")
+        private void Create_Backup_Info(string Target_Backup_Name, string Append_File_Info = "", bool Is_Base_Version = false)
         { 
             string Info_File =
             @"Directory_Name = " + Mod_Name +
@@ -3784,8 +3785,18 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
             File.WriteAllText(Xml_Directory + "Axe_Info.txt", Info_File);
 
-            // Adding a Copy into the Backup itself
-            File.Copy(Xml_Directory + "Axe_Info.txt", Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\Axe_Info.txt", true);
+
+            // iConsole(480, 400, Xml_Directory + "Axe_Info.txt" + "  and  " + Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\Axe_Info.txt");
+      
+            try 
+            {   string Info_Name = @"\Axe_Info.txt";
+                if (Is_Base_Version) { Info_Name = @"_Base\Axe_Info.txt"; }
+
+                // Adding a Copy into the Backup itself
+                File.Copy(Xml_Directory + "Axe_Info.txt", Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + Info_Name, true);
+            
+            } catch { iConsole(400, 100, "\nFailed to create or find the path."); }
+
         }
 
 
@@ -3935,10 +3946,98 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
 
+        // ============================================= 
+        // Check files in the Main_Directory for changes that are not contained in any of the Backups:
+        // ============================================= 
+
+        private void Create_New_Backup()
+        {      
+            // Dropped because if you remove any entry from the stack the whole matching based change detection ceases to function..
+            // Remove_Oldest_Backup(); // Trying to remove oldest, if NOT the currently loaded one, that is.
+
+            if (Is_Time_To_Backup()) { Backup_Time(); } // This needs to run UNDER Remove_Oldest_Backup();        
+
+            List<string> Backup_Folders = Get_All_Directories(Backup_Dir + Mod_Name, true);
+            // Reversing "Backup_Folders" controlls whether we check all Backup dirs from top to bottom or from bottom to top,
+            // The order they are feeded into Check_Files() below allows to remove old filesize missmatches in Difference_List() to be nullified by newer matches.
+            // Backup_Folders.Reverse(); // And also in order to stay synchronous with the UI view.
+          
+
+            if (Backup_Folders.Count() == 0)
+            {   // Just copy all files as innitial backup, we are going to need them later on to compare filesizes against this backup!
+                Copy_Now(Xml_Directory, Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"_Base\");
+
+                Temporal_B = "\nCreated a backup of the whole directory into\n" +
+                    Backup_Dir + "\n" + Mod_Name + @"\" + Time_Stamp + User_Name + @"_Base" +
+                    "\n\nWe are going to need it as \"Base\" later on, to \ncompare filesizes against this innitial backup.\n";
+
+                iConsole(400, 260, Temporal_B); // Tell it to the user.
+
+
+                // Base version to true, otherwise it will complain about a missmatched path
+                Create_Backup_Info(Time_Stamp + User_Name + @"_Base", Temporal_B, true);
+                Refresh_Backup_Stack(Mod_Name); 
+                
+                Temporal_B = "";
+                return;
+            }
 
 
 
 
+
+            List<string> Backup_File_List = new List<string>();
+            List<string> Main_Directory = Get_All_Files(Xml_Directory);
+            List<string> Matches_List = new List<string>();
+
+
+            foreach (string Found_Dir in Backup_Folders)
+            {
+                Backup_File_List = Get_All_Files(Found_Dir);
+                Matches_List = Check_Files(Main_Directory, Backup_File_List, false, true);
+
+
+                if (Found_Dir == Backup_Folders[0]) { Difference_List = Matches_List; } // Just dump the whole list into the other one as its empty.
+                else
+                {
+                    foreach (string Entry in Matches_List)
+                    {
+                        if (!Difference_List.Contains(Entry)) { Difference_List.Add(Entry); }
+                    }
+                }
+            }
+
+
+
+
+            if (Difference_List.Count() == 0) { iConsole(200, 100, "\nNo file changes detected."); return; }
+            // else { iConsole(400, 400, string.Join("\n", Difference_List)); } // Beware that Joining the list also modifies it, maybe even clears it..                
+            // =============================================    
+            // return;
+
+
+            Temporal_E.Clear(); // From the usage above
+
+            foreach (string Entry in Difference_List)
+            {
+                Temporal_B = Entry.Replace(Xml_Directory, "");
+
+                Temporal_E.Add(Temporal_B); // Gonna use this in the Info report below
+                Verify_Copy(Entry, Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\" + Temporal_B);
+            }
+           
+
+            Create_Backup_Info(Time_Stamp + User_Name, "Created a backup, based on different file sizes from:\n\n\n" +
+                string.Join("\n", Temporal_E));
+
+            Refresh_Backup_Stack(Mod_Name);
+
+            Temporal_E.Clear(); 
+        }
+
+
+
+        //=====================//
         // Set Shall_Match to false to return a list of files that never matched instead of the matched ones.
         public List<string> Check_Files(List<string> Return_If_Not_Matched, List<string> Return_If_Matched, bool Shall_Match = true, bool Return_Full_Path = true)
         {
@@ -3952,6 +4051,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 {   bool Name_Matched = false;
                     bool Size_Matched = false;
 
+
                     foreach (string File_B in Return_If_Matched)
                     {   try
                         {   if (Path.GetFileName(File_A) == Path.GetFileName(File_B)) // If the Paths do match
@@ -3963,18 +4063,28 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
                                 // iConsole(400, 100, Path.GetFileName(File_A) + "  and  " + Path.GetFileName(File_B));
 
+
                                 if (Length_A == Length_B) // If file sizes match 
                                 {   Size_Matched = true;
 
                                     if (Shall_Match && !Results.Contains(File_B) && !File_A.EndsWith("Axe_Info.txt")) 
                                     {
-                                        if (Return_Full_Path && !Results.Contains(File_B)) { Results.Add(File_B); }
-                                        else if (!Results.Contains(Path.GetFileName(File_B))) { Results.Add(Path.GetFileName(File_B)); } 
-                                    }                           
-                                    continue; // to the next file
-                                }
+                                        if (Return_Full_Path) { Results.Add(File_B); }
+                                        else if (!Results.Contains(Path.GetFileName(File_B))) { Results.Add(Path.GetFileName(File_B)); }
 
-                                continue; // Due to the matched name, we stop searching here
+                                        continue; // Due to matched Size, proceed with the next file instead of looping down through the rest of the list.
+                                    }
+
+
+                                    // Its Critical to use File_A here!  Not File_B, because we're looking for the match partner that was stored
+                                    // in the "Return_If_Not_Matched" for the last cycle(s) of Check_Files() before this one: Inside of the global "Difference_List" variable.
+                                    // Clearing older matches that were adressed by newer patches/backups:
+                                    if (Return_Full_Path & Difference_List.Contains(File_A)) { Difference_List.Remove(File_A); } 
+
+                                    else if (Difference_List.Contains(File_A.Replace(Xml_Directory, "")))
+                                    { Difference_List.Remove(File_A.Replace(Xml_Directory, "")); }                                  
+                                }
+                                continue; // Due to the matched name, we stop searching here for the remaining entries in the list
                             }
                         } catch {}
                     }
@@ -3984,7 +4094,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     if (!Shall_Match && !Size_Matched && Name_Matched && !File_A.EndsWith("Axe_Info.txt")) // Excllusion of my log file
                     {
                         if (Return_Full_Path && !Results.Contains(File_A)) { Results.Add(File_A); }
-                        else if (!Results.Contains(Path.GetFileName(File_A))) { Results.Add(Path.GetFileName(File_A)); }                   
+                        else if (!Results.Contains(Path.GetFileName(File_A))) { Results.Add(Path.GetFileName(File_A)); }
                     }
                 } catch {}
             }
@@ -3992,78 +4102,26 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
             return Results;
         }
-  
 
+
+
+        //=====================// 
 
         private void Button_Operator_Click(object sender, EventArgs e)
         {   
             if(Backup_Mode) // MANUALLY CREATE A NEW BACKUP OF THE FULL XML DIR
-            {                         
-                iDialogue(540, 240, "Do It", "Cancel", "false", "false", "\nDo you wish to create a new backup of the full\n"
+            {
+                // 540, 240
+                iDialogue(540, 210, "Do It", "Cancel", "false", "false", "\nDo you wish to create a new backup of the\n"
                 + Path.GetFileName(Xml_Directory.Remove(Xml_Directory.Length - 1)) + " directory?\n\n"
-                + "This will also delete backups older then the " + Int32.Parse(Get_Setting_Value("Backups_Per_Directory")) + "th slot.");
+                // + "This will also delete backups older then the " + Int32.Parse(Get_Setting_Value("Backups_Per_Directory")) + "th slot."
+                );
 
-                if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }          
-                //string Current_Backup = Get_Backup_Info()[1];
-               
-                Remove_Oldest_Backup(); // Trying to remove oldest, if NOT the currently loaded one, that is.
+                if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
 
-
-                if (Is_Time_To_Backup()) { Backup_Time(); } // This needs to run UNDER Remove_Oldest_Backup();
-
-
-
-
-                // ============================================= 
-                // Check files in the Main_Directory for changes that are not contained in any of the Backups:
-                // ============================================= 
-
-                List<string> Backup_Folders = Get_All_Directories(Backup_Dir + Mod_Name, true);
-                Backup_Folders.Reverse(); // In order to stay synchronous with the UI view.
-
-                List<string> Backup_File_List = new List<string>();
-                List<string> Main_Directory = Get_All_Files(Xml_Directory);          
-                List<string> Matches_List = new List<string>();
-                List<string> Difference_List = new List<string>();
-
-              
-
-                foreach (string Found_Dir in Backup_Folders)
-                {                   
-                    Backup_File_List = Get_All_Files(Found_Dir);
-                    Matches_List = Check_Files(Main_Directory, Backup_File_List, false, true);
-
-            
-                    if (Found_Dir == Backup_Folders[0]) { Difference_List = Matches_List; } // Just dump the whole list into the other one as its empty.
-                    else
-                    {   foreach (string Entry in Matches_List)
-                        {
-                            if (!Difference_List.Contains(Entry)) { Difference_List.Add(Entry); }
-                        }
-                    }
-                }
-
-                // iConsole(400, 100, string.Join("\n", Difference_List));
-                // =============================================             
-                // return;
-
-                Matches_List.Clear();
-
-                foreach (string Entry in Difference_List)
-                {
-                    Matches_List.Add(Entry.Replace(Xml_Directory, "")); // Gonna use this in the Info report below
-                    Verify_Copy(Entry, Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\" + Entry.Replace(Xml_Directory, ""));
-                }
-
-                // Copy_Now(Xml_Directory, Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\"); // Outdated, this just copies all of them.
-
-
-                Create_Backup_Info(Time_Stamp + User_Name, "Created a backup, based on different file sizes from:\n\n\n" +
-                    string.Join("\n", Matches_List));
-
-                Refresh_Backup_Stack(Mod_Name);
-          
+                Create_New_Backup(); 
             }
+
 
             else if ( Operation_Mode == "Bool")
             {   if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True"))
@@ -4097,6 +4155,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         }
 
+     
         private void Button_Operator_MouseHover(object sender, EventArgs e)
         {
             if (Backup_Mode) { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Plus_Lit); }
