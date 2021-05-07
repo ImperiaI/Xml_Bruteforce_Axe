@@ -258,41 +258,12 @@ namespace Xml_Axe
         {
             if (Script_Mode) { Run_Script(); } // Script Mode override
 
-            else if (Backup_Mode) // Just move into the Xml Directory that is currently selected 
-            {
-                string Selection = Select_List_View_First(List_View_Selection);
-
-
-                if (At_Top_Level) { return; }
-                try
-                {
-                    string Current_Version = Get_Backup_Info()[1];
-                    //Label_Entity_Name.Text = Current_Version; // Obsolete because I highlight bg color now
-                    //Label_Entity_Name.Location = new Point(86, -2);
-
-
-                    List_View_Selection.Items.Clear();
-                    Temporal_E = Get_All_Directories(Backup_Dir + @"\" + Selection, true);
-                    Temporal_E.Reverse();
-
-                    foreach (string Found_Dir in Temporal_E)
-                    {
-                        string Folder_Name = Found_Dir.Replace(Backup_Dir + @"\" + Selection + @"\", "");
-
-                        // "Current" here means the Current directory in .\Backup, this program assembles new patches inside of it.
-                        if (Folder_Name != "" && Folder_Name != "Current" && Folder_Name != Selection && !List_View_Matches(List_View_Selection, Folder_Name))
-                        { List_View_Selection.Items.Add(Folder_Name); At_Top_Level = true; }
-                    }
-
-
-                    Set_Checker(List_View_Selection, Theme_Color);
-
-                    foreach (ListViewItem Item in List_View_Selection.Items)
-                    {
-                        if (Item.Text == Current_Version) { Item.BackColor = Color.Orange; break; } // Highlighting Selection
-                    }
-
-                } catch {}              
+            else if (Backup_Mode && !At_Top_Level) // Just move into the Xml Directory that is currently selected 
+            {   Button_Operator_MouseLeave(null, null);
+                Button_Scripts.Visible = true;
+                Button_Operator.Visible = true;
+                Button_Operator.Location = new Point(1, 350);
+                Refresh_Backup_Stack(Select_List_View_First(List_View_Selection));                                                                     
             }
 
             else // Normal Mode
@@ -305,6 +276,40 @@ namespace Xml_Axe
                 }
             }
 
+        }
+
+
+
+
+        public void Refresh_Backup_Stack(string Selected_Project)
+        {   try
+            {   string Current_Version = Get_Backup_Info()[1];
+                //Label_Entity_Name.Text = Current_Version; // Obsolete because I highlight bg color now
+                //Label_Entity_Name.Location = new Point(86, -2);
+             
+
+                List_View_Selection.Items.Clear();
+                Temporal_E = Get_All_Directories(Backup_Dir + @"\" + Selected_Project, true);
+                Temporal_E.Reverse();
+
+                foreach (string Found_Dir in Temporal_E)
+                {
+                    string Folder_Name = Found_Dir.Replace(Backup_Dir + @"\" + Selected_Project + @"\", "");
+
+                    // "Current" here means the Current directory in .\Backup, this program assembles new patches inside of it.
+                    if (Folder_Name != "" && Folder_Name != "Current" && Folder_Name != Selected_Project && !List_View_Matches(List_View_Selection, Folder_Name))
+                    { List_View_Selection.Items.Add(Folder_Name); At_Top_Level = true; }
+                }
+
+
+                Set_Checker(List_View_Selection, Theme_Color);
+
+                foreach (ListViewItem Item in List_View_Selection.Items)
+                {
+                    if (Item.Text == Current_Version) { Item.BackColor = Color.Orange; break; } // Highlighting Selection
+                }
+
+            } catch {}  
         }
 
    
@@ -677,6 +682,7 @@ namespace Xml_Axe
                 if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
             }
 
+
             if (Is_Time_To_Backup()) { Backup_Time(); }// This updates the Last_Backup_Time variable we use to define name of the Backup dir!
 
             Related_Xmls = Slice(true); // This line does the actual Job!
@@ -693,22 +699,9 @@ namespace Xml_Axe
                 string Backup_Count = Get_Setting_Value("Backups_Per_Directory");
 
                 if (Related_Xmls.Count() > 0 && Backup_Count != "0" && Backup_Count != "" && !Match_Without_Emptyspace(Backup_Count, "false"))
-                {  // Update the Backup Version
-
-                    string Info_File =
-                     @"Directory_Name = " + Mod_Name +
-                     "\nVersion = " + Last_Backup_Time +
-                     "\n\n\n//============================================================\\\\" +
-                     "\nChanged_Files:" +
-                     "\n//============================================================\\\\" +
-                     "\n" + string.Join("\n", Related_Xmls);
-
-                    // This does not happen below because it needs to write this file once only.
-                    File.WriteAllText(Backup_Dir + Mod_Name + @"\Info.txt", Info_File);
-
-                    File.Copy(Backup_Dir + Mod_Name + @"\Info.txt", Backup_Dir + Mod_Name + @"\" + Last_Backup_Time + @"\Info.txt", true);
-
-                    // File.WriteAllText(Backup_Dir + Mod_Name + @"\" + Last_Backup_Time + @"\Info.txt", Info_File);
+                {   // Update the Backup Version and
+                    // AUTOMATICALLY CREATE BACKUP from the list of Related_Xmls
+                    Create_Backup_Info(Last_Backup_Time, string.Join("\n", Related_Xmls));
                 }
             }
 
@@ -878,6 +871,27 @@ namespace Xml_Axe
         }
 
 
+
+        public bool Remove_Oldest_Backup()
+        {
+            string Backup_Count = Get_Setting_Value("Backups_Per_Directory");
+
+            if (Backup_Count != "0" && Backup_Count != "" && !Match_Without_Emptyspace(Backup_Count, "false"))
+            {
+                int Maximal_Backups = Int32.Parse(Backup_Count);
+                Temporal_E = Get_All_Directories(Backup_Dir + Mod_Name, true);
+
+                if (Temporal_E.Count() >= Maximal_Backups) // If reached max count, we need to delete the last one!
+                {   // iConsole(400, 200, Temporal_E.First()); return null; // Thats the one we're targeting for deletion                   
+
+                    if (Temporal_E.First() != Get_Backup_Info()[1])
+                    { Deleting(Temporal_E.First()); return true; }// Trash ONLY the last one
+                }
+            }
+
+            return false;
+        }
+
         
         //-----------------------------------------------------------------------------
         // Main Function
@@ -894,8 +908,7 @@ namespace Xml_Axe
 
           
             string Backup_File = "";
-            string Backup_Count = Get_Setting_Value("Backups_Per_Directory");
-
+           
 
             // XElement Selected_Instance = null;
             IEnumerable<XElement> Instances = null;
@@ -913,17 +926,7 @@ namespace Xml_Axe
                 if (!Directory.Exists(Backup_Dir)) { Directory.CreateDirectory(Backup_Dir); }
                 // if (!Directory.Exists(Backup_Dir + Mod_Name)) { Directory.CreateDirectory(Backup_Dir + Mod_Name); }
 
-
-                if (Backup_Count != "0" && Backup_Count != "" && !Match_Without_Emptyspace(Backup_Count, "false"))
-                {
-                    int Maximal_Backups = Int32.Parse(Backup_Count);
-                    Temporal_E = Get_All_Directories(Backup_Dir + Mod_Name, true);
-
-                    if (Temporal_E.Count() >= Maximal_Backups) // If reached max count, we need to delete the last one!
-                    {   // iConsole(400, 200, Temporal_E.First()); return null; // Thats the one we're targeting for deletion                   
-                        Deleting(Temporal_E.First()); // Trash ONLY the last one
-                    }
-                }
+                Remove_Oldest_Backup();
 
             } else { File_Collection = Get_All_Files(Xml_Directory, "xml"); }
 
@@ -1201,6 +1204,8 @@ namespace Xml_Axe
                     
                     if (Apply_Changes) 
                     {
+                        string Backup_Count = Get_Setting_Value("Backups_Per_Directory");
+
                         if (Backup_Count != "0" && Backup_Count != "" && !Match_Without_Emptyspace(Backup_Count, "false")) // Then backup feature is disabled in general
                         {   Backup_File = Backup_Dir + Mod_Name + @"\" + Last_Backup_Time + @"\" + (Selected_Xml.Replace(Xml_Directory, "")); // Creating Sub-Directories:                        
                             if (!Directory.Exists(Path.GetDirectoryName(Backup_File))) { Directory.CreateDirectory(Path.GetDirectoryName(Backup_File)); }
@@ -3116,15 +3121,16 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Backup_Mode = false; At_Top_Level = false;
                 Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible  
 
+                Button_Operator.Location = new Point(1, 430); // Back to its original location
+
                 //Set_Label_Entity_Name_Text();
                 //Label_Entity_Name.Location = new Point(31, 238);
             }            
             else
-            {   Backup_Mode = true;
-
-              
+            {   Backup_Mode = true;           
                 List_View_Selection.Items.Clear();
                 List_View_Selection.Visible = true;
+                Button_Scripts.Visible = false;
                 if (Text_Box_Description.Visible) { Disable_Description(); }
 
              
@@ -3144,7 +3150,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
             // Toggeling Buttons for this mode
             Button_Start_MouseLeave(null, null); 
-            Button_Scripts_MouseLeave(null, null); 
+            Button_Scripts_MouseLeave(null, null);
+            Button_Operator_MouseLeave(null, null);
         }
 
         private void Button_Undo_MouseHover(object sender, EventArgs e)
@@ -3185,9 +3192,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-
-            // iConsole(400, 100, test.ToString()); return;
-
+            //iConsole(400, 100, Last_Backup_Time); return;
 
             if (Backup_Mode) // Just show the last results
             {
@@ -3397,7 +3402,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
             else if (Script_Mode) // Toggle between Script Mode
-            {
+            {              
                 Script_Mode = false;
                 Drop_Zone.Visible = true;
                 Zoom_List_View(false);    
@@ -3412,7 +3417,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             }
 
             else if (Backup_Mode)
-            {             
+            {     
+                if (!At_Top_Level) { return; }
+
                 string Selected_Backup = Select_List_View_First(List_View_Selection);
                 string Working_Directory = Backup_Dir + Mod_Name + @"\Current";
                 // string Directory_Name = "";
@@ -3430,18 +3437,19 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     // Find out whether Current_Version comes before Selected_Backup
                     else if (Item.Text == Current_Version) { Move_Backwards = true; break; }                                         
                 }
-                
 
 
 
-                if (Current_Version != "" && Current_Version != Selected_Backup) 
+                if (Current_Version == Selected_Backup) { iConsole(400, 100, "\nThis should already be the current version."); }
+
+                else if (Current_Version != "")
                 {
                     //if (!Move_Backwards) // Changed my mind about this
                     //{
-                        iDialogue(580, 240, "Restore All", "Cancel", "Only Inside", "false", "\nDo you wish to restore to the backup " +
-                           Selected_Backup + "?\n\nFor all changed files between this backup and the \ncurrent state, or only for the files inside of this backup?"
-                            // + Xml_Directory.Replace(Mod_Directory, "") + "?"
-                           );
+                    iDialogue(580, 240, "Restore All", "Cancel", "Only Inside", "false", "\nDo you wish to restore to the backup " +
+                       Selected_Backup + "?\n\nFor all changed files between this backup and the \ncurrent state, or only for the files inside of this backup?"
+                        // + Xml_Directory.Replace(Mod_Directory, "") + "?"
+                       );
                     /*
                     }
                     else
@@ -3558,7 +3566,6 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
         // All_Files_Since_This means all files in other Backups then this one, that are between the Current_Version and the Target_Backup.
-
         public void Restore(string Current_Version, string Target_Backup, bool Move_Backwards, bool All_Files_Since_This = true)
         {   // string Current = Select_List_View_First(List_View_Selection);
 
@@ -3687,12 +3694,15 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 //iConsole(500, 100, "\nJumped by " + Cycles + " slot" + s + "."); // Confirming the right amount of directories to pass
 
 
-                string Info_File =
-                @"Directory_Name = " + Mod_Name +
-                "\nVersion = " + Target_Backup;
+                // iConsole(600, 100, Backup_Dir + Mod_Name + @"\" + Target_Backup + @"\Info.txt" + "  |  " + Backup_Dir + Mod_Name + @"\Info.txt");
+                // Copying the Backup info of the selected backup up into the root dir, this is from where the program stores which is selected.  
 
-                File.WriteAllText(Backup_Dir + Mod_Name + @"\Info.txt", Info_File);
+                try
+                {  iConsole(600, 100, Backup_Dir + Mod_Name + @"\" + Target_Backup + @"\Info.txt" + "  |  " + Backup_Dir + Mod_Name + @"\Info.txt"); 
+                } catch { Create_Backup_Info(Target_Backup); } // If failed to find it, we just create a new one.
 
+
+                File.Copy(Backup_Dir + Mod_Name + @"\" + Target_Backup + @"\Info.txt", Backup_Dir + Mod_Name + @"\Info.txt", true);
 
                 // Label_Entity_Name.Text = Target_Backup; // Updating UI Info (outdated)
                 Set_Checker(List_View_Selection, Theme_Color); // Erasing last selection
@@ -3713,6 +3723,30 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 }
             } catch {}         
         }
+
+
+        // Use "Last_Backup_Time" as argument for Target_Backup_Name
+        private void Create_Backup_Info(string Target_Backup_Name, string Append_File_Info = "")
+        { 
+            string Info_File =
+            @"Directory_Name = " + Mod_Name +
+            "\nVersion = " + Target_Backup_Name;
+
+            if (Append_File_Info != "")
+            {
+                Info_File +=
+                    "\n\n\n//============================================================\\\\" +
+                    "\nChanged_Files:" +
+                    "\n//============================================================\\\\" +
+                    "\n" + Append_File_Info; // Append_File_Info can be a joined List<string> of file names here.
+            }
+
+            File.WriteAllText(Backup_Dir + Mod_Name + @"\Info.txt", Info_File);
+
+            // Adding a Copy into the Backup itself
+            File.Copy(Backup_Dir + Mod_Name + @"\Info.txt", Backup_Dir + Mod_Name + @"\" + Last_Backup_Time + @"\Info.txt", true);
+        }
+
 
 
         private void Zoom_List_View(bool Large)
@@ -3870,7 +3904,24 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         private void Button_Operator_Click(object sender, EventArgs e)
         {   
-            if ( Operation_Mode == "Bool")
+            if(Backup_Mode) // MANUALLY CREATE A NEW BACKUP OF THE FULL XML DIR
+            {                         
+                iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nDo you wish to create a new backup \nof the full Xml directory?");
+                if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
+
+                Remove_Oldest_Backup(); // Trying to remove oldest, if NOT the currently loaded one, that is.
+                string Current_Backup = Get_Backup_Info()[1];
+
+                if (Is_Time_To_Backup()) { Backup_Time(); }
+                Copy_Now(Xml_Directory, Backup_Dir + Mod_Name + @"\" + Last_Backup_Time + @"\");
+
+                Create_Backup_Info(Last_Backup_Time, "Created a full copy of the whole Xml directory.");
+
+                Refresh_Backup_Stack(Mod_Name);
+          
+            }
+
+            else if ( Operation_Mode == "Bool")
             {   if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True"))
                 {   Combo_Box_Tag_Value.Text = "False";
                     Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool);
@@ -3904,7 +3955,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         private void Button_Operator_MouseHover(object sender, EventArgs e)
         {
-            if (Operation_Mode == "Bool")
+            if (Backup_Mode) { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Plus_Lit); }
+
+            else if (Operation_Mode == "Bool")
             {   if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "Yes"))
                 { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool_Lit); }
                 else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool); }
@@ -3918,7 +3971,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         private void Button_Operator_MouseLeave(object sender, EventArgs e)
         {
-            if (Operation_Mode == "Bool")
+            if (Backup_Mode) { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Plus); }
+
+            else if (Operation_Mode == "Bool")
             {   if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "Yes")) 
                 { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool_Lit); }
                 else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool); }
