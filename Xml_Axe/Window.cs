@@ -261,12 +261,12 @@ namespace Xml_Axe
         {
             if (Script_Mode) { Run_Script(); } // Script Mode override
 
-            else if (Backup_Mode && At_Top_Level) // Just move into the Xml Directory that is currently selected 
-            {   Button_Operator_MouseLeave(null, null);
-                Button_Scripts.Visible = true;
-                Button_Operator.Visible = true;
-                Button_Operator.Location = new Point(1, 350);
-                Refresh_Backup_Stack(Select_List_View_First(List_View_Selection));                                                                     
+            else if (Backup_Mode) // Just move into the Xml Directory that is currently selected 
+            {   if (At_Top_Level) // Leave this below here
+                {    Button_Operator_MouseLeave(null, null);
+                     Button_Scripts.Visible = true;   
+                     Refresh_Backup_Stack(Select_List_View_First(List_View_Selection));   
+                }                                                                  
             }
 
             else // Normal Mode
@@ -282,6 +282,19 @@ namespace Xml_Axe
         }
 
 
+
+
+        public void Refresh_Backup_Directory()
+        {
+            foreach (string Folder in Get_All_Directories(Backup_Dir, true))
+            {
+                string Folder_Name = Folder.Replace(Backup_Dir, "");
+                if (Folder_Name != "" && !List_View_Matches(List_View_Selection, Folder_Name))
+                { List_View_Selection.Items.Add(Folder_Name); }
+            }
+
+            Set_Checker(List_View_Selection, Theme_Color);
+        }
 
 
         public void Refresh_Backup_Stack(string Selected_Project)
@@ -302,9 +315,9 @@ namespace Xml_Axe
 
                     // "Current" here means the Current directory in .\Backup, this program assembles new patches inside of it.
                     if (Folder_Name != "" && Folder_Name != "Current" && Folder_Name != Selected_Project && !List_View_Matches(List_View_Selection, Folder_Name))
-                    { List_View_Selection.Items.Add(Folder_Name); At_Top_Level = false; }
+                    { List_View_Selection.Items.Add(Folder_Name); }
                 }
-
+                At_Top_Level = false;
 
                 Set_Checker(List_View_Selection, Theme_Color);
 
@@ -553,14 +566,29 @@ namespace Xml_Axe
             if (Backup_Mode) // Deletion Function
             {
                 Temporal_E = Select_List_View_Items(List_View_Selection);
-                string s = "";
-                if (Temporal_E.Count > 1) { s = "s"; }
 
-                iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nAre you sure you wish to delete the \nselected backup" + s + "?");
+                bool Selected_Base = false;
+                foreach (string Folder_Path in Temporal_E)
+                {
+                    if (Folder_Path.EndsWith("_Base")) { Selected_Base = true; break; }
+                }
+
+                if (Selected_Base)
+                { iDialogue(540, 260, "Do It", "Cancel", "false", "false", "\nWait, you selected a \"Base\" backup. But the backup \n" +
+                    "feature needs it to compare against new changes.\n" +
+                    "Are you sure you wish to delete the selected backup?\n\n" +
+                    "Instead you could merge Backups into a new Base." ); 
+                }
+                else
+                {   string s = "";
+                    if (Temporal_E.Count > 1) { s = "s"; }
+
+                    iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nAre you sure you wish to delete the \nselected backup" + s + "?");
+                }
+
                 if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
 
-             
-
+           
 
                 foreach (string Folder_Path in Temporal_E)
                 {
@@ -700,34 +728,47 @@ namespace Xml_Axe
 
 
             if (Related_Xmls != null)
-            {   if (Related_Xmls.Count() > 0 && Is_Backup_Count_Valid())
-                {
-                    string Backup_Path = Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name;
-
-                    if (Directory.Exists(Backup_Path)) // Means timestamp is the same
-                    {   // iConsole(400, 100, Backup_Path);
-                        string The_File = File.ReadAllText(Backup_Path + @"\Axe_Info.txt");
-
-                        // Nah that old Timestamp is still the same with this timing..
-                        // string Old_Timestamp = Get_Backup_Info(Info_File)[1];
+            {   try
+                {   if (Related_Xmls.Count() > 0 && Is_Backup_Count_Valid())
+                    {
+                        string Backup_Path = Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name;
+                        bool Info_File_Exists = true;
 
 
-                        foreach (string Line in The_File.Split('\n'))
-                        {
-                            if (Line == "") { continue; }
-                            else if (Related_Xmls.Contains(Line)) { Related_Xmls.Remove(Line); }
+                        if (Directory.Exists(Backup_Path)) // Means timestamp is the same
+                        {   // iConsole(400, 100, Backup_Path);
+
+                            if (!File.Exists(Backup_Path + @"\Axe_Info.txt")) { Info_File_Exists = false; }
+                            else
+                            {
+                                string The_File = File.ReadAllText(Backup_Path + @"\Axe_Info.txt");
+
+                                // Nah that old Timestamp is still the same with this timing..
+                                // string Old_Timestamp = Get_Backup_Info(Info_File)[1];
+
+
+                                foreach (string Line in The_File.Split('\n'))
+                                {
+                                    if (Line == "") { continue; }
+                                    else if (Related_Xmls.Contains(Line)) { Related_Xmls.Remove(Line); }
+                                }
+
+                                // Append the Related_Xmls it does not already contain :)
+                                The_File += "\n\n" + string.Join("\n", Related_Xmls);
+
+                                // CAUTION, there are difference between this method and Create_Backup_Info() above.
+                                File.WriteAllText(Xml_Directory + "Axe_Info.txt", The_File); // Update it
+                                File.Copy(Xml_Directory + "Axe_Info.txt", Backup_Path + @"\Axe_Info.txt", true);
+                            }
                         }
+                        // Update the Backup Version and AUTOMATICALLY CREATE BACKUP from the list of Related_Xmls
+                        else { Info_File_Exists = false; }
 
-                        // Append the Related_Xmls it does not already contain :)
-                        The_File += "\n\n" + string.Join("\n", Related_Xmls);
 
-                        // CAUTION, there are difference between this method and Create_Backup_Info() above.
-                        File.WriteAllText(Xml_Directory + "Axe_Info.txt", The_File); // Update it
-                        File.Copy(Xml_Directory + "Axe_Info.txt", Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\Axe_Info.txt", true);
-                    }                 
-                    // Update the Backup Version and AUTOMATICALLY CREATE BACKUP from the list of Related_Xmls
-                    else { Create_Backup_Info(Time_Stamp + User_Name, string.Join("\n", Related_Xmls)); }
-                }
+                        if (!Info_File_Exists) { Create_Backup_Info(Time_Stamp + User_Name, string.Join("\n", Related_Xmls)); }
+
+                    }
+                } catch { iConsole(400, 100, "\nFailed to create Axe_Info.txt for the current backup."); }
             }
 
 
@@ -956,11 +997,33 @@ namespace Xml_Axe
 
 
             if (Apply_Changes) // File_Collection is a global variable, feeded from the remaining filenames in the Caution_Window 
-            {   if (File_Collection == null | File_Collection.Count == 0) { File_Collection = Get_All_Files(Xml_Directory, "xml"); } // Failsafe
+            {   
+                if (File_Collection == null | File_Collection.Count == 0) { File_Collection = Get_All_Files(Xml_Directory, "xml"); } // Failsafe
                 // iConsole(560, 600, Xml_Directory + string.Join("\n", File_Collection)); // return null; // Debug Code
+        
 
-                if (!Directory.Exists(Backup_Dir)) { Directory.CreateDirectory(Backup_Dir); }
-                // if (!Directory.Exists(Backup_Dir + Mod_Name)) { Directory.CreateDirectory(Backup_Dir + Mod_Name); }
+                if (!Directory.Exists(Backup_Dir + Mod_Name)) { Directory.CreateDirectory(Backup_Dir + Mod_Name); }
+
+                if (Get_All_Directories(Backup_Dir + Mod_Name, true).Count() == 0) // Then we need to create a innitial "Base" backup
+                {
+                    // Just copy all files as innitial backup, we are going to need them later on to compare filesizes against this backup!
+                    Copy_Now(Xml_Directory, Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"_Base\");
+
+                    Temporal_B = "\nCreated a backup of the whole directory into\n" +
+                        Backup_Dir + "\n" + Mod_Name + @"\" + Time_Stamp + User_Name + @"_Base" +
+                        "\n\nWe are going to need it as \"Base\" later on, to \ncompare filesizes against this innitial backup.\n";
+
+                    iConsole(400, 260, Temporal_B); // Tell it to the user.
+
+
+                    // Base version to true, otherwise it will complain about a missmatched path
+                    Create_Backup_Info(Time_Stamp + User_Name + @"_Base", Temporal_B, true);
+                    Refresh_Backup_Stack(Mod_Name);
+
+                    File_Collection.Clear();
+                    Temporal_B = "";
+                    return null;
+                }
 
                 // Remove_Oldest_Backup(); // Dropped Feature
 
@@ -1239,14 +1302,15 @@ namespace Xml_Axe
                     }
                     
                     if (Apply_Changes) 
-                    {                       
-                        if (Is_Backup_Count_Valid()) // Then backup feature is disabled in general
-                        {   Backup_File = Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\" + (Selected_Xml.Replace(Xml_Directory, "")); // Creating Sub-Directories:                        
+                    {
+                        // if (Is_Backup_Count_Valid()) { // Then backup feature is disabled in general, dropped feature
+                          
+                            Backup_File = Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\" + (Selected_Xml.Replace(Xml_Directory, "")); // Creating Sub-Directories:                        
                             if (!Directory.Exists(Path.GetDirectoryName(Backup_File))) { Directory.CreateDirectory(Path.GetDirectoryName(Backup_File)); }
 
 
                             File.Copy(Selected_Xml, Backup_File, true);  // Creating a Backup                           
-                        }
+                        // }
 
                         Xml_File.Save(Selected_Xml);
                         //  iConsole(500, 100, "\nSaving to " + Xml); }
@@ -3160,17 +3224,12 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 List_View_Selection.Items.Clear();
                 List_View_Selection.Visible = true;
 
+                Button_Operator.Visible = true;
+                Button_Operator.Location = new Point(1, 350);
+
                 if (Text_Box_Description.Visible) { Disable_Description(); }
 
-             
-                foreach (string Folder in Get_All_Directories(Backup_Dir, true))
-                {
-                    string Folder_Name = Folder.Replace(Backup_Dir, "");
-                    if (Folder_Name != "" && !List_View_Matches(List_View_Selection, Folder_Name))
-                    { List_View_Selection.Items.Add(Folder_Name); }                   
-                }
-
-                Set_Checker(List_View_Selection, Theme_Color);
+                Refresh_Backup_Directory();
             }
 
 
@@ -3820,7 +3879,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         private void Set_UI_Backup_Mode(bool Mode)
         {
-            Control[] Controls = { Button_Run, Button_Scripts, Button_Percentage, Button_Operator, Button_Toggle_Settings };
+            Control[] Controls = { Button_Run, Button_Scripts, Button_Percentage, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
         }
 
@@ -3970,7 +4029,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Temporal_B = "\nCreated a backup of the whole directory into\n" +
                     Backup_Dir + "\n" + Mod_Name + @"\" + Time_Stamp + User_Name + @"_Base" +
                     "\n\nWe are going to need it as \"Base\" later on, to \ncompare filesizes against this innitial backup.\n";
-
+                
                 iConsole(400, 260, Temporal_B); // Tell it to the user.
 
 
@@ -4111,15 +4170,21 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         {   
             if(Backup_Mode) // MANUALLY CREATE A NEW BACKUP OF THE FULL XML DIR
             {
-                // 540, 240
-                iDialogue(540, 210, "Do It", "Cancel", "false", "false", "\nDo you wish to create a new backup of the\n"
-                + Path.GetFileName(Xml_Directory.Remove(Xml_Directory.Length - 1)) + " directory?\n\n"
-                // + "This will also delete backups older then the " + Int32.Parse(Get_Setting_Value("Backups_Per_Directory")) + "th slot."
-                );
+                if (At_Top_Level && !Directory.Exists(Backup_Dir + Mod_Name)) 
+                {   Directory.CreateDirectory(Backup_Dir + Mod_Name); // Creating Mod Dir
+                    Refresh_Backup_Directory();                   
+                }
+                else
+                {   // 540, 240
+                    iDialogue(540, 210, "Do It", "Cancel", "false", "false", "\nDo you wish to create a new backup of the\n"
+                    + Path.GetFileName(Xml_Directory.Remove(Xml_Directory.Length - 1)) + " directory?\n\n"
+                        // + "This will also delete backups older then the " + Int32.Parse(Get_Setting_Value("Backups_Per_Directory")) + "th slot."
+                    );
 
-                if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
+                    if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
 
-                Create_New_Backup(); 
+                    Create_New_Backup();
+                }
             }
 
 
