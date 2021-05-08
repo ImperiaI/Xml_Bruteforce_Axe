@@ -73,6 +73,7 @@ namespace Xml_Axe
         string User_Name = "";
         string Backup_Dir = "";
         string Backup_Folder = "";
+        string Sync_Path = "";
         bool Backup_Mode = false;
         bool At_Top_Level = true;
         string Last_Backup_Time, Time_Stamp, Current_Hour = "";
@@ -264,11 +265,14 @@ namespace Xml_Axe
 
             else if (Backup_Mode) // Just move into the Xml Directory that is currently selected 
             {   if (At_Top_Level) // Leave this below here
-                {    Button_Operator_MouseLeave(null, null);
-                     Button_Scripts.Visible = true;
+                {   Button_Operator_MouseLeave(null, null);
+                    Button_Scripts.Visible = true;
 
-                     Backup_Folder = Select_List_View_First(List_View_Selection); // This defines which Backup dir is targeted!!
-                     Refresh_Backup_Stack(Backup_Folder);   
+                    Backup_Folder = Select_List_View_First(List_View_Selection); // This defines which Backup dir is targeted!!
+
+                    // Grabbing the Path we're going to use to sync at
+                    Sync_Path = Get_Backup_Info(Backup_Dir + Backup_Folder + @"\Axe_Info.txt")[0] + @"\";
+                    Refresh_Backup_Stack(Backup_Folder);   
                 }                                                                  
             }
 
@@ -306,7 +310,7 @@ namespace Xml_Axe
         public void Refresh_Backup_Stack(string Selected_Project)
         {   try
             {
-                string Current_Version = Get_Backup_Info(Xml_Directory + "Axe_Info.txt")[1];
+                string Current_Version = Get_Backup_Info(Sync_Path + "Axe_Info.txt")[1];
                 //Label_Entity_Name.Text = Current_Version; // Obsolete because I highlight bg color now
                 //Label_Entity_Name.Location = new Point(86, -2);
              
@@ -665,6 +669,7 @@ namespace Xml_Axe
             Set_Resource_Button(Drop_Zone, Get_Start_Image());
 
 
+            // Using Xml_Directory instead of Sync_Path here.
             if (File.Exists(Xml_Directory + "Axe_Blacklist.txt"))
             { Blacklisted_Xmls = File.ReadAllLines(Xml_Directory + "Axe_Blacklist.txt").ToList(); }
 
@@ -974,6 +979,7 @@ namespace Xml_Axe
                 if (Temporal_E.Count() >= Maximal_Backups) // If reached max count, we need to delete the last one!
                 {   // iConsole(400, 200, Temporal_E.First()); return null; // Thats the one we're targeting for deletion                   
 
+                    // Could use Sync_Path instead of Xml_Directory
                     if (Temporal_E.First() != Get_Backup_Info(Xml_Directory + "Axe_Info.txt")[1])
                     { Deleting(Temporal_E.First()); return true; }// Trash ONLY the last one
                 }
@@ -3306,8 +3312,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-          
-            iConsole(400, 100, Backup_Folder); return;
+
+            iConsole(400, 100, Backup_Folder + " and " + Sync_Path); return;
 
 
             if (Backup_Mode) // Just show the last results
@@ -3544,7 +3550,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 string Selected_Backup = Select_List_View_First(List_View_Selection);
                 string Working_Directory = Backup_Dir + Backup_Folder + @"\Current";
                 // string Directory_Name = "";
-                string Current_Version = Get_Backup_Info(Xml_Directory + "Axe_Info.txt")[1];
+                string Current_Version = Get_Backup_Info(Sync_Path + "Axe_Info.txt")[1];
 
 
   
@@ -3814,10 +3820,10 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 //iConsole(500, 100, "\nJumped by " + Cycles + " slot" + s + "."); // Confirming the right amount of directories to pass
 
 
-                // iConsole(600, 100, Backup_Dir + Backup_Folder + @"\" + Target_Backup + @"\Axe_Info.txt" + "  |  " + Xml_Directory + "Axe_Info.txt");
+                // iConsole(600, 100, Backup_Dir + Backup_Folder + @"\" + Target_Backup + @"\Axe_Info.txt" + "  |  " + Sync_Path + "Axe_Info.txt");
                 // Copying the Backup info of the selected backup up into the root dir, this is from where the program stores which is selected.               
                 try
-                {   File.Copy(Backup_Dir + Backup_Folder + @"\" + Target_Backup + @"\Axe_Info.txt", Xml_Directory + "Axe_Info.txt", true);
+                {   File.Copy(Backup_Dir + Backup_Folder + @"\" + Target_Backup + @"\Axe_Info.txt", Sync_Path + "Axe_Info.txt", true);
                 } catch { Create_Backup_Info(Backup_Folder, Target_Backup); } // If failed to find it, we just create a new one.
 
 
@@ -3834,9 +3840,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 }
 
 
-                // iConsole(600, 100, Working_Directory + "   To   " + Xml_Directory + "This");
-                if (Directory.Exists(Working_Directory)) 
-                {   Copy_Now(Working_Directory, Xml_Directory);
+                // iConsole(600, 100, Working_Directory + "   To   " + Sync_Path + "This");
+                if (Directory.Exists(Working_Directory))
+                {   Copy_Now(Working_Directory, Sync_Path);
                     Deleting(Working_Directory);
                 }
             } catch {}         
@@ -3859,10 +3865,10 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     "\n" + Append_File_Info; // Append_File_Info can be a joined List<string> of file names here.
             }
 
-            File.WriteAllText(Xml_Directory + "Axe_Info.txt", Info_File);
+            File.WriteAllText(Sync_Path + "Axe_Info.txt", Info_File);
 
 
-            // iConsole(480, 400, Xml_Directory + "Axe_Info.txt" + "  and  " + Backup_Dir + Backup_Folder + @"\" + Time_Stamp + User_Name + @"\Axe_Info.txt");
+            // iConsole(480, 400, Sync_Path + "Axe_Info.txt" + "  and  " + Backup_Dir + Backup_Folder + @"\" + Time_Stamp + User_Name + @"\Axe_Info.txt");
       
             try 
             {   string Info_Name = @"\Axe_Info.txt";
@@ -3870,7 +3876,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
                 // Adding a Copy into the Backup itself. 
                 // CAUTION, Directory_Name means the different Folders in Backup_Dir!
-                File.Copy(Xml_Directory + "Axe_Info.txt", Backup_Dir + Directory_Name + @"\" + Time_Stamp + User_Name + Info_Name, true);
+                File.Copy(Sync_Path + "Axe_Info.txt", Backup_Dir + Directory_Name + @"\" + Time_Stamp + User_Name + Info_Name, true);
             
             } catch { iConsole(400, 100, "\nFailed to create or find the path."); }
 
@@ -4042,7 +4048,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
             if (The_Backup_Folders.Count() == 0)
             {   // Just copy all files as innitial backup, we are going to need them later on to compare filesizes against this backup!
-                Copy_Now(Xml_Directory, Backup_Dir + Backup_Folder + @"\" + Time_Stamp + User_Name + @"_Base\");
+                Copy_Now(Sync_Path, Backup_Dir + Backup_Folder + @"\" + Time_Stamp + User_Name + @"_Base\");
 
                 Temporal_B = "\nCreated a backup of the whole directory into\n" +
                     Backup_Dir + "\n" + Backup_Folder + @"\" + Time_Stamp + User_Name + @"_Base" +
@@ -4064,7 +4070,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
             List<string> Backup_File_List = new List<string>();
-            List<string> Main_Directory = Get_All_Files(Xml_Directory);
+            List<string> Main_Directory = Get_All_Files(Sync_Path);
             List<string> Matches_List = new List<string>();
 
 
@@ -4097,7 +4103,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
             foreach (string Entry in Difference_List)
             {
-                Temporal_B = Entry.Replace(Xml_Directory, "");
+                Temporal_B = Entry.Replace(Sync_Path, "");
 
                 Temporal_E.Add(Temporal_B); // Gonna use this in the Info report below
                 Verify_Copy(Entry, Backup_Dir + Backup_Folder + @"\" + Time_Stamp + User_Name + @"\" + Temporal_B);
@@ -4156,10 +4162,10 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                                     // Its Critical to use File_A here!  Not File_B, because we're looking for the match partner that was stored
                                     // in the "Return_If_Not_Matched" for the last cycle(s) of Check_Files() before this one: Inside of the global "Difference_List" variable.
                                     // Clearing older matches that were adressed by newer patches/backups:
-                                    if (Return_Full_Path & Difference_List.Contains(File_A)) { Difference_List.Remove(File_A); } 
+                                    if (Return_Full_Path & Difference_List.Contains(File_A)) { Difference_List.Remove(File_A); }
 
-                                    else if (Difference_List.Contains(File_A.Replace(Xml_Directory, "")))
-                                    { Difference_List.Remove(File_A.Replace(Xml_Directory, "")); }                                  
+                                    else if (Difference_List.Contains(File_A.Replace(Sync_Path, "")))
+                                    { Difference_List.Remove(File_A.Replace(Sync_Path, "")); }                                  
                                 }
                                 continue; // Due to the matched name, we stop searching here for the remaining entries in the list
                             }
@@ -4195,7 +4201,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 else
                 {   // 540, 240
                     iDialogue(540, 210, "Do It", "Cancel", "false", "false", "\nDo you wish to create a new backup of the\n"
-                    + Path.GetFileName(Xml_Directory.Remove(Xml_Directory.Length - 1)) + " directory?\n\n"
+                    + Path.GetFileName(Sync_Path.Remove(Sync_Path.Length - 1)) + " directory?\n\n"
                         // + "This will also delete backups older then the " + Int32.Parse(Get_Setting_Value("Backups_Per_Directory")) + "th slot."
                     );
 
