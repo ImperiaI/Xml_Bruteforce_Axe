@@ -284,9 +284,11 @@ namespace Xml_Axe
 
 
 
-        public void Refresh_Backup_Directory()
+        public List<string> Refresh_Backup_Directory()
         {
-            foreach (string Folder in Get_All_Directories(Backup_Dir, true))
+            Temporal_E = Get_All_Directories(Backup_Dir, true);
+
+            foreach (string Folder in Temporal_E)
             {
                 string Folder_Name = Folder.Replace(Backup_Dir, "");
                 if (Folder_Name != "" && !List_View_Matches(List_View_Selection, Folder_Name))
@@ -294,6 +296,7 @@ namespace Xml_Axe
             }
 
             Set_Checker(List_View_Selection, Theme_Color);
+            return Temporal_E;
         }
 
 
@@ -342,10 +345,17 @@ namespace Xml_Axe
                     // string Image_Name = Path.GetFileName(File_Names[0]);                    
                     try // Just to be on the safe side
                     {
-                        if (!System.Text.RegularExpressions.Regex.IsMatch(File_Names[0], "(?i).*?" + ".xml$")
-                           & !File.GetAttributes(File_Names[0]).HasFlag(FileAttributes.Directory)) // Check whether it is a file or a directory                                                     
-                        { iConsole(600, 200, "\nError: the file needs to either be a folder or of .xml format."); }
-                        else { Set_Paths(File_Names[0]); }
+                        if (Backup_Mode && At_Top_Level)
+                        {
+                            Temporal_B = Path.GetFileName(File_Names[0]);
+                            if (!Directory.Exists(Backup_Dir + Temporal_B)) { Directory.CreateDirectory(Backup_Dir + Temporal_B); Refresh_Backup_Directory(); }
+                        }
+                        else
+                        {   if (!Regex.IsMatch(File_Names[0], "(?i).*?" + ".xml$")
+                               & !File.GetAttributes(File_Names[0]).HasFlag(FileAttributes.Directory)) // Check whether it is a file or a directory                                                     
+                            { iConsole(600, 200, "\nError: the file needs to either be a folder or of .xml format."); }
+                            else { Set_Paths(File_Names[0]); }
+                        }
 
                     }
                     catch { }
@@ -3229,7 +3239,10 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
                 if (Text_Box_Description.Visible) { Disable_Description(); }
 
+
                 Refresh_Backup_Directory();
+                // if (Temporal_E.Count() == 1) { Refresh_Backup_Stack(Mod_Name); } // Then auto forward into the one backup dir
+                // Otherwise let the user choose              
             }
 
 
