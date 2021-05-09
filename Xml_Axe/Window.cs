@@ -74,6 +74,8 @@ namespace Xml_Axe
         string Backup_Dir = "";
         string Backup_Folder = "";
         string Current_Backup = "";
+        string Backup_Info = @"\Axe_Info.txt";
+        string Root_Backup_Path = "";
         string Sync_Path = "";
         bool Backup_Mode = false;
         bool At_Top_Level = true;
@@ -272,8 +274,10 @@ namespace Xml_Axe
                     Backup_Folder = Select_List_View_First(List_View_Selection); // This defines which Backup dir is targeted!!
 
                     // Grabbing the Path we're going to use to sync at
-                    Sync_Path = Get_Backup_Info(Backup_Dir + Backup_Folder + @"\Axe_Info.txt")[0] + @"\";
-                    Refresh_Backup_Stack(Backup_Folder);   
+                    
+                    Refresh_Backup_Stack(Backup_Folder);
+                    // Needs to run AFTER Refresh_Backup_Stack() because it loads Root_Backup_Info  
+                    Sync_Path = Get_Backup_Info(Root_Backup_Path)[0] + @"\"; 
                 }                                                                  
             }
 
@@ -310,8 +314,9 @@ namespace Xml_Axe
 
         public void Refresh_Backup_Stack(string Selected_Project)
         {   try
-            {   
-                Current_Backup = Get_Backup_Info(Backup_Dir + Backup_Folder +  @"\Axe_Info.txt")[1];
+            {
+                Root_Backup_Path = Backup_Dir + Backup_Folder + Backup_Info;
+                Current_Backup = Get_Backup_Info(Root_Backup_Path)[1];
                 //Label_Entity_Name.Text = Current_Version; // Obsolete because I highlight bg color now
                 //Label_Entity_Name.Location = new Point(86, -2);
              
@@ -757,10 +762,10 @@ namespace Xml_Axe
                         if (Directory.Exists(Backup_Path)) // Means timestamp is the same
                         {   // iConsole(400, 100, Backup_Path);
 
-                            if (!File.Exists(Backup_Path + @"\Axe_Info.txt")) { Info_File_Exists = false; }
+                            if (!File.Exists(Backup_Path + Backup_Info)) { Info_File_Exists = false; }
                             else
                             {
-                                string The_File = File.ReadAllText(Backup_Path + @"\Axe_Info.txt");
+                                string The_File = File.ReadAllText(Backup_Path + Backup_Info);
 
                                 // Nah that old Timestamp is still the same with this timing..
                                 // string Old_Timestamp = Get_Backup_Info(Info_File)[1];
@@ -777,7 +782,7 @@ namespace Xml_Axe
 
                                 // CAUTION, there are difference between this method and Create_Backup_Info() above.
                                 File.WriteAllText(Xml_Directory + "Axe_Info.txt", The_File); // Update it
-                                File.Copy(Xml_Directory + "Axe_Info.txt", Backup_Path + @"\Axe_Info.txt", true);
+                                File.Copy(Xml_Directory + "Axe_Info.txt", Backup_Path + Backup_Info, true);
                             }
                         }
                         // Update the Backup Version and AUTOMATICALLY CREATE BACKUP from the list of Related_Xmls
@@ -3551,9 +3556,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 string Selected_Backup = Select_List_View_First(List_View_Selection);
                 string Working_Directory = Backup_Dir + Backup_Folder + @"\Current";
                 // string Directory_Name = "";
-                string Current_Version = Get_Backup_Info(Backup_Dir + Backup_Folder + @"\Axe_Info.txt")[1];
 
-  
             
                 bool Move_Backwards = false;
 
@@ -3561,15 +3564,15 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 {
                     if (Item.Text == Selected_Backup) { break; }
 
-                    // Find out whether Current_Version comes before Selected_Backup
-                    else if (Item.Text == Current_Version) { Move_Backwards = true; break; }                                         
+                    // Find out whether Current_Backup comes before Selected_Backup
+                    else if (Item.Text == Current_Backup) { Move_Backwards = true; break; }                                         
                 }
 
 
 
-                if (Current_Version == Selected_Backup) { iConsole(400, 100, "\nThis should already be the current version."); }
+                if (Current_Backup == Selected_Backup) { iConsole(400, 100, "\nThis should already be the current version."); }
 
-                else if (Current_Version != "")
+                else if (Current_Backup != "")
                 {
                     //if (!Move_Backwards) // Changed my mind about this
                     //{
@@ -3590,9 +3593,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
                     // Moving backwards in the history means we better not change the newest version of files that are not inside of the target patch
                     // We also ignore all files outside of this patch if the user decided "else" while moving forward  | Move_Backwards)
-                    else if (Caution_Window.Passed_Value_A.Text_Data == "else") { Restore(Current_Version + User_Name, Selected_Backup, Move_Backwards, false); }
+                    else if (Caution_Window.Passed_Value_A.Text_Data == "else") { Restore(Current_Backup + User_Name, Selected_Backup, Move_Backwards, false); }
 
-                    else { Restore(Current_Version + User_Name, Selected_Backup, Move_Backwards, true); } // Current_Version is allowed to be remaining "" here.
+                    else { Restore(Current_Backup + User_Name, Selected_Backup, Move_Backwards, true); } // Current_Backup is allowed to be remaining "" here.
                 }
             }
 
@@ -3639,7 +3642,6 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         {
             string [] Backup_Info = new string [2]; 
             // Directory_Name = "";
-            // string Current_Version = "";
 
             try
             {   // Info_Path used to be Xml_Directory + "Axe_Info.txt"
@@ -3823,7 +3825,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 // Copying the Backup info of the selected backup up into the root dir, this is from where the program stores which is selected.               
                 try
                 {
-                    File.Copy(Backup_Dir + Backup_Folder + @"\" + Target_Backup + @"\Axe_Info.txt", Backup_Dir + Backup_Folder + @"\Axe_Info.txt", true);
+                    File.Copy(Backup_Dir + Backup_Folder + @"\" + Target_Backup + Backup_Info, Root_Backup_Path, true);
                 } catch { Create_Backup_Info(Backup_Folder, Target_Backup); } // If failed to find it, we just create a new one.
 
 
@@ -3852,7 +3854,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         // Use "Time_Stamp" as argument for Target_Backup_Name
         private void Create_Backup_Info(string Directory_Name, string Target_Backup_Name, string Append_File_Info = "", bool Is_Base_Version = false)
         {
-            string Info_Name = @"\Axe_Info.txt";
+            string Info_Name = Backup_Info;
             string Root_Backup = Backup_Dir + Directory_Name + Info_Name;
 
             string Info_File =
@@ -3873,7 +3875,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             
             try
             {
-                if (Is_Base_Version) { Info_Name = @"_Base\Axe_Info.txt"; }
+                if (Is_Base_Version) { Info_Name = @"_Base" + Backup_Info; }
 
                 // Adding a Copy into the Backup itself. 
                 // CAUTION, Directory_Name means the different Folders in Backup_Dir!
