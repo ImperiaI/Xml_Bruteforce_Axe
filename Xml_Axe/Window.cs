@@ -309,8 +309,8 @@ namespace Xml_Axe
 
         public void Refresh_Backup_Stack(string Selected_Project)
         {   try
-            {
-                string Current_Version = Get_Backup_Info(Sync_Path + "Axe_Info.txt")[1];
+            {   
+                string Current_Version = Get_Backup_Info(Backup_Dir + Backup_Folder +  @"\Axe_Info.txt")[1];
                 //Label_Entity_Name.Text = Current_Version; // Obsolete because I highlight bg color now
                 //Label_Entity_Name.Location = new Point(86, -2);
              
@@ -783,7 +783,7 @@ namespace Xml_Axe
                         else { Info_File_Exists = false; }
 
 
-                        if (!Info_File_Exists) { Create_Backup_Info(Time_Stamp + User_Name, string.Join("\n", Related_Xmls)); }
+                        if (!Info_File_Exists) { Create_Backup_Info(Mod_Name, Time_Stamp + User_Name, string.Join("\n", Related_Xmls)); }
 
                     }
                 } catch { iConsole(400, 100, "\nFailed to create Axe_Info.txt for the current backup."); }
@@ -3851,9 +3851,12 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         // Use "Time_Stamp" as argument for Target_Backup_Name
         private void Create_Backup_Info(string Directory_Name, string Target_Backup_Name, string Append_File_Info = "", bool Is_Base_Version = false)
-        { 
+        {
+            string Info_Name = @"\Axe_Info.txt";
+            string Root_Backup = Backup_Dir + Directory_Name + Info_Name;
+
             string Info_File =
-            @"Directory_Name = " + Directory_Name +
+            @"Directory_Name = " + Sync_Path.Remove(Sync_Path.Length - 1) +
             "\nVersion = " + Target_Backup_Name;
 
             if (Append_File_Info != "")
@@ -3865,21 +3868,19 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     "\n" + Append_File_Info; // Append_File_Info can be a joined List<string> of file names here.
             }
 
-            File.WriteAllText(Sync_Path + "Axe_Info.txt", Info_File);
-
-
+            File.WriteAllText(Root_Backup, Info_File);
             // iConsole(480, 400, Sync_Path + "Axe_Info.txt" + "  and  " + Backup_Dir + Backup_Folder + @"\" + Time_Stamp + User_Name + @"\Axe_Info.txt");
-      
-            try 
-            {   string Info_Name = @"\Axe_Info.txt";
+
+            
+            try
+            {
                 if (Is_Base_Version) { Info_Name = @"_Base\Axe_Info.txt"; }
 
                 // Adding a Copy into the Backup itself. 
                 // CAUTION, Directory_Name means the different Folders in Backup_Dir!
-                File.Copy(Sync_Path + "Axe_Info.txt", Backup_Dir + Directory_Name + @"\" + Time_Stamp + User_Name + Info_Name, true);
-            
-            } catch { iConsole(400, 100, "\nFailed to create or find the path."); }
+                File.Copy(Root_Backup, Backup_Dir + Directory_Name + @"\" + Time_Stamp + User_Name + Info_Name, true);
 
+            } catch { iConsole(600, 200, "\nFailed to create or find the path: \n" + Backup_Dir + Directory_Name + @"\" + Time_Stamp + User_Name + Info_Name); } 
         }
 
 
@@ -4108,9 +4109,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Temporal_E.Add(Temporal_B); // Gonna use this in the Info report below
                 Verify_Copy(Entry, Backup_Dir + Backup_Folder + @"\" + Time_Stamp + User_Name + @"\" + Temporal_B);
             }
-           
 
-            Create_Backup_Info(Time_Stamp + User_Name, "Created a backup, based on different file sizes from:\n\n\n" +
+
+            Create_Backup_Info(Backup_Folder, Time_Stamp + User_Name, "Created a backup, based on different file sizes from:\n\n\n" +
                 string.Join("\n", Temporal_E));
 
             Refresh_Backup_Stack(Backup_Folder);
@@ -4126,7 +4127,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         {
             List<string> Results = new List<string>();
 
-
+            
             // Difference between Return_If_Matched and Return_If_Not_Matched is, that they have different paths at the beginning, 
             // And so the directory with files of interest is the one you want to either return if matched or not.
             foreach (string File_A in Return_If_Not_Matched)
