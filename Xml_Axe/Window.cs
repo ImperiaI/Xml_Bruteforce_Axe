@@ -73,6 +73,7 @@ namespace Xml_Axe
         string User_Name = "";
         string Backup_Dir = "";
         string Backup_Folder = "";
+        string Current_Backup = "";
         string Sync_Path = "";
         bool Backup_Mode = false;
         bool At_Top_Level = true;
@@ -310,7 +311,7 @@ namespace Xml_Axe
         public void Refresh_Backup_Stack(string Selected_Project)
         {   try
             {   
-                string Current_Version = Get_Backup_Info(Backup_Dir + Backup_Folder +  @"\Axe_Info.txt")[1];
+                Current_Backup = Get_Backup_Info(Backup_Dir + Backup_Folder +  @"\Axe_Info.txt")[1];
                 //Label_Entity_Name.Text = Current_Version; // Obsolete because I highlight bg color now
                 //Label_Entity_Name.Location = new Point(86, -2);
              
@@ -333,7 +334,7 @@ namespace Xml_Axe
 
                 foreach (ListViewItem Item in List_View_Selection.Items)
                 {
-                    if (Item.Text == Current_Version) { Item.BackColor = Color.Orange; break; } // Highlighting Selection
+                    if (Item.Text == Current_Backup) { Item.BackColor = Color.Orange; break; } // Highlighting Selection
                 }
 
             } catch {}  
@@ -980,7 +981,7 @@ namespace Xml_Axe
                 {   // iConsole(400, 200, Temporal_E.First()); return null; // Thats the one we're targeting for deletion                   
 
                     // Could use Sync_Path instead of Xml_Directory
-                    if (Temporal_E.First() != Get_Backup_Info(Xml_Directory + "Axe_Info.txt")[1])
+                    if (Temporal_E.First() != Current_Backup)
                     { Deleting(Temporal_E.First()); return true; }// Trash ONLY the last one
                 }
             }
@@ -3550,8 +3551,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 string Selected_Backup = Select_List_View_First(List_View_Selection);
                 string Working_Directory = Backup_Dir + Backup_Folder + @"\Current";
                 // string Directory_Name = "";
-                string Current_Version = Get_Backup_Info(Sync_Path + "Axe_Info.txt")[1];
-
+                string Current_Version = Get_Backup_Info(Backup_Dir + Backup_Folder + @"\Axe_Info.txt")[1];
 
   
             
@@ -3820,10 +3820,10 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 //iConsole(500, 100, "\nJumped by " + Cycles + " slot" + s + "."); // Confirming the right amount of directories to pass
 
 
-                // iConsole(600, 100, Backup_Dir + Backup_Folder + @"\" + Target_Backup + @"\Axe_Info.txt" + "  |  " + Sync_Path + "Axe_Info.txt");
                 // Copying the Backup info of the selected backup up into the root dir, this is from where the program stores which is selected.               
                 try
-                {   File.Copy(Backup_Dir + Backup_Folder + @"\" + Target_Backup + @"\Axe_Info.txt", Sync_Path + "Axe_Info.txt", true);
+                {
+                    File.Copy(Backup_Dir + Backup_Folder + @"\" + Target_Backup + @"\Axe_Info.txt", Backup_Dir + Backup_Folder + @"\Axe_Info.txt", true);
                 } catch { Create_Backup_Info(Backup_Folder, Target_Backup); } // If failed to find it, we just create a new one.
 
 
@@ -3869,8 +3869,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             }
 
             File.WriteAllText(Root_Backup, Info_File);
-            // iConsole(480, 400, Sync_Path + "Axe_Info.txt" + "  and  " + Backup_Dir + Backup_Folder + @"\" + Time_Stamp + User_Name + @"\Axe_Info.txt");
-
+  
             
             try
             {
@@ -4200,13 +4199,14 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     Refresh_Backup_Directory();                   
                 }
                 else
-                {   // 540, 240
+                {   /*  // 540, 240  This check is quite annoying, disabled.
                     iDialogue(540, 210, "Do It", "Cancel", "false", "false", "\nDo you wish to create a new backup of the\n"
                     + Path.GetFileName(Sync_Path.Remove(Sync_Path.Length - 1)) + " directory?\n\n"
                         // + "This will also delete backups older then the " + Int32.Parse(Get_Setting_Value("Backups_Per_Directory")) + "th slot."
                     );
 
                     if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
+                    */
 
                     Create_New_Backup();
                 }
