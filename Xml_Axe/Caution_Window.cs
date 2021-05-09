@@ -65,14 +65,34 @@ namespace Xml_Axe
             Passed_Value_A.Text_Data = "true";
 
             if (List_Exclusion_Mode)
-            {   foreach (ListViewItem Item in List_View_Info.Items)
-                {   try 
-                    {   if (Active_Window != null & Item != null)
-                        {   if (Item.Text != "" & !Item.Text.Contains("Are you sure"))
-                            { Active_Window.File_Collection.Add(Active_Window.Xml_Directory + Item.Text); }
-                        }
-                    } catch {}
-                }              
+            {   
+                List<string> Selection = Active_Window.Select_List_View_Items(List_View_Info);
+
+                if (Selection.Count() > 0) 
+                { 
+                    // Active_Window.File_Collection = Active_Window.Select_List_View_Items(List_View_Info);
+
+                    foreach (string Entry in Selection)
+                    {   try
+                        {   if (Active_Window != null & Entry != null)
+                            {   if (Entry != "" & !Entry.Contains("Are you sure"))
+                                { Active_Window.File_Collection.Add(Active_Window.Xml_Directory + Entry); }
+                            }
+                        } catch {}
+                    }
+                }
+                
+                else
+                {   foreach (ListViewItem Item in List_View_Info.Items)
+                    {    try
+                        {   if (Active_Window != null & Item != null)
+                            {
+                                if (Item.Text != "" & !Item.Text.Contains("Are you sure"))
+                                { Active_Window.File_Collection.Add(Active_Window.Xml_Directory + Item.Text); }
+                            }
+                        } catch {}
+                    }
+                }           
             }
 
             this.Close();

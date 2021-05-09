@@ -70,14 +70,9 @@ namespace Xml_Axe
         string Last_Combo_Box_Entity_Name = "";
 
 
-        string User_Name = "";
-        string Backup_Path = "";
-        string Backup_Folder = "";
-        string Current_Backup = "";
-        string Package_Name = ""; 
+        string Sync_Path, Root_Backup_Path, Backup_Path, Backup_Folder, User_Name, Current_Backup, Package_Name = ""; 
         string Backup_Info = @"\Axe_Info.txt";
-        string Root_Backup_Path = "";
-        string Sync_Path = "";
+ 
         bool Backup_Mode = false;
         bool At_Top_Level = true;
         string Last_Backup_Time, Time_Stamp, Current_Hour = "";
@@ -101,8 +96,12 @@ namespace Xml_Axe
         public List<string> Temporal_E = new List<string>();
 
         string[] Ignored_Attribute_Values = new string[] { "", "None", "Find_And_Replace", "Insert_Random_Int", "Insert_Random_Float" };
-     
 
+
+
+
+
+        // ========================== Load ==========================
 
         private void Window_Load(object sender, EventArgs e)
         {
@@ -147,7 +146,14 @@ namespace Xml_Axe
 
             Queried_Attribute = Get_Setting_Value("Queried_Attribute"); // Needs to run after Reset_Tag_List()!
             Text_Format_Delimiter = Get_Setting_Value("Text_Format_Delimiter");
-            User_Name = "_" + Get_Setting_Value("User_Name");
+
+
+            if (Verify_Setting("User_Name")) { User_Name = "_" + Get_Setting_Value("User_Name"); }
+            else { User_Name = ""; }
+
+            if (User_Name == "_") { User_Name = ""; }
+
+
             if (Text_Format_Delimiter == "\\t" | Text_Format_Delimiter == "t") { Text_Format_Delimiter = "\"\t\""; } // Correction Override
             
 
@@ -168,7 +174,7 @@ namespace Xml_Axe
                 Deleting(Parent_Dir + @"\Delete_Me.zip");
             }
 
-
+            Backup_Time(); // Setting a time stamp, running this allows to continue the 5 min timeout from the last session
             Backup_Path = Path.GetDirectoryName(Script_Directory) + @"\Backup\";
 
 
@@ -590,13 +596,17 @@ namespace Xml_Axe
         {
             if (Backup_Mode) // Deletion Function
             {
+
                 Temporal_E = Select_List_View_Items(List_View_Selection);
+                if (Temporal_E.Count() == 0) { iConsole(400, 100, "\nPlease select any of the backups."); return; }
+
 
                 bool Selected_Base = false;
                 foreach (string Folder_Path in Temporal_E)
                 {
                     if (Folder_Path.EndsWith("_Base")) { Selected_Base = true; break; }
                 }
+
 
                 if (Selected_Base)
                 { iDialogue(540, 260, "Do It", "Cancel", "false", "false", "\nWait, you selected a \"Base\" backup. But the backup \n" +
@@ -678,15 +688,11 @@ namespace Xml_Axe
             Set_Resource_Button(Drop_Zone, Get_Start_Image());
       
 
-            // Using Xml_Directory instead of Sync_Path here.
-            // if (File.Exists(Xml_Directory + "Axe_Blacklist.txt")) 
-            // { Blacklisted_Xmls = File.ReadAllLines(Xml_Directory + "Axe_Blacklist.txt").ToList(); }
+   
+            if (File.Exists(Xml_Directory + "Axe_Blacklist.txt")) 
+            { Blacklisted_Xmls = File.ReadAllLines(Xml_Directory + "Axe_Blacklist.txt").ToList(); }
 
-            Sync_Path = Get_Backup_Info(Backup_Path + Mod_Name + Backup_Info)[0] + @"\"; 
-            if (File.Exists(Sync_Path + "Axe_Blacklist.txt")) 
-            { Blacklisted_Xmls = File.ReadAllLines(Sync_Path + "Axe_Blacklist.txt").ToList(); }
-
-
+       
 
             int Line_Count = 0;
             // bool Warn_User = true;
@@ -715,6 +721,10 @@ namespace Xml_Axe
 
             Properties.Settings.Default.Trackbar_Value = Track_Bar_Tag_Value.Value;
             Properties.Settings.Default.Save(); // Storing last usage
+
+
+            Sync_Path = Get_Backup_Info(Backup_Path + Mod_Name + Backup_Info)[0] + @"\";
+            if (Sync_Path == @"None\") { Sync_Path = Xml_Directory; } // Failsafe
 
 
             // if (The_Settings.Contains("Show_Files_That_Would_Change = true") | The_Settings.Contains("Request_Approval=true"))
@@ -758,11 +768,14 @@ namespace Xml_Axe
 
             if (Text_Box_Description.Visible) { Disable_Description(); }
 
-         
+
+
+
+
 
             if (Related_Xmls != null)
             {   try
-                {   if (Related_Xmls.Count() > 0 && Is_Backup_Count_Valid())
+                {   if (Related_Xmls.Count() > 0) // && Verify_Setting("Backups_Per_Directory")) Disabled Feature
                     {   // Using Mod_Name instead of Backup_Folder here, because that's the current working directory!
                         string Path_And_Backup = Backup_Path + Mod_Name + @"\" + Package_Name;
                         bool Info_File_Exists = true;
@@ -823,12 +836,11 @@ namespace Xml_Axe
         { Set_Resource_Button(Button_Run, Properties.Resources.Button_Axe); }
 
 
-        public bool Is_Backup_Count_Valid()
+        public bool Verify_Setting(string The_Setting)
         {
-            string Backup_Count = Get_Setting_Value("Backups_Per_Directory");
-            // iConsole(560, 600, Backup_File); // return null;
+            string Found_Setting = Get_Setting_Value(The_Setting);
 
-            if (Backup_Count != "0" && Backup_Count != "" && !Match_Without_Emptyspace(Backup_Count, "false")) { return true; }
+            if (Found_Setting != "0" && Found_Setting != "" && !Match_Without_Emptyspace(Found_Setting, "false")) { return true; }
             return false;
         }
 
@@ -986,7 +998,7 @@ namespace Xml_Axe
 
             string Backup_Count = Get_Setting_Value("Backups_Per_Directory");
 
-            if (Is_Backup_Count_Valid())
+            if (Verify_Setting("Backups_Per_Directory"))
             {
                 int Maximal_Backups = Int32.Parse(Backup_Count);
                 Temporal_E = Get_All_Directories(Backup_Path + Backup_Folder, true);
@@ -1060,7 +1072,7 @@ namespace Xml_Axe
 
                 // Remove_Oldest_Backup(); // Dropped Feature
 
-            } else { File_Collection = Get_All_Files(Sync_Path, "xml"); }
+            } else { File_Collection = Get_All_Files(Xml_Directory, "xml"); }
 
         
 
@@ -2101,7 +2113,11 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
             foreach (string Tag in Process_Tags(Text_Box_Tags.Text))
             { Combo_Box_Tag_Name.Items.Add(Tag); }
-            
+
+
+            if (Verify_Setting("User_Name")) { User_Name = "_" + Get_Setting_Value("User_Name"); }
+            else { User_Name = ""; }
+            if (User_Name == "_") { User_Name = ""; }
 
 
             // Set Color
@@ -3325,8 +3341,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-
-            iConsole(400, 100, Backup_Folder + " and " + Sync_Path); return;
+        
+            // iConsole(400, 100, Sync_Path); return;
 
 
             if (Backup_Mode) // Just show the last results
@@ -3576,8 +3592,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 }
 
 
+                if (Selected_Backup == null) { iConsole(400, 100, "\nPlease select any of the backups."); }
 
-                if (Current_Backup == Selected_Backup) { iConsole(400, 100, "\nThis should already be the current version."); }
+                else if (Current_Backup == Selected_Backup) { iConsole(400, 100, "\nThis should already be the current version."); }
 
                 else if (Current_Backup != "")
                 {
@@ -3860,26 +3877,30 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         // Use "Time_Stamp" as argument for Target_Backup_Name
         private void Create_Backup_Info(string Directory_Name, string Target_Backup_Name, string Append_File_Info = "", bool Is_Base_Version = false)
-        {
+        {  
             // Package_Name variable is updated by Button_Run_Click() or Create_New_Backup() 
             string Info_Name = Backup_Info;
             string Root_Backup = Backup_Path + Directory_Name + Info_Name;
 
-            string Info_File =
-            @"Directory_Name = " + Sync_Path.Remove(Sync_Path.Length - 1) +
-            "\nVersion = " + Target_Backup_Name;
 
-            if (Append_File_Info != "")
-            {
-                Info_File +=
-                    "\n\n\n//============================================================\\\\" +
-                    "\nChanged_Files:" +
-                    "\n//============================================================\\\\" +
-                    "\n" + Append_File_Info; // Append_File_Info can be a joined List<string> of file names here.
-            }
+            try
+            {   string Info_File =
+                @"Directory_Name = " + Sync_Path.Remove(Sync_Path.Length - 1) +
+                "\nVersion = " + Target_Backup_Name;
 
-            File.WriteAllText(Root_Backup, Info_File);
-  
+                if (Append_File_Info != "")
+                {
+                    Info_File +=
+                        "\n\n\n//============================================================\\\\" +
+                        "\nChanged_Files:" +
+                        "\n//============================================================\\\\" +
+                        "\n" + Append_File_Info; // Append_File_Info can be a joined List<string> of file names here.
+                }
+
+                File.WriteAllText(Root_Backup, Info_File);
+
+            } catch { iConsole(600, 200, "\nFailed to create or find the path for Axe_Info.txt."); } 
+       
             
             try
             {
