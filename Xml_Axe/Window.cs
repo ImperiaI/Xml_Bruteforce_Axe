@@ -277,7 +277,8 @@ namespace Xml_Axe
                     
                     Refresh_Backup_Stack(Backup_Folder);
                     // Needs to run AFTER Refresh_Backup_Stack() because it loads Root_Backup_Info  
-                    Sync_Path = Get_Backup_Info(Root_Backup_Path)[0] + @"\"; 
+                    Sync_Path = Get_Backup_Info(Root_Backup_Path)[0] + @"\";
+                  
                 }                                                                  
             }
 
@@ -673,11 +674,16 @@ namespace Xml_Axe
             }
 
             Set_Resource_Button(Drop_Zone, Get_Start_Image());
-
+      
 
             // Using Xml_Directory instead of Sync_Path here.
-            if (File.Exists(Xml_Directory + "Axe_Blacklist.txt"))
-            { Blacklisted_Xmls = File.ReadAllLines(Xml_Directory + "Axe_Blacklist.txt").ToList(); }
+            // if (File.Exists(Xml_Directory + "Axe_Blacklist.txt")) 
+            // { Blacklisted_Xmls = File.ReadAllLines(Xml_Directory + "Axe_Blacklist.txt").ToList(); }
+
+            Sync_Path = Get_Backup_Info(Backup_Dir + Mod_Name + Backup_Info)[0] + @"\"; 
+            if (File.Exists(Sync_Path + "Axe_Blacklist.txt")) 
+            { Blacklisted_Xmls = File.ReadAllLines(Sync_Path + "Axe_Blacklist.txt").ToList(); }
+
 
 
             int Line_Count = 0;
@@ -754,7 +760,7 @@ namespace Xml_Axe
             if (Related_Xmls != null)
             {   try
                 {   if (Related_Xmls.Count() > 0 && Is_Backup_Count_Valid())
-                {       // Using Mod_Name instead of Backup_Folder here, because that's the current working directory!
+                    {   // Using Mod_Name instead of Backup_Folder here, because that's the current working directory!
                         string Backup_Path = Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name;
                         bool Info_File_Exists = true;
 
@@ -781,8 +787,8 @@ namespace Xml_Axe
                                 The_File += "\n\n" + string.Join("\n", Related_Xmls);
 
                                 // CAUTION, there are difference between this method and Create_Backup_Info() above.
-                                File.WriteAllText(Xml_Directory + "Axe_Info.txt", The_File); // Update it
-                                File.Copy(Xml_Directory + "Axe_Info.txt", Backup_Path + Backup_Info, true);
+                                File.WriteAllText(Sync_Path + "Axe_Info.txt", The_File); // Update it
+                                File.Copy(Sync_Path + "Axe_Info.txt", Backup_Path + Backup_Info, true);
                             }
                         }
                         // Update the Backup Version and AUTOMATICALLY CREATE BACKUP from the list of Related_Xmls
@@ -985,9 +991,7 @@ namespace Xml_Axe
                 if (Temporal_E.Count() >= Maximal_Backups) // If reached max count, we need to delete the last one!
                 {   // iConsole(400, 200, Temporal_E.First()); return null; // Thats the one we're targeting for deletion                   
 
-                    // Could use Sync_Path instead of Xml_Directory
-                    if (Temporal_E.First() != Current_Backup)
-                    { Deleting(Temporal_E.First()); return true; }// Trash ONLY the last one
+                    if (Temporal_E.First() != Current_Backup) { Deleting(Temporal_E.First()); return true; }// Trash ONLY the last one
                 }
             }
 
@@ -1033,7 +1037,7 @@ namespace Xml_Axe
                 if (Get_All_Directories(Backup_Dir + Mod_Name, true).Count() == 0) // Then we need to create a innitial "Base" backup
                 {
                     // Just copy all files as innitial backup, we are going to need them later on to compare filesizes against this backup!
-                    Copy_Now(Xml_Directory, Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"_Base\");
+                    Copy_Now(Sync_Path, Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"_Base\");
 
                     Temporal_B = "\nCreated a backup of the whole directory into\n" +
                         Backup_Dir + "\n" + Mod_Name + @"\" + Time_Stamp + User_Name + @"_Base" +
@@ -1053,7 +1057,7 @@ namespace Xml_Axe
 
                 // Remove_Oldest_Backup(); // Dropped Feature
 
-            } else { File_Collection = Get_All_Files(Xml_Directory, "xml"); }
+            } else { File_Collection = Get_All_Files(Sync_Path, "xml"); }
 
         
 
@@ -1330,8 +1334,8 @@ namespace Xml_Axe
                     if (Apply_Changes) 
                     {
                         // if (Is_Backup_Count_Valid()) { // Then backup feature is disabled in general, dropped feature
-                          
-                            Backup_File = Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\" + (Selected_Xml.Replace(Xml_Directory, "")); // Creating Sub-Directories:                        
+
+                            Backup_File = Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\" + (Selected_Xml.Replace(Sync_Path, "")); // Creating Sub-Directories:                        
                             if (!Directory.Exists(Path.GetDirectoryName(Backup_File))) { Directory.CreateDirectory(Path.GetDirectoryName(Backup_File)); }
 
 
