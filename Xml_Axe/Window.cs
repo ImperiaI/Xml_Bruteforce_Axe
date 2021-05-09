@@ -71,9 +71,10 @@ namespace Xml_Axe
 
 
         string User_Name = "";
-        string Backup_Dir = "";
+        string Backup_Path = "";
         string Backup_Folder = "";
         string Current_Backup = "";
+        string Package_Name = ""; 
         string Backup_Info = @"\Axe_Info.txt";
         string Root_Backup_Path = "";
         string Sync_Path = "";
@@ -168,7 +169,7 @@ namespace Xml_Axe
             }
 
 
-            Backup_Dir = Path.GetDirectoryName(Script_Directory) + @"\Backup\";
+            Backup_Path = Path.GetDirectoryName(Script_Directory) + @"\Backup\";
 
 
 
@@ -299,11 +300,11 @@ namespace Xml_Axe
 
         public List<string> Refresh_Backup_Directory()
         {
-            Temporal_E = Get_All_Directories(Backup_Dir, true);
+            Temporal_E = Get_All_Directories(Backup_Path, true);
 
             foreach (string Folder in Temporal_E)
             {
-                string Folder_Name = Folder.Replace(Backup_Dir, "");
+                string Folder_Name = Folder.Replace(Backup_Path, "");
                 if (Folder_Name != "" && !List_View_Matches(List_View_Selection, Folder_Name))
                 { List_View_Selection.Items.Add(Folder_Name); }
             }
@@ -316,19 +317,19 @@ namespace Xml_Axe
         public void Refresh_Backup_Stack(string Selected_Project)
         {   try
             {
-                Root_Backup_Path = Backup_Dir + Backup_Folder + Backup_Info;
+                Root_Backup_Path = Backup_Path + Backup_Folder + Backup_Info;
                 Current_Backup = Get_Backup_Info(Root_Backup_Path)[1];
                 //Label_Entity_Name.Text = Current_Version; // Obsolete because I highlight bg color now
                 //Label_Entity_Name.Location = new Point(86, -2);
              
 
                 List_View_Selection.Items.Clear();
-                Temporal_E = Get_All_Directories(Backup_Dir + @"\" + Selected_Project, true);
+                Temporal_E = Get_All_Directories(Backup_Path + @"\" + Selected_Project, true);
                 Temporal_E.Reverse();
 
                 foreach (string Found_Dir in Temporal_E)
                 {
-                    string Folder_Name = Found_Dir.Replace(Backup_Dir + @"\" + Selected_Project + @"\", "");
+                    string Folder_Name = Found_Dir.Replace(Backup_Path + @"\" + Selected_Project + @"\", "");
 
                     // "Current" here means the Current directory in .\Backup, this program assembles new patches inside of it.
                     if (Folder_Name != "" && Folder_Name != "Current" && Folder_Name != Selected_Project && !List_View_Matches(List_View_Selection, Folder_Name))
@@ -362,7 +363,7 @@ namespace Xml_Axe
                         if (Backup_Mode && At_Top_Level)
                         {
                             Temporal_B = Path.GetFileName(File_Names[0]);
-                            if (!Directory.Exists(Backup_Dir + Temporal_B)) { Directory.CreateDirectory(Backup_Dir + Temporal_B); Refresh_Backup_Directory(); }
+                            if (!Directory.Exists(Backup_Path + Temporal_B)) { Directory.CreateDirectory(Backup_Path + Temporal_B); Refresh_Backup_Directory(); }
                         }
                         else
                         {   if (!Regex.IsMatch(File_Names[0], "(?i).*?" + ".xml$")
@@ -520,19 +521,19 @@ namespace Xml_Axe
             if (Script_Mode) { Execute(Script_Directory); }
 
             else if (Backup_Mode) 
-            {   
-                if (At_Top_Level) { Execute(Backup_Dir); } 
+            {
+                if (At_Top_Level) { Execute(Backup_Path); } 
                 else 
                 {   string Selection = Select_List_View_First(List_View_Selection);
-                    if (Selection == null) { Execute(Backup_Dir); return; } // Failsafe
+                    if (Selection == null) { Execute(Backup_Path); return; } // Failsafe
 
-                    Temporal_E = Get_All_Directories(Backup_Dir + Backup_Folder, true);
+                    Temporal_E = Get_All_Directories(Backup_Path + Backup_Folder, true);
                     Temporal_E.Reverse();
 
 
                     foreach (string Found_Dir in Temporal_E)
                     {
-                        string Folder_Name = Found_Dir.Replace(Backup_Dir + Backup_Folder + @"\", "");
+                        string Folder_Name = Found_Dir.Replace(Backup_Path + Backup_Folder + @"\", "");
 
                         if (Folder_Name != "" && Folder_Name == Selection)
                         { Execute(Found_Dir); return; }
@@ -616,7 +617,7 @@ namespace Xml_Axe
 
                 foreach (string Folder_Path in Temporal_E)
                 {
-                    string Full_Path = Backup_Dir + Backup_Folder + @"\" + Folder_Path;
+                    string Full_Path = Backup_Path + Backup_Folder + @"\" + Folder_Path;
                     // iConsole(600, 100, Full_Path);
 
                     if (Directory.Exists(Full_Path)) 
@@ -664,6 +665,7 @@ namespace Xml_Axe
 
         private void Button_Run_Click(object sender, EventArgs e)
         {
+           
             // iConsole(600, 400, Check_for_Steam_Version()); // Debug
             if (Combo_Box_Tag_Name.Text == "") { return; }
 
@@ -680,7 +682,7 @@ namespace Xml_Axe
             // if (File.Exists(Xml_Directory + "Axe_Blacklist.txt")) 
             // { Blacklisted_Xmls = File.ReadAllLines(Xml_Directory + "Axe_Blacklist.txt").ToList(); }
 
-            Sync_Path = Get_Backup_Info(Backup_Dir + Mod_Name + Backup_Info)[0] + @"\"; 
+            Sync_Path = Get_Backup_Info(Backup_Path + Mod_Name + Backup_Info)[0] + @"\"; 
             if (File.Exists(Sync_Path + "Axe_Blacklist.txt")) 
             { Blacklisted_Xmls = File.ReadAllLines(Sync_Path + "Axe_Blacklist.txt").ToList(); }
 
@@ -747,6 +749,7 @@ namespace Xml_Axe
 
 
             if (Is_Time_To_Backup()) { Backup_Time(); }// This updates the Time_Stamp variable we use to define name of the Backup dir!
+            Package_Name = Time_Stamp + User_Name;
 
             Related_Xmls = Slice(true); // This line does the actual Job!
 
@@ -755,23 +758,23 @@ namespace Xml_Axe
 
             if (Text_Box_Description.Visible) { Disable_Description(); }
 
-
+         
 
             if (Related_Xmls != null)
             {   try
                 {   if (Related_Xmls.Count() > 0 && Is_Backup_Count_Valid())
                     {   // Using Mod_Name instead of Backup_Folder here, because that's the current working directory!
-                        string Backup_Path = Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name;
+                        string Path_And_Backup = Backup_Path + Mod_Name + @"\" + Package_Name;
                         bool Info_File_Exists = true;
 
 
-                        if (Directory.Exists(Backup_Path)) // Means timestamp is the same
-                        {   // iConsole(400, 100, Backup_Path);
+                        if (Directory.Exists(Path_And_Backup)) // Means timestamp is the same
+                        {   // iConsole(400, 100, Path_And_Backup);
 
-                            if (!File.Exists(Backup_Path + Backup_Info)) { Info_File_Exists = false; }
+                            if (!File.Exists(Path_And_Backup + Backup_Info)) { Info_File_Exists = false; }
                             else
                             {
-                                string The_File = File.ReadAllText(Backup_Path + Backup_Info);
+                                string The_File = File.ReadAllText(Path_And_Backup + Backup_Info);
 
                                 // Nah that old Timestamp is still the same with this timing..
                                 // string Old_Timestamp = Get_Backup_Info(Info_File)[1];
@@ -788,14 +791,14 @@ namespace Xml_Axe
 
                                 // CAUTION, there are difference between this method and Create_Backup_Info() above.
                                 File.WriteAllText(Sync_Path + "Axe_Info.txt", The_File); // Update it
-                                File.Copy(Sync_Path + "Axe_Info.txt", Backup_Path + Backup_Info, true);
+                                File.Copy(Sync_Path + "Axe_Info.txt", Path_And_Backup + Backup_Info, true);
                             }
                         }
                         // Update the Backup Version and AUTOMATICALLY CREATE BACKUP from the list of Related_Xmls
                         else { Info_File_Exists = false; }
 
 
-                        if (!Info_File_Exists) { Create_Backup_Info(Mod_Name, Time_Stamp + User_Name, string.Join("\n", Related_Xmls)); }
+                        if (!Info_File_Exists) { Create_Backup_Info(Mod_Name, Package_Name, string.Join("\n", Related_Xmls)); }
 
                     }
                 } catch { iConsole(400, 100, "\nFailed to create Axe_Info.txt for the current backup."); }
@@ -986,7 +989,7 @@ namespace Xml_Axe
             if (Is_Backup_Count_Valid())
             {
                 int Maximal_Backups = Int32.Parse(Backup_Count);
-                Temporal_E = Get_All_Directories(Backup_Dir + Backup_Folder, true);
+                Temporal_E = Get_All_Directories(Backup_Path + Backup_Folder, true);
 
                 if (Temporal_E.Count() >= Maximal_Backups) // If reached max count, we need to delete the last one!
                 {   // iConsole(400, 200, Temporal_E.First()); return null; // Thats the one we're targeting for deletion                   
@@ -1032,22 +1035,22 @@ namespace Xml_Axe
 
 
                 // Using Mod_Name instead of Backup_Folder here, because we're explicitely targeting the working directory.
-                if (!Directory.Exists(Backup_Dir + Mod_Name)) { Directory.CreateDirectory(Backup_Dir + Mod_Name); }
+                if (!Directory.Exists(Backup_Path + Mod_Name)) { Directory.CreateDirectory(Backup_Path + Mod_Name); }
 
-                if (Get_All_Directories(Backup_Dir + Mod_Name, true).Count() == 0) // Then we need to create a innitial "Base" backup
+                if (Get_All_Directories(Backup_Path + Mod_Name, true).Count() == 0) // Then we need to create a innitial "Base" backup
                 {
                     // Just copy all files as innitial backup, we are going to need them later on to compare filesizes against this backup!
-                    Copy_Now(Sync_Path, Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"_Base\");
+                    Copy_Now(Sync_Path, Backup_Path + Mod_Name + @"\" + Package_Name + @"_Base\");
 
                     Temporal_B = "\nCreated a backup of the whole directory into\n" +
-                        Backup_Dir + "\n" + Mod_Name + @"\" + Time_Stamp + User_Name + @"_Base" +
+                        Backup_Path + "\n" + Mod_Name + @"\" + Package_Name + @"_Base" +
                         "\n\nWe are going to need it as \"Base\" later on, to \ncompare filesizes against this innitial backup.\n";
 
                     iConsole(400, 260, Temporal_B); // Tell it to the user.
 
 
                     // Base version to true, otherwise it will complain about a missmatched path
-                    Create_Backup_Info(Mod_Name, Time_Stamp + User_Name + @"_Base", Temporal_B, true);
+                    Create_Backup_Info(Mod_Name, Package_Name + @"_Base", Temporal_B, true);
                     Refresh_Backup_Stack(Mod_Name);
 
                     File_Collection.Clear();
@@ -1335,7 +1338,7 @@ namespace Xml_Axe
                     {
                         // if (Is_Backup_Count_Valid()) { // Then backup feature is disabled in general, dropped feature
 
-                            Backup_File = Backup_Dir + Mod_Name + @"\" + Time_Stamp + User_Name + @"\" + (Selected_Xml.Replace(Sync_Path, "")); // Creating Sub-Directories:                        
+                        Backup_File = Backup_Path + Mod_Name + @"\" + Package_Name + @"\" + (Selected_Xml.Replace(Sync_Path, "")); // Creating Sub-Directories:                        
                             if (!Directory.Exists(Path.GetDirectoryName(Backup_File))) { Directory.CreateDirectory(Path.GetDirectoryName(Backup_File)); }
 
 
@@ -3558,7 +3561,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 if (At_Top_Level) { return; } // Leave this as it is.
 
                 string Selected_Backup = Select_List_View_First(List_View_Selection);
-                string Working_Directory = Backup_Dir + Backup_Folder + @"\Current";
+                string Working_Directory = Backup_Path + Backup_Folder + @"\Current";
                 // string Directory_Name = "";
 
             
@@ -3707,9 +3710,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
             try
             {
-                string Working_Directory = Backup_Dir + Backup_Folder + @"\Current";
+                string Working_Directory = Backup_Path + Backup_Folder + @"\Current";
 
-                List<string> Backups = Get_All_Directories(Backup_Dir + Backup_Folder, true);
+                List<string> Backups = Get_All_Directories(Backup_Path + Backup_Folder, true);
                 List<string> Backup_Files = new List<string>();
 
 
@@ -3829,7 +3832,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 // Copying the Backup info of the selected backup up into the root dir, this is from where the program stores which is selected.               
                 try
                 {
-                    File.Copy(Backup_Dir + Backup_Folder + @"\" + Target_Backup + Backup_Info, Root_Backup_Path, true);
+                    File.Copy(Backup_Path + Backup_Folder + @"\" + Target_Backup + Backup_Info, Root_Backup_Path, true);
                 } catch { Create_Backup_Info(Backup_Folder, Target_Backup); } // If failed to find it, we just create a new one.
 
 
@@ -3858,8 +3861,9 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         // Use "Time_Stamp" as argument for Target_Backup_Name
         private void Create_Backup_Info(string Directory_Name, string Target_Backup_Name, string Append_File_Info = "", bool Is_Base_Version = false)
         {
+            // Package_Name variable is updated by Button_Run_Click() or Create_New_Backup() 
             string Info_Name = Backup_Info;
-            string Root_Backup = Backup_Dir + Directory_Name + Info_Name;
+            string Root_Backup = Backup_Path + Directory_Name + Info_Name;
 
             string Info_File =
             @"Directory_Name = " + Sync_Path.Remove(Sync_Path.Length - 1) +
@@ -3882,10 +3886,10 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 if (Is_Base_Version) { Info_Name = @"_Base" + Backup_Info; }
 
                 // Adding a Copy into the Backup itself. 
-                // CAUTION, Directory_Name means the different Folders in Backup_Dir!
-                File.Copy(Root_Backup, Backup_Dir + Directory_Name + @"\" + Time_Stamp + User_Name + Info_Name, true);
+                // CAUTION, Directory_Name means the different Folders in Backup_Path!
+                File.Copy(Root_Backup, Backup_Path + Directory_Name + @"\" + Package_Name + Info_Name, true);
 
-            } catch { iConsole(600, 200, "\nFailed to create or find the path: \n" + Backup_Dir + Directory_Name + @"\" + Time_Stamp + User_Name + Info_Name); } 
+            } catch { iConsole(600, 200, "\nFailed to create or find the path: \n" + Backup_Path + Directory_Name + @"\" + Package_Name + Info_Name); } 
         }
 
 
@@ -4045,8 +4049,10 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             // Remove_Oldest_Backup(); // Trying to remove oldest, if NOT the currently loaded one, that is.
 
             if (Is_Time_To_Backup()) { Backup_Time(); } // This needs to run UNDER Remove_Oldest_Backup();        
+            Package_Name = Time_Stamp + User_Name;
 
-            List<string> The_Backup_Folders = Get_All_Directories(Backup_Dir + Backup_Folder, true);
+
+            List<string> The_Backup_Folders = Get_All_Directories(Backup_Path + Backup_Folder, true);
             // Reversing "Backup_Folders" controlls whether we check all Backup dirs from top to bottom or from bottom to top,
             // The order they are feeded into Check_Files() below allows to remove old filesize missmatches in Difference_List() to be nullified by newer matches.
             // Backup_Folders.Reverse(); // And also in order to stay synchronous with the UI view.
@@ -4054,17 +4060,17 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
             if (The_Backup_Folders.Count() == 0)
             {   // Just copy all files as innitial backup, we are going to need them later on to compare filesizes against this backup!
-                Copy_Now(Sync_Path, Backup_Dir + Backup_Folder + @"\" + Time_Stamp + User_Name + @"_Base\");
+                Copy_Now(Sync_Path, Backup_Path + Backup_Folder + @"\" + Package_Name + @"_Base\");
 
                 Temporal_B = "\nCreated a backup of the whole directory into\n" +
-                    Backup_Dir + "\n" + Backup_Folder + @"\" + Time_Stamp + User_Name + @"_Base" +
+                    Backup_Path + "\n" + Backup_Folder + @"\" + Package_Name + @"_Base" +
                     "\n\nWe are going to need it as \"Base\" later on, to \ncompare filesizes against this innitial backup.\n";
                 
                 iConsole(400, 260, Temporal_B); // Tell it to the user.
 
 
                 // Base version to true, otherwise it will complain about a missmatched path
-                Create_Backup_Info(Backup_Folder, Time_Stamp + User_Name + @"_Base", Temporal_B, true);
+                Create_Backup_Info(Backup_Folder, Package_Name + @"_Base", Temporal_B, true);
                 Refresh_Backup_Stack(Backup_Folder); 
                 
                 Temporal_B = "";
@@ -4112,11 +4118,11 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Temporal_B = Entry.Replace(Sync_Path, "");
 
                 Temporal_E.Add(Temporal_B); // Gonna use this in the Info report below
-                Verify_Copy(Entry, Backup_Dir + Backup_Folder + @"\" + Time_Stamp + User_Name + @"\" + Temporal_B);
+                Verify_Copy(Entry, Backup_Path + Backup_Folder + @"\" + Package_Name + @"\" + Temporal_B);
             }
 
 
-            Create_Backup_Info(Backup_Folder, Time_Stamp + User_Name, "Created a backup, based on different file sizes from:\n\n\n" +
+            Create_Backup_Info(Backup_Folder, Package_Name, "Created a backup, based on different file sizes from:\n\n\n" +
                 string.Join("\n", Temporal_E));
 
             Refresh_Backup_Stack(Backup_Folder);
@@ -4200,8 +4206,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         {   
             if(Backup_Mode) // MANUALLY CREATE A NEW BACKUP OF THE FULL XML DIR
             {
-                if (At_Top_Level && !Directory.Exists(Backup_Dir + Mod_Name)) 
-                {   Directory.CreateDirectory(Backup_Dir + Mod_Name); // Creating Mod Dir
+                if (At_Top_Level && !Directory.Exists(Backup_Path + Mod_Name))
+                {   Directory.CreateDirectory(Backup_Path + Mod_Name); // Creating Mod Dir
                     Refresh_Backup_Directory();                   
                 }
                 else
