@@ -131,6 +131,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Axe_Icon.ico" />
+    <None Include="Resources\Button_Stack_Lit.png" />
+    <None Include="Resources\Button_Stack.png" />
+    <None Include="Resources\Button_Axe_2.png" />
     <None Include="Resources\Button_Delete.png" />
     <None Include="Resources\Button_Delete_Lit.png" />
     <None Include="Resources\Button_Ying.png" />

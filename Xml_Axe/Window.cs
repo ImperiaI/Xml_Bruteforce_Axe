@@ -63,6 +63,8 @@ namespace Xml_Axe
 
         bool Script_Mode = false;
         string Temporal_A, Temporal_B = "";
+        int Temporal_C = 0;
+        int Temporal_D = 0;
         string Queried_Attribute = "Name"; // Preseting
         string Text_Format_Delimiter = ";";
         string Script_Directory = "";
@@ -285,7 +287,8 @@ namespace Xml_Axe
                     Refresh_Backup_Stack(Backup_Folder);
                     // Needs to run AFTER Refresh_Backup_Stack() because it loads Root_Backup_Info  
                     Sync_Path = Get_Backup_Info(Root_Backup_Path)[0] + @"\";
-                  
+
+                    Button_Search_MouseLeave(null, null);
                 }                                                                  
             }
 
@@ -692,9 +695,9 @@ namespace Xml_Axe
             if (File.Exists(Xml_Directory + "Axe_Blacklist.txt")) 
             { Blacklisted_Xmls = File.ReadAllLines(Xml_Directory + "Axe_Blacklist.txt").ToList(); }
 
-       
 
-            int Line_Count = 0;
+
+            Temporal_C = 0;
             // bool Warn_User = true;
             string The_Settings = Properties.Settings.Default.Tags;
             List<string> Related_Xmls = new List<string>();
@@ -732,8 +735,8 @@ namespace Xml_Axe
             {
                 // Warn_User = false;                  
                 Related_Xmls = Slice(false); // Means don't apply any changes
-                Line_Count = (Related_Xmls.Count() * 30) + 160;
-                if (Line_Count > 680) { Line_Count = 680; }
+                Temporal_C = (Related_Xmls.Count() * 30) + 160;
+                if (Temporal_C > 680) { Temporal_C = 680; }
 
                
 
@@ -751,7 +754,7 @@ namespace Xml_Axe
 
                     iConsole(600, 100, Error_Text); return;
                 } // 680
-                else { iDialogue(740, Line_Count, "Yes", "Cancel", "Ignore", "Blacklist", "(Strg + Click to select multiple.)   Are you sure you wish to apply changes to:", Related_Xmls, true); }
+                else { iDialogue(740, Temporal_C, "Yes", "Cancel", "Ignore", "Blacklist", "(Strg + Click to select multiple.)   Are you sure you wish to apply changes to:", Related_Xmls, true); }
 
 
                 if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
@@ -822,9 +825,9 @@ namespace Xml_Axe
             /*if (Related_Xmls.Count() > 0 & Warn_User & !In_Selected_Xml(Combo_Box_Entity_Name.Text) 
               & Match_Setting("Show_Changed_Files"))
             {
-                Line_Count = (Related_Xmls.Count() * 30) + 90;
-                if (Line_Count > 680) { Line_Count = 680; }
-                iConsole(560, Line_Count, "\nApplied Changes to the following files: \n\n" + string.Join("\n", Related_Xmls));
+                Temporal_C = (Related_Xmls.Count() * 30) + 90;
+                if (Temporal_C > 680) { Temporal_C = 680; }
+                iConsole(560, Temporal_C, "\nApplied Changes to the following files: \n\n" + string.Join("\n", Related_Xmls));
             }*/
         }
 
@@ -3264,7 +3267,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible  
 
                 Button_Operator.Location = new Point(1, 430); // Back to its original location
-
+    
                 //Set_Label_Entity_Name_Text();
                 //Label_Entity_Name.Location = new Point(31, 238);
             }            
@@ -3289,7 +3292,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             Set_UI_Backup_Mode(!Backup_Mode);
 
             // Toggeling Buttons for this mode
-            Button_Start_MouseLeave(null, null); 
+            Button_Start_MouseLeave(null, null);         
             Button_Scripts_MouseLeave(null, null);
             Button_Operator_MouseLeave(null, null);
         }
@@ -3346,19 +3349,40 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
             if (Backup_Mode) // Just show the last results
-            {
-                Backup_Mode = false; 
-                At_Top_Level = true;
-                Button_Undo_MouseLeave(null, null);
-                Button_Scripts.Visible = false;
-                Button_Operator.Visible = false;
+            { 
+                // Toggle older searches
+                if (At_Top_Level)
+                {
+                    Backup_Mode = false;
+                    At_Top_Level = true;
+                    Button_Undo_MouseLeave(null, null);
+                    Button_Scripts.Visible = false;
+                    Button_Operator.Visible = false;
 
-                List_View_Selection.Items.Clear();
-               
-                foreach (string Entry in Found_Entities)
-                { List_View_Selection.Items.Add(Entry); }
-                Set_Checker(List_View_Selection, Color.Black);
+                    List_View_Selection.Items.Clear();
 
+                    foreach (string Entry in Found_Entities)
+                    { List_View_Selection.Items.Add(Entry); }
+                    Set_Checker(List_View_Selection, Color.Black);
+                }
+
+                else // Collapse the stack of selected Backups into the Base version.
+                {                   
+                    Temporal_E = Select_List_View_Items(List_View_Selection);
+                    Temporal_D = Temporal_E.Count();
+
+                    if (Temporal_E == null | Temporal_D == 0)
+                    {   iConsole(400, 200, "\nPlease select 1 or more backups that follow \neach other by Strg + Click, \n" +
+                        "In order to merge them into the Base backup. \nYou can either double click the list to select all."); 
+                    }            
+                    else 
+                    {   iDialogue(540, 200, "Merge", "Cancel", "false", "false", "\nDo you wish to merge the " + Temporal_D + " selected backups \ninto the Base backup?");                      
+                      
+                        if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; } // User Abbort 
+                        else { Collapse_Backup_Stack(); }                      
+                    }
+                }
+                        
                 return;
             }
 
@@ -3469,10 +3493,14 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
         private void Button_Search_MouseHover(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Search, Properties.Resources.Button_Search_Lit); }
+        {   if (Backup_Mode && !At_Top_Level) { Set_Resource_Button(Button_Search, Properties.Resources.Button_Stack_Lit); }
+            else { Set_Resource_Button(Button_Search, Properties.Resources.Button_Search_Lit); }
+        }
 
         private void Button_Search_MouseLeave(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Search, Properties.Resources.Button_Search); }
+        {   if (Backup_Mode && !At_Top_Level) { Set_Resource_Button(Button_Search, Properties.Resources.Button_Stack); }
+            else { Set_Resource_Button(Button_Search, Properties.Resources.Button_Search); }
+        }
 
 
 
@@ -3592,7 +3620,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 }
 
 
-                if (Selected_Backup == null) { iConsole(400, 100, "\nPlease select any of the backups."); }
+                if (Selected_Backup == null) { iConsole(400, 100, "\nPlease select any of the backups to restore it."); }
 
                 else if (Current_Backup == Selected_Backup) { iConsole(400, 100, "\nThis should already be the current version."); }
 
@@ -3717,6 +3745,61 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         }
 
 
+
+        public void Collapse_Backup_Stack()
+        {   try
+            {   bool Selected_First = false;
+                bool Detected_Selection_Gap = false;
+                List<string> Backup_Files = new List<string>();
+                string Working_Directory = Backup_Path + Backup_Folder + @"\Current\";
+
+
+
+                foreach (ListViewItem Item in List_View_Selection.Items)
+                {   if (Item.Text != "Current" && Item.Selected | Item.Text.EndsWith("Base")) 
+                    {
+                        if (Detected_Selection_Gap) { iConsole(400, 100, "\nYou need to select all targeted collumns in a row \notherwise that would break the right sync order."); return; }
+
+                        // Done when we hit the first Backup with _Base extention, if anything else was "Selected_First"
+                        else if (Selected_First && Item.Text.EndsWith("Base")) { Backup_Files.Add(Item.Text); break; } 
+                        else if (!Item.Text.EndsWith("Base")) { Backup_Files.Add(Item.Text); Selected_First = true; }                        
+
+                    } else if (Selected_First) { Detected_Selection_Gap = true; } // Ignoring all gaps until the first is selected                                
+                }
+
+                Backup_Files.Reverse(); // Important, to paste the versions over each other in chronological order.
+                
+
+
+
+                foreach (string File_Path in Get_All_Directories(Backup_Path + Backup_Folder))
+                {   foreach (string Entry in Backup_Files)
+                    {   if (Entry.EndsWith("Base") && File_Path.EndsWith(Entry)) // Ignoring the Backup, thats our target 
+                        { Working_Directory = File_Path; } // Comment out this line out to fall back into "Current" as working dir.
+
+                        else if (File_Path.EndsWith(Entry))
+                        {   // iConsole(600, 100, Entry + " in " + File_Path);                      
+                            Copy_Now(File_Path, Working_Directory);                            
+                            Deleting(File_Path);
+                        }
+                    }
+                }
+
+
+
+                Backup_Files.Reverse(); // Re-reversing to show the correct order to the user.
+                Temporal_C = (Backup_Files.Count() * 30) + 140;
+                if (Temporal_C > 680) { Temporal_C = 680; }
+
+                Refresh_Backup_Stack(Backup_Folder); // Visualising changes to UI
+
+                // Temporal_C as Line Count
+                iConsole(600, Temporal_C, "\nMerged Backups into Base in the following order:\n\n" + string.Join("\n", Backup_Files));
+
+            } catch { iConsole(400, 100, "Failed to merge selected Backups into Base."); }
+        }
+
+
         // All_Files_Since_This means all files in other Backups then this one, that are between the Current_Version and the Target_Backup.
         public void Restore(string Current_Version, string Target_Backup, bool Move_Backwards, bool All_Files_Since_This = true)
         {   // string Current = Select_List_View_First(List_View_Selection);
@@ -3735,13 +3818,13 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
                 foreach(string Entry in Backups)
                 {
-                    if (Entry.EndsWith("Current")) { Backups.Remove(Entry); break; }
+                    if (Entry.EndsWith("Current")) { Backups.Remove(Entry); } // break; }
                 }
 
 
                 if (Move_Backwards) { Backups.Reverse(); }
 
-                /* Obsolete because Move_Backwards already covers this, and isn't required as well.
+                /* Obsolete because Move_Backwards already covers this.
                 string First_Of_Them = "";
                 //int Start_At = 0;
 
@@ -3835,10 +3918,10 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 else { Intruduction += "\nWithout changing any files inbetween, \nthat are not part of the target backup.\n\n"; }
 
 
-                int Line_Count = (Stack_History.Count() * 30) + 190;
-                if (Line_Count > 680) { Line_Count = 680; }
+                Temporal_C = (Stack_History.Count() * 30) + 190;
+                if (Temporal_C > 680) { Temporal_C = 680; }
 
-                iConsole(480, Line_Count, Intruduction + string.Join("\n", Stack_History));
+                iConsole(480, Temporal_C, Intruduction + string.Join("\n", Stack_History));
 
 
                 //string s = "";
@@ -3996,10 +4079,10 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                             {
 
                                 Temporal_E = File.ReadAllLines(Properties.Settings.Default.Mod_Directory + @"\Data\cleanup.txt").ToList();
-                                int Line_Count = (Temporal_E.Count() * 30) + 160;
-                                if (Line_Count > 680) { Line_Count = 680; }
+                                Temporal_C = (Temporal_E.Count() * 30) + 160;
+                                if (Temporal_C > 680) { Temporal_C = 680; }
 
-                                iDialogue(680, Line_Count, "Yes, All", "Textures", "Models only", "Cancel", "Do you wish to move these into a \"Unused\" folder:", Temporal_E);
+                                iDialogue(680, Temporal_C, "Yes, All", "Textures", "Models only", "Cancel", "Do you wish to move these into a \"Unused\" folder:", Temporal_E);
 
                                 if (Caution_Window.Passed_Value_A.Text_Data == "true") { Move_Unused_Files(); }
                                 else if (Caution_Window.Passed_Value_A.Text_Data == "false") { Move_Unused_Files("textures"); }

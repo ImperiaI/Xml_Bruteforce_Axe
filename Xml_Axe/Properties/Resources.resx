@@ -262,4 +262,10 @@
   <data name="Button_Delete_Lit" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Button_Delete_Lit.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="Button_Stack" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Button_Stack.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Button_Stack_Lit" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Button_Stack_Lit.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>
