@@ -3749,40 +3749,37 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         public void Collapse_Backup_Stack(string Certain_Backup = "")
         {   try
             {   bool Selected_First = false;
-                bool Found_Certain_Backup = false;
                 bool Detected_Selection_Gap = false;
                 List<string> Backup_Files = new List<string>();
                 string Working_Directory = Backup_Path + Backup_Folder + @"\Current\";
 
 
-
-                foreach (ListViewItem Item in List_View_Selection.Items)
-                {   if (Item.Text != "Current")
+                if (Certain_Backup != "")
+                {   for (int i = List_View_Selection.Items.Count - 1; i >= 1; i--)
                     {
-                        // Certain_Backup mode targets that certain backup
-                        // if (Certain_Backup != "" && Item.Text == Certain_Backup) { Backup_Files.Add(Certain_Backup); Selected_First = true; }
-                        
-                        // Free pass for the first found item that is no Base verion!
-                        if (Certain_Backup == "Last" && !Found_Certain_Backup && !Item.Text.EndsWith("Base")) 
-                        { Backup_Files.Add(Item.Text); Selected_First = true; Found_Certain_Backup = true; }
+                        string Entry = List_View_Selection.Items[i].Text;
 
-                        else if (Item.Selected | Item.Text.EndsWith("Base")) 
+                        if (Entry.EndsWith("Base")) { Backup_Files.Add(Entry); } // Grab the bottom most Base
+                        else if (!Entry.EndsWith("Base")) { Backup_Files.Add(Entry); break; } // Bottom most Backup                    
+                    }
+                }
+                else
+                {   foreach (ListViewItem Item in List_View_Selection.Items)
+                    {   if (Item.Text != "Current" && Item.Selected | Item.Text.EndsWith("Base"))
                         {
                             if (Detected_Selection_Gap) { iConsole(400, 100, "\nYou need to select all targeted collumns in a row \notherwise that would break the right sync order."); return; }
 
                             // Done when we hit the first Backup with _Base extention, if anything else was "Selected_First"
-                            else if (Selected_First && Item.Text.EndsWith("Base")) { Backup_Files.Add(Item.Text); break; } 
-                            else if (!Found_Certain_Backup && !Item.Text.EndsWith("Base")) { Backup_Files.Add(Item.Text); Selected_First = true; }                        
+                            else if (Selected_First && Item.Text.EndsWith("Base")) { Backup_Files.Add(Item.Text); break; }
+                            else if (!Item.Text.EndsWith("Base")) { Backup_Files.Add(Item.Text); Selected_First = true; }
 
-                        } else if (Selected_First) { Detected_Selection_Gap = true; } // Ignoring all gaps until the first is selected   
-                    }                             
+                        }
+                        else if (Selected_First) { Detected_Selection_Gap = true; } // Ignoring all gaps until the first is selected                                
+                    }
+
+
+                    Backup_Files.Reverse(); // Important, to paste the versions over each other in chronological order.
                 }
-
-                iConsole(600, Temporal_C, "\nMerged Backups into Base in the following order:\n\n" + string.Join("\n", Backup_Files));
-                return;
-
-                Backup_Files.Reverse(); // Important, to paste the versions over each other in chronological order.
-                
 
 
 
@@ -3800,15 +3797,17 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 }
 
 
-
-                Backup_Files.Reverse(); // Re-reversing to show the correct order to the user.
-                Temporal_C = (Backup_Files.Count() * 30) + 140;
-                if (Temporal_C > 680) { Temporal_C = 680; }
-
                 Refresh_Backup_Stack(Backup_Folder); // Visualising changes to UI
 
-                // Temporal_C as Line Count
-                iConsole(600, Temporal_C, "\nMerged Backups into Base in the following order:\n\n" + string.Join("\n", Backup_Files));
+                if (Certain_Backup != "")
+                {
+                    Backup_Files.Reverse(); // Re-reversing to show the correct order to the user.
+                    Temporal_C = (Backup_Files.Count() * 30) + 140;
+                    if (Temporal_C > 680) { Temporal_C = 680; }
+                   
+                    // Temporal_C as Line Count
+                    iConsole(600, Temporal_C, "\nMerged Backups into Base in the following order:\n\n" + string.Join("\n", Backup_Files));
+                }
 
             } catch { iConsole(400, 100, "Failed to merge selected Backups into Base."); }
         }
