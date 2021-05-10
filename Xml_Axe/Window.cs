@@ -129,10 +129,8 @@ namespace Xml_Axe
             foreach (Control Selectrion in Controls) { Selectrion.BackColor = Color.Transparent; }   
     
      
-        
-
-            Load_Xml_Content(Properties.Settings.Default.Last_File, false); // Need this loaded so In_Selected_Xml(); can match true
-            
+       
+       
 
             Tag_List = Properties.Settings.Default.Tags;
             if (Tag_List == null | Tag_List == "") 
@@ -176,7 +174,7 @@ namespace Xml_Axe
                 Deleting(Parent_Dir + @"\Delete_Me.zip");
             }
 
-            Backup_Time(); // Setting a time stamp, running this allows to continue the 5 min timeout from the last session
+            // Backup_Time(); // Setting a time stamp, running this allows to continue the 5 min timeout from the last session
             Backup_Path = Path.GetDirectoryName(Script_Directory) + @"\Backup\";
 
 
@@ -193,6 +191,10 @@ namespace Xml_Axe
                 Track_Bar_Tag_Value.Value = Properties.Settings.Default.Trackbar_Value;
             }
 
+
+            // Running this AFTER loading of settings so Combo_Box_Entity_Name.Text can select the last attribute that was selected before close of application.
+            Load_Xml_Content(Properties.Settings.Default.Last_File, false); // Need this loaded so In_Selected_Xml(); can match true
+            
 
             if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Label_Entity_Name.Text = "First Attribute"; }
             else { Label_Entity_Name.Text = Queried_Attribute; }
@@ -333,17 +335,9 @@ namespace Xml_Axe
              
 
                 List_View_Selection.Items.Clear();
-                Temporal_E = Get_All_Directories(Backup_Path + @"\" + Selected_Project, true);
-                Temporal_E.Reverse();
+                
+                Get_Backup_Dirs(Selected_Project); 
 
-                foreach (string Found_Dir in Temporal_E)
-                {
-                    string Folder_Name = Found_Dir.Replace(Backup_Path + @"\" + Selected_Project + @"\", "");
-
-                    // "Current" here means the Current directory in .\Backup, this program assembles new patches inside of it.
-                    if (Folder_Name != "" && Folder_Name != "Current" && Folder_Name != Selected_Project && !List_View_Matches(List_View_Selection, Folder_Name))
-                    { List_View_Selection.Items.Add(Folder_Name); }
-                }
                 At_Top_Level = false;
 
                 Set_Checker(List_View_Selection, Theme_Color);
@@ -356,6 +350,27 @@ namespace Xml_Axe
             } catch {}  
         }
 
+
+        private List<string> Get_Backup_Dirs(string Selected_Project)
+        {
+            List<string> Found_Directories = new List<string>();
+            Temporal_E = Get_All_Directories(Backup_Path + @"\" + Selected_Project, true);
+            Temporal_E.Reverse();
+
+            foreach (string Found_Dir in Temporal_E)
+            {
+                string Folder_Name = Found_Dir.Replace(Backup_Path + @"\" + Selected_Project + @"\", "");
+
+                // "Current" here means the Current directory in .\Backup, this program assembles new patches inside of it.
+                if (Folder_Name != "" && Folder_Name != "Current" && Folder_Name != Selected_Project && !List_View_Matches(List_View_Selection, Folder_Name))
+                {
+                    if (Backup_Mode) { List_View_Selection.Items.Add(Folder_Name); }
+                    else { Found_Directories.Add(Folder_Name); }  
+                }
+            }
+
+            return Found_Directories;
+        }
    
 
         private void List_View_Selection_DragDrop(object sender, DragEventArgs e)
@@ -726,7 +741,8 @@ namespace Xml_Axe
             Properties.Settings.Default.Save(); // Storing last usage
 
 
-            Sync_Path = Get_Backup_Info(Backup_Path + Mod_Name + Backup_Info)[0] + @"\";
+            Backup_Folder = Mod_Name;
+            Sync_Path = Get_Backup_Info(Backup_Path + Backup_Folder + Backup_Info)[0] + @"\"; // Root_Backup_Path
             if (Sync_Path == @"None\") { Sync_Path = Xml_Directory; } // Failsafe
 
 
@@ -761,10 +777,13 @@ namespace Xml_Axe
             }
 
 
-            if (Is_Time_To_Backup()) { Backup_Time(); }// This updates the Time_Stamp variable we use to define name of the Backup dir!
+
+            if (Is_Time_To_Backup()) { Backup_Time(); } // This updates the Time_Stamp variable we use to define name of the Backup dir!
             Package_Name = Time_Stamp + User_Name;
 
             Related_Xmls = Slice(true); // This line does the actual Job!
+
+            Collapse_Oldest_Backup(); 
 
             Set_Resource_Button(Drop_Zone, Get_Done_Image());
             if (List_View_Selection.Visible) { Button_Start_Click(null, null); } // Hiding open Xml
@@ -936,6 +955,17 @@ namespace Xml_Axe
 
                 Set_Checker(List_View_Selection, Theme_Color);
                 if (!Show_List) { List_View_Selection.Visible = false; }
+
+
+                // If the selected entity is within the selected Xml:
+                if (In_Selected_Xml(Combo_Box_Entity_Name.Text)) 
+                { 
+                    foreach (ListViewItem Item in List_View_Selection.Items)
+                    {
+                        if (Item.Text == Combo_Box_Entity_Name.Text) { Item.Selected = true; break; }
+                    }
+                }
+
             } catch {}
         }
 
@@ -995,21 +1025,19 @@ namespace Xml_Axe
 
 
 
-        public bool Remove_Oldest_Backup()
+        public bool Collapse_Oldest_Backup()
         {
-            if (Is_Time_To_Backup() == false) { return false; } // Abbort if we're too early
-
-            string Backup_Count = Get_Setting_Value("Backups_Per_Directory");
+            string Backup_Count = Get_Setting_Value("Backups_Per_Directory");        
 
             if (Verify_Setting("Backups_Per_Directory"))
-            {
-                int Maximal_Backups = Int32.Parse(Backup_Count);
-                Temporal_E = Get_All_Directories(Backup_Path + Backup_Folder, true);
-
-                if (Temporal_E.Count() >= Maximal_Backups) // If reached max count, we need to delete the last one!
-                {   // iConsole(400, 200, Temporal_E.First()); return null; // Thats the one we're targeting for deletion                   
-
-                    if (Temporal_E.First() != Current_Backup) { Deleting(Temporal_E.First()); return true; }// Trash ONLY the last one
+            {   int Maximal_Backups = Int32.Parse(Backup_Count);
+                int Found_Backups = Get_All_Directories(Backup_Path + Backup_Folder, true).Count();
+               
+                if (Found_Backups > Maximal_Backups) // If reached max count, we need to delete the last one!
+                {
+                    // iConsole(400, 100, "They are " + Found_Backups + " Backups from maximal " + Maximal_Backups);
+                    Collapse_Backup_Stack("Last"); return true;
+                    // Outdated: if (Temporal_E.First() != Current_Backup) { Deleting(Temporal_E.First()); return true; }// Trash ONLY the last one
                 }
             }
 
@@ -1071,9 +1099,7 @@ namespace Xml_Axe
                     File_Collection.Clear();
                     Temporal_B = "";
                     return null;
-                }
-
-                // Remove_Oldest_Backup(); // Dropped Feature
+                }                
 
             } else { File_Collection = Get_All_Files(Xml_Directory, "xml"); }
 
@@ -1350,18 +1376,13 @@ namespace Xml_Axe
                     }
                     
                     if (Apply_Changes) 
-                    {
-                        // if (Is_Backup_Count_Valid()) { // Then backup feature is disabled in general, dropped feature
+                    {   Backup_File = Backup_Path + Mod_Name + @"\" + Package_Name + @"\" + (Selected_Xml.Replace(Sync_Path, "")); // Creating Sub-Directories:                        
+                        if (!Directory.Exists(Path.GetDirectoryName(Backup_File))) { Directory.CreateDirectory(Path.GetDirectoryName(Backup_File)); }
 
-                        Backup_File = Backup_Path + Mod_Name + @"\" + Package_Name + @"\" + (Selected_Xml.Replace(Sync_Path, "")); // Creating Sub-Directories:                        
-                            if (!Directory.Exists(Path.GetDirectoryName(Backup_File))) { Directory.CreateDirectory(Path.GetDirectoryName(Backup_File)); }
-
-
-                            File.Copy(Selected_Xml, Backup_File, true);  // Creating a Backup                           
-                        // }
-
+                        File.Copy(Selected_Xml, Backup_File, true);  // Creating a Backup                           
+                        
                         Xml_File.Save(Selected_Xml);
-                        //  iConsole(500, 100, "\nSaving to " + Xml); }
+                        //  iConsole(500, 100, "\nSaving to " + Xml); }                     
                     } 
 
                     if (In_Selected_Xml(Entity_Name)) { return Changed_Xmls; } // Exiting after the first (and only) Xml File.
@@ -3343,8 +3364,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
-        {
-            Collapse_Backup_Stack("Last"); return;
+        {   
             // iConsole(400, 100, Sync_Path); return;
 
 
@@ -3751,19 +3771,29 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             {   bool Selected_First = false;
                 bool Detected_Selection_Gap = false;
                 List<string> Backup_Files = new List<string>();
+                List<string> Found_Backups = new List<string>();
                 string Working_Directory = Backup_Path + Backup_Folder + @"\Current\";
 
 
                 if (Certain_Backup != "")
-                {   for (int i = List_View_Selection.Items.Count - 1; i >= 1; i--)
+                {
+                    if (Backup_Mode) 
+                    {   Found_Backups = Get_All_List_View_Items(List_View_Selection);
+                        Found_Backups.Reverse(); // Because the for loop below expects the reversed format from List_View_Selection in Backup_Mode                   
+                    }
+                    else { Found_Backups = Get_Backup_Dirs(Backup_Folder); }
+                 
+
+                    for (int i = Found_Backups.Count - 1; i >= 1; i--)
                     {
-                        string Entry = List_View_Selection.Items[i].Text;
+                        string Entry = Found_Backups[i];
 
                         if (Entry.EndsWith("Base")) { Backup_Files.Add(Entry); } // Grab the bottom most Base
                         else if (!Entry.EndsWith("Base")) { Backup_Files.Add(Entry); break; } // Bottom most Backup                    
                     }
                 }
-                else
+
+                else // This part is always called within the Backup (management) mode:
                 {   foreach (ListViewItem Item in List_View_Selection.Items)
                     {   if (Item.Text != "Current" && Item.Selected | Item.Text.EndsWith("Base"))
                         {
@@ -4161,11 +4191,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         // ============================================= 
 
         private void Create_New_Backup()
-        {      
-            // Dropped because if you remove any entry from the stack the whole matching based change detection ceases to function..
-            // Remove_Oldest_Backup(); // Trying to remove oldest, if NOT the currently loaded one, that is.
-
-            if (Is_Time_To_Backup()) { Backup_Time(); } // This needs to run UNDER Remove_Oldest_Backup();        
+        {
+            if (Is_Time_To_Backup()) { Backup_Time(); }
             Package_Name = Time_Stamp + User_Name;
 
 
@@ -4238,13 +4265,15 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Verify_Copy(Entry, Backup_Path + Backup_Folder + @"\" + Package_Name + @"\" + Temporal_B);
             }
 
+            Collapse_Oldest_Backup();
+
 
             Create_Backup_Info(Backup_Folder, Package_Name, "Created a backup, based on different file sizes from:\n\n\n" +
                 string.Join("\n", Temporal_E));
 
             Refresh_Backup_Stack(Backup_Folder);
 
-            Temporal_E.Clear(); 
+            Temporal_E.Clear();         
         }
 
 
@@ -4255,62 +4284,68 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         {
             List<string> Results = new List<string>();
 
-            
-            // Difference between Return_If_Matched and Return_If_Not_Matched is, that they have different paths at the beginning, 
-            // And so the directory with files of interest is the one you want to either return if matched or not.
-            foreach (string File_A in Return_If_Not_Matched)
-            {   try
-                {   bool Name_Matched = false;
-                    bool Size_Matched = false;
-
-
-                    foreach (string File_B in Return_If_Matched)
-                    {   try
-                        {   if (Path.GetFileName(File_A) == Path.GetFileName(File_B)) // If the Paths do match
-                            {
-                                Name_Matched = true;
-
-                                long Length_A = new System.IO.FileInfo(File_A).Length;
-                                long Length_B = new System.IO.FileInfo(File_B).Length;
-
-                                // iConsole(400, 100, Path.GetFileName(File_A) + "  and  " + Path.GetFileName(File_B));
-
-
-                                if (Length_A == Length_B) // If file sizes match 
-                                {   Size_Matched = true;
-
-                                    if (Shall_Match && !Results.Contains(File_B) && !File_A.EndsWith("Axe_Info.txt")) 
-                                    {
-                                        if (Return_Full_Path) { Results.Add(File_B); }
-                                        else if (!Results.Contains(Path.GetFileName(File_B))) { Results.Add(Path.GetFileName(File_B)); }
-
-                                        continue; // Due to matched Size, proceed with the next file instead of looping down through the rest of the list.
-                                    }
-
-
-                                    // Its Critical to use File_A here!  Not File_B, because we're looking for the match partner that was stored
-                                    // in the "Return_If_Not_Matched" for the last cycle(s) of Check_Files() before this one: Inside of the global "Difference_List" variable.
-                                    // Clearing older matches that were adressed by newer patches/backups:
-                                    if (Return_Full_Path & Difference_List.Contains(File_A)) { Difference_List.Remove(File_A); }
-
-                                    else if (Difference_List.Contains(File_A.Replace(Sync_Path, "")))
-                                    { Difference_List.Remove(File_A.Replace(Sync_Path, "")); }                                  
-                                }
-                                continue; // Due to the matched name, we stop searching here for the remaining entries in the list
-                            }
-                        } catch {}
-                    }
-
-
-                    // Name_Matched means it is existing but different
-                    if (!Shall_Match && !Size_Matched && Name_Matched && !File_A.EndsWith("Axe_Info.txt")) // Excllusion of my log file
+            try
+            {   // Difference between Return_If_Matched and Return_If_Not_Matched is, that they have different paths at the beginning, 
+                // And so the directory with files of interest is the one you want to either return if matched or not.
+                foreach (string File_A in Return_If_Not_Matched)
+                {
+                    try
                     {
-                        if (Return_Full_Path && !Results.Contains(File_A)) { Results.Add(File_A); }
-                        else if (!Results.Contains(Path.GetFileName(File_A))) { Results.Add(Path.GetFileName(File_A)); }
-                    }
-                } catch {}
-            }
+                        bool Name_Matched = false;
+                        bool Size_Matched = false;
 
+
+                        foreach (string File_B in Return_If_Matched)
+                        {
+                            try
+                            {
+                                if (Path.GetFileName(File_A) == Path.GetFileName(File_B)) // If the Paths do match
+                                {
+                                    Name_Matched = true;
+
+                                    long Length_A = new System.IO.FileInfo(File_A).Length;
+                                    long Length_B = new System.IO.FileInfo(File_B).Length;
+
+                                    // iConsole(400, 100, Path.GetFileName(File_A) + "  and  " + Path.GetFileName(File_B));
+
+
+                                    if (Length_A == Length_B) // If file sizes match 
+                                    {
+                                        Size_Matched = true;
+
+                                        if (Shall_Match && !Results.Contains(File_B) && !File_A.EndsWith("Axe_Info.txt"))
+                                        {
+                                            if (Return_Full_Path) { Results.Add(File_B); }
+                                            else if (!Results.Contains(Path.GetFileName(File_B))) { Results.Add(Path.GetFileName(File_B)); }
+
+                                            continue; // Due to matched Size, proceed with the next file instead of looping down through the rest of the list.
+                                        }
+
+
+                                        // Its Critical to use File_A here!  Not File_B, because we're looking for the match partner that was stored
+                                        // in the "Return_If_Not_Matched" for the last cycle(s) of Check_Files() before this one: Inside of the global "Difference_List" variable.
+                                        // Clearing older matches that were adressed by newer patches/backups:
+                                        if (Return_Full_Path & Difference_List.Contains(File_A)) { Difference_List.Remove(File_A); }
+
+                                        else if (Difference_List.Contains(File_A.Replace(Sync_Path, "")))
+                                        { Difference_List.Remove(File_A.Replace(Sync_Path, "")); }
+                                    }
+                                    continue; // Due to the matched name, we stop searching here for the remaining entries in the list
+                                }
+                            }
+                            catch { }
+                        }
+
+
+                        // Name_Matched means it is existing but different
+                        if (!Shall_Match && !Size_Matched && Name_Matched && !File_A.EndsWith("Axe_Info.txt")) // Excllusion of my log file
+                        {
+                            if (Return_Full_Path && !Results.Contains(File_A)) { Results.Add(File_A); }
+                            else if (!Results.Contains(Path.GetFileName(File_A))) { Results.Add(Path.GetFileName(File_A)); }
+                        }
+                    } catch {}
+                }
+            } catch { iConsole(400, 100, "File Comparison function has crashed."); }
 
             return Results;
         }
