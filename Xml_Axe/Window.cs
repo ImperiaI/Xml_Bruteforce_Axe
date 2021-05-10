@@ -286,7 +286,7 @@ namespace Xml_Axe
 
                     // Grabbing the Path we're going to use to sync at
                     
-                    Refresh_Backup_Stack(Backup_Folder);
+                    Refresh_Backup_Stack();
                     // Needs to run AFTER Refresh_Backup_Stack() because it loads Root_Backup_Info  
                     Sync_Path = Get_Backup_Info(Root_Backup_Path)[0] + @"\";
 
@@ -325,7 +325,7 @@ namespace Xml_Axe
         }
 
 
-        public void Refresh_Backup_Stack(string Selected_Project)
+        public void Refresh_Backup_Stack()
         {   try
             {
                 Root_Backup_Path = Backup_Path + Backup_Folder + Backup_Info;
@@ -334,10 +334,8 @@ namespace Xml_Axe
                 //Label_Entity_Name.Location = new Point(86, -2);
              
 
-                List_View_Selection.Items.Clear();
-                
-                Get_Backup_Dirs(Selected_Project); 
-
+                List_View_Selection.Items.Clear();               
+                Get_Backup_Dirs(); 
                 At_Top_Level = false;
 
                 Set_Checker(List_View_Selection, Theme_Color);
@@ -351,18 +349,18 @@ namespace Xml_Axe
         }
 
 
-        private List<string> Get_Backup_Dirs(string Selected_Project)
+        private List<string> Get_Backup_Dirs()
         {
             List<string> Found_Directories = new List<string>();
-            Temporal_E = Get_All_Directories(Backup_Path + @"\" + Selected_Project, true);
+            Temporal_E = Get_All_Directories(Backup_Path + @"\" + Backup_Folder, true);
             Temporal_E.Reverse();
 
             foreach (string Found_Dir in Temporal_E)
             {
-                string Folder_Name = Found_Dir.Replace(Backup_Path + @"\" + Selected_Project + @"\", "");
+                string Folder_Name = Found_Dir.Replace(Backup_Path + @"\" + Backup_Folder + @"\", "");
 
                 // "Current" here means the Current directory in .\Backup, this program assembles new patches inside of it.
-                if (Folder_Name != "" && Folder_Name != "Current" && Folder_Name != Selected_Project && !List_View_Matches(List_View_Selection, Folder_Name))
+                if (Folder_Name != "" && Folder_Name != "Current" && Folder_Name != Backup_Folder && !List_View_Matches(List_View_Selection, Folder_Name))
                 {
                     if (Backup_Mode) { List_View_Selection.Items.Add(Folder_Name); }
                     else { Found_Directories.Add(Folder_Name); }  
@@ -742,7 +740,8 @@ namespace Xml_Axe
 
 
             Backup_Folder = Mod_Name;
-            Sync_Path = Get_Backup_Info(Backup_Path + Backup_Folder + Backup_Info)[0] + @"\"; // Root_Backup_Path
+            Current_Backup = Get_Backup_Info(Root_Backup_Path)[1];
+            Sync_Path = Get_Backup_Info(Root_Backup_Path)[0] + @"\"; 
             if (Sync_Path == @"None\") { Sync_Path = Xml_Directory; } // Failsafe
 
 
@@ -783,7 +782,7 @@ namespace Xml_Axe
 
             Related_Xmls = Slice(true); // This line does the actual Job!
 
-            Collapse_Oldest_Backup(); 
+            Collapse_Oldest_Backup("Silent"); 
 
             Set_Resource_Button(Drop_Zone, Get_Done_Image());
             if (List_View_Selection.Visible) { Button_Start_Click(null, null); } // Hiding open Xml
@@ -1025,7 +1024,7 @@ namespace Xml_Axe
 
 
 
-        public bool Collapse_Oldest_Backup()
+        public bool Collapse_Oldest_Backup(string Certain_Backup)
         {
             string Backup_Count = Get_Setting_Value("Backups_Per_Directory");        
 
@@ -1036,7 +1035,7 @@ namespace Xml_Axe
                 if (Found_Backups > Maximal_Backups) // If reached max count, we need to delete the last one!
                 {
                     // iConsole(400, 100, "They are " + Found_Backups + " Backups from maximal " + Maximal_Backups);
-                    Collapse_Backup_Stack("Last"); return true;
+                    Collapse_Backup_Stack(Certain_Backup); return true;
                     // Outdated: if (Temporal_E.First() != Current_Backup) { Deleting(Temporal_E.First()); return true; }// Trash ONLY the last one
                 }
             }
@@ -1094,7 +1093,8 @@ namespace Xml_Axe
 
                     // Base version to true, otherwise it will complain about a missmatched path
                     Create_Backup_Info(Mod_Name, Package_Name + @"_Base", Temporal_B, true);
-                    Refresh_Backup_Stack(Mod_Name);
+                    Refresh_Backup_Stack();
+                    At_Top_Level = false; // Correcting
 
                     File_Collection.Clear();
                     Temporal_B = "";
@@ -3304,7 +3304,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
                 Refresh_Backup_Directory();
-                // if (Temporal_E.Count() == 1) { Refresh_Backup_Stack(Backup_Folder); } // Then auto forward into the one backup dir
+                // if (Temporal_E.Count() == 1) { Refresh_Backup_Stack(); } // Then auto forward into the one backup dir
                 // Otherwise let the user choose              
             }
 
@@ -3767,7 +3767,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
         public void Collapse_Backup_Stack(string Certain_Backup = "")
-        {   try
+        {                                    
+            try
             {   bool Selected_First = false;
                 bool Detected_Selection_Gap = false;
                 List<string> Backup_Files = new List<string>();
@@ -3781,14 +3782,25 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     {   Found_Backups = Get_All_List_View_Items(List_View_Selection);
                         Found_Backups.Reverse(); // Because the for loop below expects the reversed format from List_View_Selection in Backup_Mode                   
                     }
-                    else { Found_Backups = Get_Backup_Dirs(Backup_Folder); }
+                    else { Found_Backups = Get_Backup_Dirs(); }
                  
 
                     for (int i = Found_Backups.Count - 1; i >= 1; i--)
                     {
                         string Entry = Found_Backups[i];
 
-                        if (Entry.EndsWith("Base")) { Backup_Files.Add(Entry); } // Grab the bottom most Base
+
+
+                        if (Entry == Current_Backup) // Stop, we can't Collapse the currently loaded backup
+                        {
+                            if (Certain_Backup != "Silent")
+                            {   iConsole(550, 180, "\nThe selected Backup was marked for auto merging \ninto the Base backup. " +
+                                   "Please load/checkout any \nother backup by the arrow button to unlock this one.");
+                            }
+
+                            return;
+                        }
+                        else if (Entry.EndsWith("Base")) { Backup_Files.Add(Entry); } // Grab the bottom most Base
                         else if (!Entry.EndsWith("Base")) { Backup_Files.Add(Entry); break; } // Bottom most Backup                    
                     }
                 }
@@ -3798,6 +3810,12 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     {   if (Item.Text != "Current" && Item.Selected | Item.Text.EndsWith("Base"))
                         {
                             if (Detected_Selection_Gap) { iConsole(400, 100, "\nYou need to select all targeted collumns in a row \notherwise that would break the right sync order."); return; }
+
+
+                            if (Item.Text == Current_Backup) // Stop, we can't Collapse the currently loaded backup
+                            {  iConsole(550, 180, "\nThe selected Backup was marked for auto merging \ninto the Base backup. " +
+                                    "Please load/checkout any \nother backup by the arrow button to unlock this one."); return;
+                            }
 
                             // Done when we hit the first Backup with _Base extention, if anything else was "Selected_First"
                             else if (Selected_First && Item.Text.EndsWith("Base")) { Backup_Files.Add(Item.Text); break; }
@@ -3825,12 +3843,12 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                         }
                     }
                 }
+            
 
-
-                Refresh_Backup_Stack(Backup_Folder); // Visualising changes to UI
-
-                if (Certain_Backup != "")
+                if (Certain_Backup != "Silent") // Only for auto-merge mode the notification is muted
                 {
+                    Refresh_Backup_Stack(); // Visualising changes to UI
+
                     Backup_Files.Reverse(); // Re-reversing to show the correct order to the user.
                     Temporal_C = (Backup_Files.Count() * 30) + 140;
                     if (Temporal_C > 680) { Temporal_C = 680; }
@@ -4215,7 +4233,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
                 // Base version to true, otherwise it will complain about a missmatched path
                 Create_Backup_Info(Backup_Folder, Package_Name + @"_Base", Temporal_B, true);
-                Refresh_Backup_Stack(Backup_Folder); 
+                Refresh_Backup_Stack(); 
                 
                 Temporal_B = "";
                 return;
@@ -4265,13 +4283,13 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 Verify_Copy(Entry, Backup_Path + Backup_Folder + @"\" + Package_Name + @"\" + Temporal_B);
             }
 
-            Collapse_Oldest_Backup();
+            Collapse_Oldest_Backup("Last");
 
 
             Create_Backup_Info(Backup_Folder, Package_Name, "Created a backup, based on different file sizes from:\n\n\n" +
                 string.Join("\n", Temporal_E));
 
-            Refresh_Backup_Stack(Backup_Folder);
+            Refresh_Backup_Stack();
 
             Temporal_E.Clear();         
         }
