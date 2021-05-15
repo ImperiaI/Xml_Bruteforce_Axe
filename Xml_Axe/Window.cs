@@ -501,18 +501,33 @@ namespace Xml_Axe
 
 
             if (Operation_Mode == "Point")
-            {   Min_Int_Range = 1;
-                Max_Int_Range = Track_Bar_Tag_Value.Value;       
+            {  
+                if (Scale_Mode == "XY")
+                {   Min_Int_Range = Track_Bar_Tag_Value.Value;
+                    Max_Int_Range = Track_Bar_Tag_Value.Value + 10;
+                }
+                else if (Scale_Mode == "X")
+                {   Min_Int_Range = Track_Bar_Tag_Value.Value;
+                    // Max_Int_Range remains the same from last change
+                }
+                else if (Scale_Mode == "Y") { Max_Int_Range = Track_Bar_Tag_Value.Value + 10; }
+
                 Combo_Box_Tag_Value.Text = (Operator + Min_Int_Range + " | " + Operator + Max_Int_Range).Replace(",", ".");
             }
             else if (Operation_Mode == "Point_Float")
-            {   Max_Float_Range = (float)Track_Bar_Tag_Value.Value;
-                Min_Float_Range = Max_Float_Range / 10;
+            {   
+                if (Scale_Mode == "XY")
+                {   Min_Float_Range = (float)Track_Bar_Tag_Value.Value / 10;
+                    Max_Float_Range = 1 + (float)Track_Bar_Tag_Value.Value / 10;
+                }
+                else if (Scale_Mode == "X") { Min_Float_Range = (float)Track_Bar_Tag_Value.Value / 10; }
+                else if (Scale_Mode == "Y") { Max_Float_Range = 1 + (float)Track_Bar_Tag_Value.Value / 10; }
 
-                string Prefix = "1.";
-                if (Track_Bar_Tag_Value.Value == 10) { Prefix = ""; Max_Float_Range = 2; }
 
-                Combo_Box_Tag_Value.Text = (Operator + Min_Float_Range + " | " + Operator + Prefix + Max_Float_Range).Replace(",", ".");             
+                // string Prefix = "1.";
+                if (Scale_Mode == "X" && Track_Bar_Tag_Value.Value == 10) { Max_Float_Range = 2; } //Prefix = ""; }
+
+                Combo_Box_Tag_Value.Text = (Operator + Min_Float_Range + " | " + Operator + Max_Float_Range).Replace(",", ".");             
             }
    
             else
@@ -2865,6 +2880,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
                 if (Operation_Mode == "Bool") { Operation_Mode = "Normal"; }
                 Button_Operator_MouseLeave(null, null);
+                Button_Scripts_MouseLeave(null, null); // Starting or exiting XY mode for Points
 
 
                 if (Get_Text_Box_Bool() != "Neither") { Combo_Box_Tag_Value.Text = ""; }        
@@ -3398,7 +3414,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-
+            Operation_Mode = "Point_Float";
             iConsole(400, 100, Operation_Mode); return;
 
 
@@ -3630,7 +3646,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         private void Button_Scripts_Click(object sender, EventArgs e)
         {
-            if (Combo_Box_Tag_Name.Text == "Scale_Galaxies") // Cycle
+            if (Operation_Mode.Contains("Point") | Combo_Box_Tag_Name.Text == "Scale_Galaxies") // Cycle
             {
                 if (Scale_Mode == "XY") { Scale_Mode = "X"; }
                 else if (Scale_Mode == "X") { Scale_Mode = "Y"; }
@@ -3774,7 +3790,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
         private void Button_Scripts_MouseHover(object sender, EventArgs e)
         {
-            if (Combo_Box_Tag_Name.Text == "Scale_Galaxies")
+            if (Operation_Mode.Contains("Point") | Combo_Box_Tag_Name.Text == "Scale_Galaxies")
             {
                 if (Scale_Mode == "XY") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_XY_Lit); }
                 else if (Scale_Mode == "X") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_X_Lit); }
@@ -3789,7 +3805,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             if (Script_Mode) { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash_Lit); }
             else
             {
-                if (Combo_Box_Tag_Name.Text == "Scale_Galaxies")
+                if (Operation_Mode.Contains("Point") | Combo_Box_Tag_Name.Text == "Scale_Galaxies")
                 {
                     if (Scale_Mode == "XY") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_XY); }
                     else if (Scale_Mode == "X") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_X); }
