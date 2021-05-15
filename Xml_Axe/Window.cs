@@ -500,14 +500,14 @@ namespace Xml_Axe
             if (Combo_Box_Tag_Value.Text.StartsWith("-")) { Operator = "-"; } // Remain -
 
 
-            if (Operation_Mode == "Random")
+            if (Operation_Mode == "Point")
             {   Min_Int_Range = 1;
                 Max_Int_Range = Track_Bar_Tag_Value.Value;       
                 Combo_Box_Tag_Value.Text = (Operator + Min_Int_Range + " | " + Operator + Max_Int_Range).Replace(",", ".");
             }
-            else if (Operation_Mode == "Random_Float")
+            else if (Operation_Mode == "Point_Float")
             {   Max_Float_Range = (float)Track_Bar_Tag_Value.Value;
-                Min_Float_Range = (float)Track_Bar_Tag_Value.Value / 10;
+                Min_Float_Range = Max_Float_Range / 10;
 
                 string Prefix = "1.";
                 if (Track_Bar_Tag_Value.Value == 10) { Prefix = ""; Max_Float_Range = 2; }
@@ -1547,7 +1547,7 @@ namespace Xml_Axe
                                 string Result = Combo_Box_Tag_Value.Text.Replace("+", "");
 
 
-                                if (Operation_Mode.Contains("Random")) // Don't chain this to the statement above.
+                                if (Operation_Mode.Contains("Point")) // Don't chain this to the statement above.
                                 {
                                     string[] Input = Wash_String(Result).Split('|');
                                     int Value_1 = 0;
@@ -1559,9 +1559,9 @@ namespace Xml_Axe
 
                                     try
                                     {
-                                        if (Operation_Mode == "Random") { Result = (Randomize.Next(Value_1, Value_2)).ToString(); }
+                                        if (Operation_Mode == "Point") { Result = (Randomize.Next(Value_1, Value_2)).ToString(); }
 
-                                        else if (Operation_Mode == "Random_Float") // Don't chain this to the statement above.
+                                        else if (Operation_Mode == "Point_Float") // Don't chain this to the statement above.
                                         {                                           
                                             string Before_Point = Randomize.Next(Value_1, Value_2).ToString();//number before decimal point
                                             string After_Point_1 = Randomize.Next(Value_1, Value_2).ToString();//1st decimal point
@@ -2115,7 +2115,7 @@ int Scale_Galaxies = 100 # Adjusts size of Planets and their *Galaxy_Core_Art_Mo
 
 Int Select_Box_Scale = 100 # Set to 0 and all Ships and Troops will have their select box deactivated. Not reversible because all values in the selection become 0 which can't be scalled. In percent mode this scales the size of all select box circles.
 
-int Radar_Icon_Size = 100 # You can scale this double value tag in Percent Mode, along with Scale_Factor to match the new model sizes on the radar. 
+pointf Radar_Icon_Size = 1 # You can scale this double value tag in Percent Mode, along with Scale_Factor to match the new model sizes on the radar. 
 
 Layer_Z_Adjust = 100 # In percent mode this will scale the distance between all height layer values. Reversible if you figure out the correct % values.
 
@@ -2239,7 +2239,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
             if (Combo_Box_Entity_Name.Text == "Insert_Random_Int") 
             {
-                Operation_Mode = "Random";
+                Operation_Mode = "Point";
                 Track_Bar_Tag_Value_Scroll(null, null); // Showing the 2 float values in the textbox for us.  
 
                 Label_Tag_Value.Text = "Range of Int values";
@@ -2247,13 +2247,13 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 if (Match_Setting("Show_Tooltip"))
                 {   Text_Box_Description.Visible = true;
 
-                    // Special Tooltip, that describes the Percent Mode                   
+                    // Special Tooltip, that describes the Random Mode                   
                     Text_Box_Description.Text = "The two entries in the value text box define the range of random values to fill into each selected xml tag while the Axe runns in Random Mode. Please watch out to not use this for tags that expect any other variable type then int.";                   
                 }
             }
             else if (Combo_Box_Entity_Name.Text == "Insert_Random_Float")
             {
-                Operation_Mode = "Random_Float";
+                Operation_Mode = "Point_Float";
                 Track_Bar_Tag_Value_Scroll(null, null); // Showing the 2 float values in the textbox for us.  
 
                 Label_Tag_Value.Text = "Range of float values";
@@ -2262,7 +2262,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 {
                     Text_Box_Description.Visible = true;
 
-                    // Special Tooltip, that describes the Percent Mode                   
+                    // Special Tooltip, that describes the Random Float Mode                   
                     Text_Box_Description.Text = "The two entries in the value text box define the range of random values to fill into each selected xml tag while the Axe runns in Random Mode. Please watch out to not use this for tags that expect any other variable type then float.";
                 }
             }
@@ -2738,9 +2738,23 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                         {   Tag_Format = "string";
                             Tag_Name = Tag_Name.Substring(6, Tag_Name.Length - 6);
                         }
+                        else if (Tag_Name.StartsWith("PointF") | Tag_Name.StartsWith("Pointf") | Tag_Name.StartsWith("pointf") | Tag_Name.StartsWith("pointF"))
+                        {
+                            Tag_Format = "point_float";
+                            Tag_Name = Tag_Name.Substring(6, Tag_Name.Length - 6);
+                          
+                        } // Needs to run AFTER pointF or this will trigger and wipe all but the F lol
+                        else if (Tag_Name.StartsWith("Point") | Tag_Name.StartsWith("point"))
+                        {
+                            Tag_Format = "point";
+                            Tag_Name = Tag_Name.Substring(5, Tag_Name.Length - 5);
+                        }
+
+
 
                         else if (Tag_Name.StartsWith("Int") | Tag_Name.StartsWith("int"))
-                        {   Tag_Format = "int";
+                        {
+                            Tag_Format = "int";
                             Tag_Name = Tag_Name.Substring(3, Tag_Name.Length - 3);
                         }
                    
@@ -2820,7 +2834,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
 
                 string It = Combo_Box_Tag_Value.Text;
-
+              
                 if (!Is_Match(It, "True") & !Is_Match(It, "False") & !Is_Match(It, "Yes") & !Is_Match(It, "No"))
                 { Combo_Box_Tag_Value.Text = ""; }
 
@@ -2828,7 +2842,20 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             else // if (Is_Match(Tag_Format, "int")) // It will probably be int
             {
                 if (Operation_Mode == "Percent") { Scale_Factor = 10; }
-                else 
+                else if (Is_Match(Tag_Format, "point_float"))
+                {                    
+                    Scale_Factor = 10;
+                    Operation_Mode = "Point_Float";
+                }
+                else if (Is_Match(Tag_Format, "point"))
+                {
+                    Scale_Factor = 10;
+                    Operation_Mode = "Point";     
+                }
+         
+                    
+
+                else
                 {
                     int.TryParse(Tag_Format, out Scale_Factor);
                     if (Scale_Factor == 0) { Scale_Factor = 100; } // Failsafe, default Scale Factor is 100
@@ -2877,7 +2904,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 {   // Don't move this to above.
                     if (!Combo_Box_Tag_Value.Text.Contains("%")) { Combo_Box_Tag_Value.Text += "%"; }
                 }
-                else if (Operation_Mode != "Random") { Operation_Mode = "Normal"; }
+                else if (Operation_Mode != "Point" && Operation_Mode != "Point_Float") { Operation_Mode = "Normal"; }
             }
 
             Button_Operator_MouseLeave(null, null); // Check if bool and refresh
@@ -3371,10 +3398,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-            //Backup_Folder = Mod_Name;
-            //Current_Backup = Get_Backup_Info(Root_Backup_Path)[1];
 
-            //iConsole(400, 100, Get_Backup_Info(Root_Backup_Path Backup_Path + Backup_Folder + Backup_Info)[1]); return;
+            iConsole(400, 100, Operation_Mode); return;
 
 
             if (Backup_Mode) // Just show the last results
@@ -3677,6 +3702,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                     else if (Caution_Window.Passed_Value_A.Text_Data == "else") { Restore(Current_Backup + User_Name, Selected_Backup, Move_Backwards, false); }
 
                     else { Restore(Current_Backup + User_Name, Selected_Backup, Move_Backwards, true); } // Current_Backup is allowed to be remaining "" here.
+
+                    Current_Backup = Selected_Backup; //Update
                 }
             }
 
@@ -3803,7 +3830,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                         if (Entry == Current_Backup) // Stop, we can't Collapse the currently loaded backup
                         {
                             if (Certain_Backup != "Silent")
-                            {   iConsole(550, 180, "\nThe selected Backup was marked for auto merging \ninto the Base backup. " +
+                            {   iConsole(550, 180, "\nThe selected Backup was marked for merging \ninto the Base backup. " +
                                    "Please load/checkout any \nother backup by the arrow button to unlock this one.");
                             }
 
@@ -4403,6 +4430,16 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
 
                     if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
                     */
+
+                    if (List_View_Selection.Items.Count > 0)
+                    {   // We need to be up to date, otherwise this action would twist the sync
+                        if (Current_Backup != List_View_Selection.Items[0].Text) 
+                        {
+                            iConsole(520, 160, "\nA older Backup is currently loaded/checked out.\n" +
+                            "Please load the newest/top most backup, because it \nallows us to continue the chain in correct order.");
+                            return;
+                        }                           
+                    }
 
                     Create_New_Backup();
                 }
