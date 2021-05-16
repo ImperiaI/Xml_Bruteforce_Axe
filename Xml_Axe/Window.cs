@@ -55,13 +55,12 @@ namespace Xml_Axe
         bool User_Input = false;
         bool Xml_List_Mode = true;
 
-        string Operation_Mode = "Normal";
+        string Operation_Mode = "Int";
         string Scale_Mode = "XY";
 
         bool EAW_Mode = true;
-       
-
         bool Script_Mode = false;
+
         string Temporal_A, Temporal_B = "";
         int Temporal_C = 0;
         int Temporal_D = 0;
@@ -2116,11 +2115,11 @@ bool Enable_Abilities # This sets the SubObjectList attribute of the selected en
 
 bool Enable_Passive_Abilities # This sets the SubObjectList attribute of the selected entities, it targets passive abilities like systemspy and all fieldcommander bonus. Not reversible at all because units that had their abilities disabled before were never meaned to be batch-enabled!
 
-Projectile_Does_Shield_Damage = bool # Set to Yes and apply to the whole mod, to disable all shield piercing effects. Not reversible because all Projectiles in the selection get the same value.
+bool Projectile_Does_Shield_Damage # Set to Yes and apply to the whole mod, to disable all shield piercing effects. Not reversible because all Projectiles in the selection get the same value.
 
-Projectile_Does_Energy_Damage = bool # Careful, if set to yes Hitpoint damage will start once enemy energy level reaches 0. Not reversible because all Projectiles in the selection get the same value.
+bool Projectile_Does_Energy_Damage # Careful, if set to yes Hitpoint damage will start once enemy energy level reaches 0. Not reversible because all Projectiles in the selection get the same value.
 
-Projectile_Does_Hitpoint_Damage = bool # Not reversible because all Projectiles in the selection get the same value.
+bool Projectile_Does_Hitpoint_Damage # Not reversible because all Projectiles in the selection get the same value.
 
 # ====================== Int Values ======================
 
@@ -2132,15 +2131,15 @@ int Shield_Refresh_Rate = 5 # Usually about 30 for capital ships and less for we
 
 int Max_Speed = 1 # In Percent Mode this is bundled to the <Min_Speed> tag, it grows or shrinks both values by the same amount. This Setting ignores objects of Projectile type, unless you explicitly select them as Filter Type.
 
-int All_Damage = 10 # This setting bundles Damage and Projectile_Damage as one scalable setting.
+Percent All_Damage = 10 # This setting bundles Damage and Projectile_Damage as one scalable setting.
 
-int Scale_Factor = 1 # Use this in Percent Mode to scale all units in a Mod. NOTE: The *All Types* filter only means SpaceUnit, UniqueUnit and StarBase. You need to select all other entities explicitly as Filter Type: TransportUnit, Space Heroes, Projectile, Particle and Planet will be ignored, unless you scale them type by type. Keep in mind to not scale too much, because the Particles in models are not scaled by this. Reversible.
+Percent Scale_Factor = 1 # Use this in Percent Mode to scale all units in a Mod. NOTE: The *All Types* filter only means SpaceUnit, UniqueUnit and StarBase. You need to select all other entities explicitly as Filter Type: TransportUnit, Space Heroes, Projectile, Particle and Planet will be ignored, unless you scale them type by type. Keep in mind to not scale too much, because the Particles in models are not scaled by this. Reversible.
 
-int Scale_Galaxies = 100 # Adjusts size of Planets and their *Galaxy_Core_Art_Model* and scales their relative position to each other through the Galactic_Position tag. If you are lucky and single GCs are sorted within certain files you can *ignore their files and scale GCs individually.
+Percent Scale_Galaxies = 100 # Adjusts size of Planets and their *Galaxy_Core_Art_Model* and scales their relative position to each other through the Galactic_Position tag. If you are lucky and single GCs are sorted within certain files you can *ignore their files and scale GCs individually.
 
 Int Select_Box_Scale = 100 # Set to 0 and all Ships and Troops will have their select box deactivated. Not reversible because all values in the selection become 0 which can't be scalled. In percent mode this scales the size of all select box circles.
 
-pointf Radar_Icon_Size = 1 # You can scale this double value tag in Percent Mode, along with Scale_Factor to match the new model sizes on the radar. 
+point_float Radar_Icon_Size = 1 # You can scale this double value tag in Percent Mode, along with Scale_Factor to match the new model sizes on the radar. 
 
 Layer_Z_Adjust = 100 # In percent mode this will scale the distance between all height layer values. Reversible if you figure out the correct % values.
 
@@ -2154,7 +2153,7 @@ int Population_Value # Scale down in Percent Mode to reduce population requireme
 
 string Encyclopedia_Text # Axe this as empty string to wipe away all Encyclopedia Texts. Obviously entirely irreversible, please use only for fun purposes!
 
-Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Projectile_Damage, Damage # This balances the most important aspects of the Game: Tactical_Health, Shields, Shield_Refresh_Rate, Projectile_Damage. You can remove or add more Tag types to this tag in the settings! Then they will scale as group by the same % value.
+Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Projectile_Damage, Damage # This balances the most important aspects of the Game: Tactical_Health, Shields, Shield_Refresh_Rate, Projectile_Damage. You can remove or add more Tag types to this tag in the settings! Then they will scale as group by the same % value.
 ";
         }
 
@@ -2266,6 +2265,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             {
                 Operation_Mode = "Point";
                 Track_Bar_Tag_Value_Scroll(null, null); // Showing the 2 float values in the textbox for us.  
+                Disable_Description();
 
                 Label_Tag_Value.Text = "Range of Int values";
 
@@ -2279,7 +2279,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             else if (Combo_Box_Entity_Name.Text == "Insert_Random_Float")
             {
                 Operation_Mode = "Point_Float";
-                Track_Bar_Tag_Value_Scroll(null, null); // Showing the 2 float values in the textbox for us.  
+                Track_Bar_Tag_Value_Scroll(null, null); // Showing the 2 float values in the textbox for us. 
+                Disable_Description();
 
                 Label_Tag_Value.Text = "Range of float values";
 
@@ -2292,8 +2293,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                 }
             }
             else 
-            {   Disable_Description(); 
-                Operation_Mode = "Normal";
+            {   Disable_Description();
+                Operation_Mode = "Int";
                 Label_Tag_Value.Text = "New Tag Value";
             }
          
@@ -2580,31 +2581,15 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             bool Reset_Type_Filter = false;
 
 
-            // Auto-Deactivating Percent mode// Auto-Deactivating Percent mode
-            if (Last_Combo_Box_Tag_Name == "Rebalance_Everything" || Last_Combo_Box_Tag_Name == "Scale_Galaxies" ||
-                Last_Combo_Box_Tag_Name == "All_Damage") 
-            { 
-                Button_Percentage_Click(null, null); 
-                Button_Percentage_MouseLeave(null, null);
-                Button_Scripts_MouseLeave(null, null);
-            }
-
 
             switch (Combo_Box_Tag_Name.Text)
             {
                 case "Planet_Surface_Accessible":
                     Combo_Box_Type_Filter.Text = "Planet";                 
                     break;
-                case "Rebalance_Everything":
-                    if (Operation_Mode != "Percent") { Button_Percentage_Click(null, null); Button_Percentage_MouseLeave(null, null); }               
-                    break;
-                case "All_Damage":
-                    if (Operation_Mode != "Percent") { Button_Percentage_Click(null, null); Button_Percentage_MouseLeave(null, null); }
-                    break;
                  case "Scale_Galaxies":
                     Combo_Box_Type_Filter.Text = "Planet";
-                    Button_Scripts_MouseLeave(null, null);
-                    if (Operation_Mode != "Percent") { Button_Percentage_Click(null, null); Button_Percentage_MouseLeave(null, null); }               
+                    Button_Scripts_MouseLeave(null, null);          
                     break;
 
                   
@@ -2733,96 +2718,71 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             string Scale_Format = "";
             string[] Tag_Info = new string[] { };
             List<string> List_Of_Tags = new List<string>();
+            string[] Variable_Types = new string[] { "Bool", "String", "Point_Float", "Point", "Percent", "Int"};
 
 
             // The + " #" makes sure the last entry comment stays empty
             foreach (string Phrase in (Input + " #").Split('\n'))
             {
                 if (Phrase.StartsWith("//") || Phrase.StartsWith("#") || Phrase == "" || Phrase == "\n" || Phrase == "\r") { continue; } // Skip commented Lines
-                else 
-                {
-                    string Tag_Name = Phrase.Replace(" ", "");
-                    string Tag_Comment = ""; // Reset
 
-                    try
+                string Tag_Name = Phrase.Replace(" ", "");
+                string Tag_Comment = ""; // Reset
+
+                try
+                {   if (Phrase.Contains("#"))
+                    {   Tag_Info = Phrase.Split('#');
+                        Tag_Name = Tag_Info[0].Replace(" ", "");
+                        Tag_Comment = Tag_Info[1];
+                    }
+
+
+                    Operation_Mode = "Int"; // Defaulting
+
+                    foreach (string Var_Type in Variable_Types)
                     {
-                        if (Phrase.Contains("#"))
-                        {   Tag_Info = Phrase.Split('#');
-                            Tag_Name = Tag_Info[0].Replace(" ", "");
-                            Tag_Comment = Tag_Info[1];
+                        if (Tag_Name.ToLower().StartsWith(Var_Type.ToLower()))
+                        {   Operation_Mode = Var_Type;
+                            Tag_Name = Tag_Name.Substring(Var_Type.Length, Tag_Name.Length - Var_Type.Length);// Removing prefix
                         }
+                    }
+
+                                 
+                    // This overwrites the "Tag_Format" from above - which is important for the range of int type Scale_Factor 
+                    if (Tag_Name.Contains("=")) // Seperating the tag name and its expected format (int, bool or string)
+                    {
+                        Tag_Info = Tag_Name.Split('=');
+                        Tag_Name = Tag_Info[0];
+                        Scale_Format = Tag_Info[1];
+                        // iConsole(400, 200, Tag_Name + " + " + Scale_Format);
+                    }
 
 
 
-                        if (Tag_Name.StartsWith("Bool") | Tag_Name.StartsWith("bool"))
-                        {   Tag_Format = "bool";
-                            // Tag_Name = Tag_Name.Replace("Bool", "");
-                            Tag_Name = Tag_Name.Substring(4, Tag_Name.Length - 4);
-                        }
 
-                        else if (Tag_Name.StartsWith("String") | Tag_Name.StartsWith("string"))
-                        {   Tag_Format = "string";
-                            Tag_Name = Tag_Name.Substring(6, Tag_Name.Length - 6);
-                        }
-                        else if (Tag_Name.StartsWith("PointF") | Tag_Name.StartsWith("Pointf") | Tag_Name.StartsWith("pointf") | Tag_Name.StartsWith("pointF"))
-                        {                            
-                            Tag_Format = "point_float";
-                            Tag_Name = Tag_Name.Substring(6, Tag_Name.Length - 6);
-                          
-                        } // Needs to run AFTER pointF or this will trigger and wipe all but the F lol
-                        else if (Tag_Name.StartsWith("Point") | Tag_Name.StartsWith("point"))
+                    if (Tag_Name != "") { List_Of_Tags.Add(Tag_Name); };
+
+                    // Loading the list of Tags, the values of all these tags are going to be scalled as group.
+                    if (Tag_Name == "Rebalance_Everything") { Balancing_Tags = Scale_Format.Split(','); }
+
+
+
+                    // Show description of the active tab
+                    if (Tag_Name == Combo_Box_Tag_Name.Text)
+                    {
+                        // iConsole(400, 200, Tag_Name + " + " + Tag_Comment);
+
+                        if (Tag_Comment == "") { Disable_Description(); }
+                        else if (Match_Setting("Show_Tooltip"))
                         {
-                            Tag_Format = "point";
-                            Tag_Name = Tag_Name.Substring(5, Tag_Name.Length - 5);
+                            if (Tag_Comment[0] == ' ') { Tag_Comment = Remove_Emptyspace_Prefix(Tag_Comment); }
+
+                            Text_Box_Description.Text = Tag_Comment;
+                            Text_Box_Description.Visible = true;
                         }
-
-
-
-                        else if (Tag_Name.StartsWith("Int") | Tag_Name.StartsWith("int"))
-                        {
-                            Tag_Format = "int";
-                            Tag_Name = Tag_Name.Substring(3, Tag_Name.Length - 3);
-                        }
-
-
-                        // This overwrites the "Tag_Format" from above - which is important for the range of int type Scale_Factor 
-                        if (Tag_Name.Contains("=")) // Seperating the tag name and its expected format (int, bool or string)
-                        {
-                            Tag_Info = Tag_Name.Split('=');
-                            Tag_Name = Tag_Info[0];
-                            Scale_Format = Tag_Info[1];
-                            // iConsole(400, 200, Tag_Name + " + " + Scale_Format);
-                        }
-
-
-                   
-
-
-
-                        if (Tag_Name != "") { List_Of_Tags.Add(Tag_Name); };
-
-                        // Loading the list of Tags, the values of all these tags are going to be scalled as group.
-                        if (Tag_Name == "Rebalance_Everything") { Balancing_Tags = Scale_Format.Split(','); }
-
-
-
-                        // Show description of the active tab
-                        if (Tag_Name == Combo_Box_Tag_Name.Text)
-                        {
-                            // iConsole(400, 200, Tag_Name + " + " + Tag_Comment);
-                          
-                            if (Tag_Comment == "") { Disable_Description(); }
-                            else if (Match_Setting("Show_Tooltip"))
-                            {
-                                if (Tag_Comment[0] == ' ') { Tag_Comment = Remove_Emptyspace_Prefix(Tag_Comment); }
-
-                                Text_Box_Description.Text = Tag_Comment;
-                                Text_Box_Description.Visible = true;
-                            }
-                            break;                          
-                        }
-                    } catch {}
-                }
+                        break;
+                    }
+                } catch {}          
             }
 
 
@@ -2832,74 +2792,56 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             {   User_Input = true;
                 return List_Of_Tags;
             }
-            else if (Tag_Format == "" | Is_Match(Tag_Format, "string"))
-            {
-                // Button_Operator.Visible = false;
-                // Button_Percentage.Visible = false;
-                Track_Bar_Tag_Value.Visible = false;
+            else if (Operation_Mode == "" | Operation_Mode == "String")
+            {   Track_Bar_Tag_Value.Visible = false;
                 // Combo_Box_Tag_Value.Items.Clear(); // Disabled
 
-                Operation_Mode = "Normal";
+                Operation_Mode = "Int";
                 Button_Operator_MouseLeave(null, null);
             }
-            else if (Is_Match(Tag_Format, "bool"))
+            else if ( Operation_Mode == "Bool")
+            {   Button_Percentage.Visible = false;
+                Track_Bar_Tag_Value.Visible = false;               
+
+                if (Get_Text_Box_Bool() == "Neither") { Combo_Box_Tag_Value.Text = ""; }           
+            }
+
+            else // if (Operation_Mode == "Int") // It will probably be int
             {
-                Operation_Mode = "Bool";
-                Button_Operator_MouseLeave(null, null);
-                Button_Percentage.Visible = false;
-                Track_Bar_Tag_Value.Visible = false;
-                
-                /* // Disabled because the tool does not know the type of tags the user types in
-                if (Combo_Box_Tag_Value.Items.Count == 0)
-                {   Combo_Box_Tag_Value.Items.Add("True");
-                    Combo_Box_Tag_Value.Items.Add("False");
-                    Combo_Box_Tag_Value.Items.Add("");
-                    Combo_Box_Tag_Value.Items.Add("Yes");
-                    Combo_Box_Tag_Value.Items.Add("No");
+                if (Operation_Mode == "Percent") 
+                {   Scale_Factor = 10;
+                    Operation_Mode = "Int"; // So the button toggles it properly back into Percent mode 
+                    Button_Percentage_Click(null, null); 
                 }
-                */
 
-
-                string It = Combo_Box_Tag_Value.Text;
-              
-                if (!Is_Match(It, "True") & !Is_Match(It, "False") & !Is_Match(It, "Yes") & !Is_Match(It, "No"))
-                { Combo_Box_Tag_Value.Text = ""; }
-
-            }
-            else // if (Is_Match(Tag_Format, "int")) // It will probably be int
-            {
-                if (Operation_Mode == "Percent") { Scale_Factor = 10; }
-                else if (Is_Match(Tag_Format, "point_float")) { Operation_Mode = "Point_Float"; }
-                else if (Is_Match(Tag_Format, "point")) { Operation_Mode = "Point"; }
-                               
-                else
+                else if (!Operation_Mode.Contains("Point"))                                        
                 {
                     int.TryParse(Scale_Format, out Scale_Factor);
                     if (Scale_Factor == 0) { Scale_Factor = 100; } // Failsafe, default Scale Factor is 100
                 }
                 // iConsole(400, 200, "Scale is " + Scale_Factor);
 
-
-                if (Operation_Mode == "Bool" | !Tag_Format.Contains("point")) { Operation_Mode = "Normal"; }
-             
-                Button_Operator_MouseLeave(null, null);
-                Button_Scripts_MouseLeave(null, null); // Starting or exiting XY mode for Points
-
-
-                if (Get_Text_Box_Bool() != "Neither") { Combo_Box_Tag_Value.Text = ""; }        
-
-
                 // Resetting the right scale factor
                 if (Scale_Factor == 10) { Combo_Box_Type_Filter_TextChanged(null, null); }
+                if (Get_Text_Box_Bool() != "Neither") { Combo_Box_Tag_Value.Text = ""; }        
+          
 
                 Button_Percentage.Visible = true;
                 Track_Bar_Tag_Value.Visible = true;
+                Track_Bar_Tag_Value_Scroll(null, null); // Updating to Values
                 // Combo_Box_Tag_Value.Items.Clear(); // Disabled
             }
+
+            Button_Operator_MouseLeave(null, null);  
+            Button_Scripts_MouseLeave(null, null); // Starting or exiting XY mode for Points
+            Button_Percentage_MouseLeave(null, null);
+
 
             User_Input = true;
             return List_Of_Tags;
         }
+
+
 
 
         private string Get_Text_Box_Bool()
@@ -2914,16 +2856,14 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         private void Combo_Box_Tag_Value_TextChanged(object sender, EventArgs e)
         { 
             if (User_Input) 
-            {   Disable_Description();                
-               
-                if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "False")
+            {   if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "False")
                     | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "Yes") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "No"))
                 { Operation_Mode = "Bool"; }
                 else if (Operation_Mode == "Percent")
                 {   // Don't move this to above.
                     if (!Combo_Box_Tag_Value.Text.Contains("%")) { Combo_Box_Tag_Value.Text += "%"; }
                 }
-                else if (Operation_Mode != "Point" && Operation_Mode != "Point_Float") { Operation_Mode = "Normal"; }
+                else if (Operation_Mode != "Point" && Operation_Mode != "Point_Float") { Operation_Mode = "Int"; }
             }
 
             Button_Operator_MouseLeave(null, null); // Check if bool and refresh
@@ -3417,8 +3357,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-            //Operation_Mode = "Point_Float";
-            iConsole(400, 100, Operation_Mode); return;
+            // iConsole(400, 100, Operation_Mode); return;
 
 
             if (Backup_Mode) // Just show the last results
@@ -3608,8 +3547,8 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         private void Button_Percentage_Click(object sender, EventArgs e)
         {
             if (Operation_Mode == "Percent")
-            {   
-                Operation_Mode = "Normal";
+            {
+                Operation_Mode = "Int";
                 User_Input = false; // Un-Percenting
                 Combo_Box_Tag_Value.Text = Remove_Operators(Combo_Box_Tag_Value.Text);
                 User_Input = true;
@@ -3619,7 +3558,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             else
             {   Operation_Mode = "Percent"; // Needs to be set BEFORE Process_Tags()
                 Combo_Box_Tag_Value.Text = ""; // Prepare for percent input
-                Process_Tags(Text_Box_Tags.Text);
+                Button_Scripts_MouseLeave(null, null); // Starting or exiting XY mode for Points
 
                 if (sender != null & Match_Setting("Show_Tooltip"))
                 {   Text_Box_Description.Visible = true;
