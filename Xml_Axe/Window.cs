@@ -499,29 +499,39 @@ namespace Xml_Axe
             string Operator = "";     
             if (Combo_Box_Tag_Value.Text.StartsWith("-")) { Operator = "-"; } // Remain -
 
+            int Bonus = 0;
+            if (Combo_Box_Entity_Name.Text == "Insert_Random_Int") { Bonus = 10; }
+            else if (Combo_Box_Entity_Name.Text == "Insert_Random_Float") { Bonus = 1; }
+
 
             if (Operation_Mode == "Point")
-            {  
+            {
+                int New_Value = Track_Bar_Tag_Value.Value;
+
                 if (Scale_Mode == "XY")
-                {   Min_Int_Range = Track_Bar_Tag_Value.Value;
-                    Max_Int_Range = Track_Bar_Tag_Value.Value + 10;
+                {
+                    Min_Int_Range = New_Value;
+                    Max_Int_Range = New_Value + Bonus;
                 }
                 else if (Scale_Mode == "X")
-                {   Min_Int_Range = Track_Bar_Tag_Value.Value;
+                {   Min_Int_Range = New_Value;
                     // Max_Int_Range remains the same from last change
                 }
-                else if (Scale_Mode == "Y") { Max_Int_Range = Track_Bar_Tag_Value.Value + 10; }
+                else if (Scale_Mode == "Y") { Max_Int_Range = New_Value + Bonus; }
 
                 Combo_Box_Tag_Value.Text = (Operator + Min_Int_Range + " | " + Operator + Max_Int_Range).Replace(",", ".");
             }
             else if (Operation_Mode == "Point_Float")
-            {   
+            {
+                float New_Value = (float)Track_Bar_Tag_Value.Value / 10;
+
                 if (Scale_Mode == "XY")
-                {   Min_Float_Range = (float)Track_Bar_Tag_Value.Value / 10;
-                    Max_Float_Range = 1 + (float)Track_Bar_Tag_Value.Value / 10;
+                {
+                    Min_Float_Range = New_Value;
+                    Max_Float_Range = Bonus + New_Value;
                 }
-                else if (Scale_Mode == "X") { Min_Float_Range = (float)Track_Bar_Tag_Value.Value / 10; }
-                else if (Scale_Mode == "Y") { Max_Float_Range = 1 + (float)Track_Bar_Tag_Value.Value / 10; }
+                else if (Scale_Mode == "X") { Min_Float_Range = New_Value; }
+                else if (Scale_Mode == "Y") { Max_Float_Range = Bonus + New_Value; }
 
 
                 // string Prefix = "1.";
@@ -2720,6 +2730,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         {
             User_Input = false;
             string Tag_Format = "";
+            string Scale_Format = "";
             string[] Tag_Info = new string[] { };
             List<string> List_Of_Tags = new List<string>();
 
@@ -2754,7 +2765,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                             Tag_Name = Tag_Name.Substring(6, Tag_Name.Length - 6);
                         }
                         else if (Tag_Name.StartsWith("PointF") | Tag_Name.StartsWith("Pointf") | Tag_Name.StartsWith("pointf") | Tag_Name.StartsWith("pointF"))
-                        {
+                        {                            
                             Tag_Format = "point_float";
                             Tag_Name = Tag_Name.Substring(6, Tag_Name.Length - 6);
                           
@@ -2772,7 +2783,6 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                             Tag_Format = "int";
                             Tag_Name = Tag_Name.Substring(3, Tag_Name.Length - 3);
                         }
-                   
 
 
                         // This overwrites the "Tag_Format" from above - which is important for the range of int type Scale_Factor 
@@ -2780,17 +2790,19 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
                         {
                             Tag_Info = Tag_Name.Split('=');
                             Tag_Name = Tag_Info[0];
-                            Tag_Format = Tag_Info[1];
-                            // iConsole(400, 200, Tag_Name + " + " + Tag_Format);
+                            Scale_Format = Tag_Info[1];
+                            // iConsole(400, 200, Tag_Name + " + " + Scale_Format);
                         }
 
+
                    
+
 
 
                         if (Tag_Name != "") { List_Of_Tags.Add(Tag_Name); };
 
                         // Loading the list of Tags, the values of all these tags are going to be scalled as group.
-                        if (Tag_Name == "Rebalance_Everything") { Balancing_Tags = Tag_Format.Split(','); }
+                        if (Tag_Name == "Rebalance_Everything") { Balancing_Tags = Scale_Format.Split(','); }
 
 
 
@@ -2857,28 +2869,19 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
             else // if (Is_Match(Tag_Format, "int")) // It will probably be int
             {
                 if (Operation_Mode == "Percent") { Scale_Factor = 10; }
-                else if (Is_Match(Tag_Format, "point_float"))
-                {                    
-                    Scale_Factor = 10;
-                    Operation_Mode = "Point_Float";
-                }
-                else if (Is_Match(Tag_Format, "point"))
-                {
-                    Scale_Factor = 10;
-                    Operation_Mode = "Point";     
-                }
-         
-                    
-
+                else if (Is_Match(Tag_Format, "point_float")) { Operation_Mode = "Point_Float"; }
+                else if (Is_Match(Tag_Format, "point")) { Operation_Mode = "Point"; }
+                               
                 else
                 {
-                    int.TryParse(Tag_Format, out Scale_Factor);
+                    int.TryParse(Scale_Format, out Scale_Factor);
                     if (Scale_Factor == 0) { Scale_Factor = 100; } // Failsafe, default Scale Factor is 100
                 }
                 // iConsole(400, 200, "Scale is " + Scale_Factor);
 
 
-                if (Operation_Mode == "Bool") { Operation_Mode = "Normal"; }
+                if (Operation_Mode == "Bool" | !Tag_Format.Contains("point")) { Operation_Mode = "Normal"; }
+             
                 Button_Operator_MouseLeave(null, null);
                 Button_Scripts_MouseLeave(null, null); // Starting or exiting XY mode for Points
 
@@ -3414,7 +3417,7 @@ Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Rate, Proj
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-            Operation_Mode = "Point_Float";
+            //Operation_Mode = "Point_Float";
             iConsole(400, 100, Operation_Mode); return;
 
 
