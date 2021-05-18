@@ -60,6 +60,7 @@ namespace Xml_Axe
 
         bool EAW_Mode = true;
         bool Script_Mode = false;
+        bool Silent_Mode = false;
 
         string Temporal_A, Temporal_B = "";
         int Temporal_C = 0;
@@ -1579,20 +1580,36 @@ namespace Xml_Axe
 
                                     Int32.TryParse(Input[0], out Value_1);
                                     Int32.TryParse(Input[1], out Value_2);
-                                    Random Randomize = new Random();
+                                    // Random Randomize = new Random();
 
                                     try
                                     {
-                                        if (Operation_Mode == "Point") { Result = (Randomize.Next(Value_1, Value_2)).ToString(); }
+                                        if (Operation_Mode == "Point") 
+                                        {
+                                            // Result = (Randomize.Next(Value_1, Value_2)).ToString();
+                                            Result = Random_Int(Value_1, Value_2).ToString();
+                                        }
 
                                         else if (Operation_Mode == "Point_Float") // Don't chain this to the statement above.
-                                        {                                           
-                                            string Before_Point = Randomize.Next(Value_1, Value_2).ToString();//number before decimal point
-                                            string After_Point_1 = Randomize.Next(Value_1, Value_2).ToString();//1st decimal point
-                                            //string After_Point_2 = Randomize.Next(Value_1, Value_2).ToString();//2nd decimal point
-                                            string Combined = Before_Point + "." + After_Point_1; // + After_Point_2;
+                                        {
+                                            float Value_3 = 0;
+                                            float Value_4 = 0;
 
-                                            Result = float.Parse(Combined).ToString();
+                                            float.TryParse(Input[0], out Value_3);
+                                            float.TryParse(Input[1], out Value_4);
+
+                                            //string Before_Point = Randomize.Next(Value_1, Value_2).ToString();//number before decimal point
+                                            //string After_Point_1 = Randomize.Next(Value_1, Value_2).ToString();//1st decimal point
+                                            //string After_Point_2 = Randomize.Next(Value_1, Value_2).ToString();//2nd decimal point
+
+                                            // string Before_Point = Random_Int((int)Value_3 * 10, (int)Value_4 * 10).ToString();//number before decimal point
+                                            //string After_Point_1 = Random_Int((int)Value_3 * 10, (int)Value_4 * 10).ToString();//1st decimal point
+                                            //string Combined = Before_Point + "." + After_Point_1; // + After_Point_2;
+
+                                            Value_4 = Random_Int((int)Value_3 * 10, (int)Value_4 * 10);
+
+                                            Result = (Value_4/10).ToString();
+                                            //Result = float.Parse(Before_Point).ToString();
                                         }
                                     } catch {}
                                 }
@@ -1637,9 +1654,58 @@ namespace Xml_Axe
         }
 
 
+        //===========================//
+
+        // The random number provider.
+        private System.Security.Cryptography.RNGCryptoServiceProvider Rand =
+            new System.Security.Cryptography.RNGCryptoServiceProvider();
+
+        // Return a random integer between a min and max value.
+        private int Random_Int(int min, int max)
+        {
+            uint scale = uint.MaxValue;
+            while (scale == uint.MaxValue)
+            {
+                // Get four random bytes.
+                byte[] four_bytes = new byte[4];
+                Rand.GetBytes(four_bytes);
+
+                // Convert that into an uint.
+                scale = BitConverter.ToUInt32(four_bytes, 0);
+            }
+
+            // Add min to the scaled difference between max and min.
+            return (int)(min + ((max + 1) - min) *
+                (scale / (double)uint.MaxValue));
+        }
+
+        //===========================//
+        private float Random_Float(float min, float max)
+        {
+            float result = 0;
+            uint scale = uint.MaxValue;
+            while (scale == uint.MaxValue)
+            {
+                // Get four random bytes.
+                byte[] four_bytes = new byte[4];
+                Rand.GetBytes(four_bytes);
+
+                // Convert that into an uint.
+                scale = BitConverter.ToUInt32(four_bytes, 0);
+                result = BitConverter.ToSingle(four_bytes, 0);
+            }
+
+            // Add min to the scaled difference between max and min.
+            return (float)(min + ((max + 1) - min) *
+                (result / (float)uint.MaxValue));
+        }
+
+        //===========================//
+
         public string Wash_String(string The_String)
         { return Regex.Replace(The_String, "[\n\r\t ]", ""); }
 
+        //===========================//
 
         public string Remove_Emptyspace_Prefix(string The_String)
         {   try
@@ -1803,22 +1869,43 @@ namespace Xml_Axe
                 }
 
 
+
+                string Steam_Path = Properties.Settings.Default.Steam_Exe_Path;
+                string Program_Path = Path.GetDirectoryName(Steam_Path) + @"\steamapps\common\Star Wars Empire at War\corruption\StarWarsG.exe";         
+
+
                 if (Custom_Parameters != "" & !Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Custom_Start_Parameters = false"))
                 {
+                    bool Is_Steam_Workshop_Id = false;
+
                     string[] Command = Custom_Parameters.Split(' ');
+
                     string Arguments = "";
-                    for (int i = 1; i < Command.Count(); i++) { Arguments += Command[i] + " "; }
+                    for (int i = 0; i < Command.Count(); i++) 
+                    {
+                        if (Is_Steam_Workshop_Id || Command[i].All(char.IsDigit) && Command[i].Count() > 9)
+                        {   Is_Steam_Workshop_Id = true; 
+                            Arguments += "STEAMMOD=" + Command[i] + " ";
+                        } 
+                        else if (i > 0) { Arguments += Command[i] + " "; } // Ignore first cmd                   
+                    }
 
-                    // iConsole(400, 100, "\"" + Custom_Parameters + "\""); // Debug
-                    // Execute(Command[0], Arguments); // This version would throw no error if the process can't be found
-                    Check_Process(Command[0], Arguments, Affinity, Priority);
+                    // iConsole(400, 200, Custom_Parameters);
 
+                    if (Is_Steam_Workshop_Id) 
+                    // if (Custom_Parameters.ToLower().Contains("steammod")) 
+                    {  
+                        Check_Process(Program_Path, Arguments, Affinity, Priority); 
+                    }
+                    else
+                    {   // iConsole(400, 100, "\"" + Custom_Parameters + "\""); // Debug
+                        // Execute(Command[0], Arguments); // This version would throw no error if the process can't be found                  
+                        // Check_Process(Custom_Parameters, "", Affinity, Priority);
+                        Check_Process(Command[0], Arguments, Affinity, Priority);
+                    }
                 }
                 else if (EAW_Mode) // Otherwised this button is used to launch the game
-                {
-                    string Steam_Path = Properties.Settings.Default.Steam_Exe_Path;
-                    string Program_Path = Path.GetDirectoryName(Steam_Path) + @"\steamapps\common\Star Wars Empire at War\corruption\StarWarsG.exe";
-             
+                {                                 
                     string Arguments = @"Modpath=Mods\" + Mod_Name + " Ignoreasserts";
 
 
@@ -1844,8 +1931,9 @@ namespace Xml_Axe
 
 
         public bool Check_Process(string Program_Path, string Arguments = "", bool Set_Affinity = false, bool High_Priority = false)
-        {   
-            string Program_Name = Path.GetFileNameWithoutExtension(Program_Path);
+        {
+            string Program_Name = "";
+            try { Path.GetFileNameWithoutExtension(Program_Path); } catch {}
             Process[] The_Process = Process.GetProcessesByName(Program_Name);
 
             // Make sure there is an instance of the app is running
@@ -2265,8 +2353,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             {
                 Operation_Mode = "Point";
                 Track_Bar_Tag_Value_Scroll(null, null); // Showing the 2 float values in the textbox for us.  
-                Disable_Description();
-
+              
                 Label_Tag_Value.Text = "Range of Int values";
 
                 if (Match_Setting("Show_Tooltip"))
@@ -2280,8 +2367,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             {
                 Operation_Mode = "Point_Float";
                 Track_Bar_Tag_Value_Scroll(null, null); // Showing the 2 float values in the textbox for us. 
-                Disable_Description();
-
+                
                 Label_Tag_Value.Text = "Range of float values";
 
                 if (Match_Setting("Show_Tooltip"))
@@ -2714,7 +2800,6 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         private List<string> Process_Tags(string Input = "")
         {
             User_Input = false;
-            string Tag_Format = "";
             string Scale_Format = "";
             string[] Tag_Info = new string[] { };
             List<string> List_Of_Tags = new List<string>();
@@ -2747,8 +2832,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         }
                     }
 
-                                 
-                    // This overwrites the "Tag_Format" from above - which is important for the range of int type Scale_Factor 
+
+                    // This overwrites the "Scale_Format" from above - which is important for the range of int type Scale_Factor 
                     if (Tag_Name.Contains("=")) // Seperating the tag name and its expected format (int, bool or string)
                     {
                         Tag_Info = Tag_Name.Split('=');
@@ -2758,7 +2843,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     }
 
 
-
+                    
 
                     if (Tag_Name != "") { List_Of_Tags.Add(Tag_Name); };
 
@@ -2828,7 +2913,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 Button_Percentage.Visible = true;
                 Track_Bar_Tag_Value.Visible = true;
+
+                Silent_Mode = false; // Bypass automatic silencing of Hint-box
                 Track_Bar_Tag_Value_Scroll(null, null); // Updating to Values
+                Silent_Mode = true;
                 // Combo_Box_Tag_Value.Items.Clear(); // Disabled
             }
 
@@ -2865,6 +2953,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }
                 else if (Operation_Mode != "Point" && Operation_Mode != "Point_Float") { Operation_Mode = "Int"; }
             }
+            if (Silent_Mode) { Disable_Description(); }
 
             Button_Operator_MouseLeave(null, null); // Check if bool and refresh
             Button_Percentage_MouseLeave(null, null);
@@ -3357,7 +3446,22 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-            // iConsole(400, 100, Operation_Mode); return;
+            //float Value_3 = 0;
+            //float Value_4 = 0;
+
+            //Value_4 = Random_Int((int)0.2F * 10, (int)1.4F * 10);
+
+            //string Result = ((double)(Value_4 / 10)).ToString();
+
+            //string Val = "";
+
+            //foreach (string Line in Properties.Settings.Default.Tags.Split('\n'))
+            //{ if (Line != "" & Line.Contains("Custom_Start_Parameters")) 
+            //{ Val = Remove_Emptyspace_Prefix(Line).Replace("\r", ""); } }
+
+            // Temporal_E = Val.Split('=');
+
+            iConsole(400, 100, Get_Setting_Value("Custom_Start_Parameters")); return;
 
 
             if (Backup_Mode) // Just show the last results
