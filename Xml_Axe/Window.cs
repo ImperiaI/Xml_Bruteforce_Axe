@@ -902,11 +902,15 @@ namespace Xml_Axe
             return false;
         }
 
-        // Custom_Modpath, Queried_Attribute, Text_Format_Delimiter
-        private string Get_Setting_Value(string Entry)
+        // Custom_Parameters, Queried_Attribute, Text_Format_Delimiter
+        private string Get_Setting_Value(string Entry, bool Return_Full_Line = false)
         {
             foreach (string Line in Properties.Settings.Default.Tags.Split('\n'))
-            { if (Line != "" & Line.Contains(Entry)) { return Remove_Emptyspace_Prefix(Line.Split('=')[1]).Replace("\r", ""); } }
+            {   if (Line != "" & Line.Contains(Entry))
+                {   if (Return_Full_Line) { return Remove_Emptyspace_Prefix(Line).Replace("\r", ""); }
+                    else { return Remove_Emptyspace_Prefix(Line.Split('=')[1]).Replace("\r", ""); }
+                } 
+            }
 
             return "";
         }
@@ -1856,76 +1860,104 @@ namespace Xml_Axe
             {
                 bool Affinity = false;
                 bool Priority = false;
+                bool Has_Custom_Path = false;
 
                 if (Match_Setting("Set_Launch_Affinity")) { Affinity = true; }
                 if (Match_Setting("High_Launch_Priority")) { Priority = true; }
+                if (Verify_Setting("Custom_Program_Path")) { Has_Custom_Path = true; }
 
 
-                string Custom_Parameters = Get_Setting_Value("Custom_Start_Parameters");
-                if (!EAW_Mode && Custom_Parameters == "") 
-                { iConsole(400, 100, "\nPlease write any Filepath + Arguments into \nSettings\\Custom_Start_Parameters" +
-                    "\nThat we could launch by this button."
-                    ); 
+                string Custom_Parameter_Line = Get_Setting_Value("Custom_Start_Parameters", true);
+                string Custom_Parameters = "";
+                try { Custom_Parameters = Custom_Parameter_Line.Split('=')[1]; } catch {}
+                    
+
+                if (!EAW_Mode && !Has_Custom_Path)
+                {
+                    iConsole(400, 190, "\nPlease write any Filepath into \nSettings\\Custom_Program_Path \nand its Arguments to Custom_Start_Parameters" +
+                    "\nIn order to launch them by this button."
+                    ); return;
                 }
 
 
 
                 string Steam_Path = Properties.Settings.Default.Steam_Exe_Path;
-                string Program_Path = Path.GetDirectoryName(Steam_Path) + @"\steamapps\common\Star Wars Empire at War\corruption\StarWarsG.exe";         
+                string Program_Path = "";
+                string Arguments = "";
 
 
-                if (Custom_Parameters != "" & !Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Custom_Start_Parameters = false"))
-                {
-                    bool Is_Steam_Workshop_Id = false;
+                if (Has_Custom_Path) // Custom Override
+                {   Program_Path = Get_Setting_Value("Custom_Program_Path");
+                    if (EAW_Mode && !Program_Path.EndsWith(".exe")) { Program_Path += ".exe"; } // Append suffix
+                } 
+                else if (EAW_Mode) { Program_Path = Path.GetDirectoryName(Steam_Path) + @"\steamapps\common\Star Wars Empire at War\corruption\StarWarsG.exe"; }
+              
 
-                    string[] Command = Custom_Parameters.Split(' ');
+                
 
-                    string Arguments = "";
-                    for (int i = 0; i < Command.Count(); i++) 
-                    {
-                        if (Is_Steam_Workshop_Id || Command[i].All(char.IsDigit) && Command[i].Count() > 9)
-                        {   Is_Steam_Workshop_Id = true; 
-                            Arguments += "STEAMMOD=" + Command[i] + " ";
-                        } 
-                        else if (i > 0) { Arguments += Command[i] + " "; } // Ignore first cmd                   
-                    }
 
-                    // iConsole(400, 200, Custom_Parameters);
+                // if (Custom_Parameters != "" & !Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Custom_Start_Parameters = false"))
+                if (Verify_Setting("Custom_Start_Parameters"))
+                {  
+                    if (!EAW_Mode) { Arguments = Custom_Parameters; }  
 
-                    if (Is_Steam_Workshop_Id) 
-                    // if (Custom_Parameters.ToLower().Contains("steammod")) 
-                    {  
-                        Check_Process(Program_Path, Arguments, Affinity, Priority); 
-                    }
-                    else
-                    {   // iConsole(400, 100, "\"" + Custom_Parameters + "\""); // Debug
-                        // Execute(Command[0], Arguments); // This version would throw no error if the process can't be found                  
-                        // Check_Process(Custom_Parameters, "", Affinity, Priority);
-                        Check_Process(Command[0], Arguments, Affinity, Priority);
-                    }
+                    else // EAW Mode, Inserting "STEAMMOD" if they are workshop items
+                    {   bool Is_Steam_Workshop_Id = false;
+                        string[] Command = Custom_Parameters.Split(' ');
+                        
+                        for (int i = 0; i < Command.Count(); i++)
+                        {
+                            if (Command[i] == " " || Command[i] == "") { continue; }
+
+                            else if (Is_Steam_Workshop_Id || Command[i].All(char.IsDigit) && Command[i].Count() > 9)
+                            {
+                                Is_Steam_Workshop_Id = true;
+                                Arguments += "STEAMMOD=" + Command[i] + " ";
+                            }
+
+                            else if (!Command[i].ToLower().Contains("modpath") && !Command[i].ToLower().Contains("steammod"))
+                            {
+                                //Arguments += "Modpath=Mods\" + Command[i];
+
+                                iConsole(400, 100, Command[i]);
+                                //try
+                                //{ 
+                                //    Temporal_A = ""; Temporal_A = Remove_Emptyspace_Prefix(Custom_Parameter_Line.Split('=')[2]); // its probably [2]                                                                    
+                                //} catch {}
+                            }
+
+                            else { Arguments += Command[i] + " "; }                 
+                        }
+
+                        // Prepending
+                        if (!Is_Match_2(Arguments, "modpath") && !Is_Match_2(Arguments, "steammod")) { Arguments = "Modpath=" + Arguments; }
+                    }                                                                              
                 }
+
                 else if (EAW_Mode) // Otherwised this button is used to launch the game
                 {                                 
-                    string Arguments = @"Modpath=Mods\" + Mod_Name + " Ignoreasserts";
-
+                    Arguments = @"Modpath=Mods\" + Mod_Name + " Ignoreasserts"; // Auto complete Arguments from Modname
 
                     // Overwride by User Setting
-                    if (!Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Custom_Modpath = false"))
-                    {
-                        Arguments = "Modpath=" + Get_Setting_Value("Custom_Modpath") + " Ignoreasserts";
-                        //  Arguments = "Modpath=" + Mod_Directory.Replace(" ", "\\ ") + " Ignoreasserts";
-                    }
-                    else if (Mod_Name.All(char.IsDigit)) // If all characters are numbers, that means we target a Workshop mod
+                    //if (Verify_Setting("Custom_Modpath"))
+                    //{   Arguments = "Modpath=" + Get_Setting_Value("Custom_Modpath") + " Ignoreasserts";
+                    //    //  Arguments = "Modpath=" + Mod_Directory.Replace(" ", "\\ ") + " Ignoreasserts";
+                    //} else
+
+                    if (Mod_Name.All(char.IsDigit)) // If all characters are numbers, that means we target a Workshop mod
                     {   // So argument 1 targets now the Workshop dir            
                         // Arguments = @"Modpath=..\..\..\workshop\content\32470\" + Mod_Name; 
                         Arguments = @"Steammod=" + Mod_Name + " Ignoreasserts";
                     }
 
-                    // Now, that we made sure Steam is running, we can launch the game           
-                    if (Check_Process(Steam_Path)) { Check_Process(Program_Path, Arguments, Affinity, Priority); }
-                } 
-            }
+                    Check_Process(Steam_Path); // Now, that we made sure Steam is running, we can launch the game 
+                }
 
+
+                iConsole(400, 100, "\"" + Program_Path + " " + Arguments + "\""); // Debug
+                // Execute(Command[0], Arguments); // This version would throw no error if the process can't be found                                                                                      
+                // Check_Process(Program_Path, Arguments, Affinity, Priority);              
+            }      
         }
 
 
@@ -2173,13 +2205,13 @@ namespace Xml_Axe
 # RGBA_Color = 100, 170, 170, 255 # Marine Blue
 # Set_Launch_Affinity = true
 # High_Launch_Priority = true
+# Custom_Program_Path = 
 # Custom_Start_Parameters = 
 # User_Name = false
 # Backups_Per_Directory = 20
 # Script_Directory = %AppData%\Local\Xml_Axe\Scripts
 # Disable_EAW_Mode = false
 # Text_Format_Delimiter = ;
-# Custom_Modpath = false
 
 
 
