@@ -1915,22 +1915,21 @@ namespace Xml_Axe
                                 Arguments += "STEAMMOD=" + Command[i] + " ";
                             }
 
-                            else if (!Command[i].ToLower().Contains("modpath") && !Command[i].ToLower().Contains("steammod"))
-                            {
-                                //Arguments += "Modpath=Mods\" + Command[i];
-
-                                iConsole(400, 100, Command[i]);
-                                //try
-                                //{ 
-                                //    Temporal_A = ""; Temporal_A = Remove_Emptyspace_Prefix(Custom_Parameter_Line.Split('=')[2]); // its probably [2]                                                                    
-                                //} catch {}
+                            else if (Command[i].ToLower() == "modpath" || Command[i].ToLower() == "steammod")
+                            {   try // Then we need to insert the Modname, that follows the = sign which was split for Custom_Parameters above 
+                                {   Temporal_A = "";
+                                    Temporal_A = Remove_Emptyspace_Prefix(Custom_Parameter_Line.Split('=')[2]); // its probably [2]
+                          
+                                    Arguments += Command[i] + "=" + Temporal_A;
+                                    // iConsole(400, 100, "\"" + Temporal_A + "\"");
+                                } catch {}
                             }
 
                             else { Arguments += Command[i] + " "; }                 
                         }
 
                         // Prepending
-                        if (!Is_Match_2(Arguments, "modpath") && !Is_Match_2(Arguments, "steammod")) { Arguments = "Modpath=" + Arguments; }
+                        if (!Arguments.ToLower().StartsWith("modpath") && !Arguments.ToLower().StartsWith("steammod")) { Arguments = @"Modpath=Mods\" + Arguments; }
                     }                                                                              
                 }
 
@@ -2252,6 +2251,10 @@ int Shield_Refresh_Rate = 5 # Usually about 30 for capital ships and less for we
 int Max_Speed = 1 # In Percent Mode this is bundled to the <Min_Speed> tag, it grows or shrinks both values by the same amount. This Setting ignores objects of Projectile type, unless you explicitly select them as Filter Type.
 
 Percent All_Damage = 10 # This setting bundles Damage and Projectile_Damage as one scalable setting.
+
+Percent Fire_Min_Recharge_Seconds = 10
+
+Percent Fire_Max_Recharge_Seconds = 10
 
 Percent Scale_Factor = 1 # Use this in Percent Mode to scale all units in a Mod. NOTE: The *All Types* filter only means SpaceUnit, UniqueUnit and StarBase. You need to select all other entities explicitly as Filter Type: TransportUnit, Space Heroes, Projectile, Particle and Planet will be ignored, unless you scale them type by type. Keep in mind to not scale too much, because the Particles in models are not scaled by this. Reversible.
 
@@ -3478,22 +3481,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-            //float Value_3 = 0;
-            //float Value_4 = 0;
 
-            //Value_4 = Random_Int((int)0.2F * 10, (int)1.4F * 10);
-
-            //string Result = ((double)(Value_4 / 10)).ToString();
-
-            //string Val = "";
-
-            //foreach (string Line in Properties.Settings.Default.Tags.Split('\n'))
-            //{ if (Line != "" & Line.Contains("Custom_Start_Parameters")) 
-            //{ Val = Remove_Emptyspace_Prefix(Line).Replace("\r", ""); } }
-
-            // Temporal_E = Val.Split('=');
-
-            iConsole(400, 100, Get_Setting_Value("Custom_Start_Parameters")); return;
+            // iConsole(400, 100, Get_Setting_Value("Custom_Start_Parameters")); return;
 
 
             if (Backup_Mode) // Just show the last results
