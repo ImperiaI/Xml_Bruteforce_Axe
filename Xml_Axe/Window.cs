@@ -48,6 +48,13 @@ namespace Xml_Axe
         float Min_Float_Range = 0.1F;
         float Max_Float_Range = 1.0F;
 
+
+        // These 3 are used for scrolling with the XY button
+        int Int_Distance = 10;
+        float Float_Distance = 1F;
+        float Last_Value = 0F;
+
+
         int Min_Int_Range = 1;
         int Max_Int_Range = 10;
 
@@ -495,49 +502,57 @@ namespace Xml_Axe
 
         private void Track_Bar_Tag_Value_Scroll(object sender, EventArgs e)
         {   User_Input = false;
-
+            
             string Operator = "";     
             if (Combo_Box_Tag_Value.Text.StartsWith("-")) { Operator = "-"; } // Remain -
 
-            int Bonus = 0;
-            if (Combo_Box_Entity_Name.Text == "Insert_Random_Int") { Bonus = 10; }
-            else if (Combo_Box_Entity_Name.Text == "Insert_Random_Float") { Bonus = 1; }
 
 
             if (Operation_Mode == "Point")
             {
                 int New_Value = Track_Bar_Tag_Value.Value;
-
+                // Int_Distance is reset to 10, each time Combo_Box_Entity_Name.Text is set to "Insert_Random_Int" 
+         
                 if (Scale_Mode == "XY")
-                {
-                    Min_Int_Range = New_Value;
-                    Max_Int_Range = New_Value + Bonus;
+                {   Min_Int_Range = New_Value;
+                    Max_Int_Range = New_Value + Int_Distance; // Apply distance between the 2 values
                 }
                 else if (Scale_Mode == "X")
-                {   Min_Int_Range = New_Value;
-                    // Max_Int_Range remains the same from last change
+                {  
+                    Update_Distance();
+                    Min_Int_Range = New_Value;
                 }
-                else if (Scale_Mode == "Y") { Max_Int_Range = New_Value + Bonus; }
+                else if (Scale_Mode == "Y") 
+                {
+                    Update_Distance(); // Updating moves Int_Distance value up or down according to the scroll bar
+                    Max_Int_Range = New_Value + Int_Distance;               
+                }
 
+                
+                Last_Value = New_Value;
                 Combo_Box_Tag_Value.Text = (Operator + Min_Int_Range + " | " + Operator + Max_Int_Range).Replace(",", ".");
             }
             else if (Operation_Mode == "Point_Float")
             {
-                float New_Value = (float)Track_Bar_Tag_Value.Value / 10;
+                float New_Value = (float)Track_Bar_Tag_Value.Value / 10;               
+                // Float_Distance is reset to 1.0F, each time Combo_Box_Entity_Name.Text is set to "Insert_Random_Float"
+                
 
                 if (Scale_Mode == "XY")
                 {
                     Min_Float_Range = New_Value;
-                    Max_Float_Range = Bonus + New_Value;
+                    Max_Float_Range = New_Value + Float_Distance;
                 }
-                else if (Scale_Mode == "X") { Min_Float_Range = New_Value; }
-                else if (Scale_Mode == "Y") { Max_Float_Range = Bonus + New_Value; }
+                else if (Scale_Mode == "X") { Update_Distance(New_Value); Min_Float_Range = New_Value; }
+                else if (Scale_Mode == "Y") { Update_Distance(New_Value); Max_Float_Range = New_Value + Float_Distance; }
 
 
+                Last_Value = New_Value;
                 // string Prefix = "1.";
                 if (Scale_Mode == "X" && Track_Bar_Tag_Value.Value == 10) { Max_Float_Range = 2; } //Prefix = ""; }
+                string Float_Range = Max_Float_Range.ToString("n1"); // Format to string with 1 decimal number
 
-                Combo_Box_Tag_Value.Text = (Operator + Min_Float_Range + " | " + Operator + Max_Float_Range).Replace(",", ".");             
+                Combo_Box_Tag_Value.Text = (Operator + Min_Float_Range + " | " + Operator + Float_Range).Replace(",", ".");             
             }
    
             else
@@ -560,6 +575,22 @@ namespace Xml_Axe
             Combo_Box_Tag_Value_TextChanged(null, null); // This must run with User_Input
         }
 
+
+        //===========================//
+        private bool Update_Distance(float Passed_Value = 0) // Returning true means value gets positive, minus direction returns negative
+        {
+            if (Passed_Value > 0) // Then float type
+            {   if (Last_Value < Passed_Value) { Float_Distance += 0.1F; return true; }
+                else if (Last_Value > Passed_Value && Float_Distance > 0.1F) { Float_Distance -= 0.1F; return false; }
+            }
+            else
+            {
+                if (Last_Value < Track_Bar_Tag_Value.Value) { Int_Distance++; return true; }
+                else if (Last_Value > Track_Bar_Tag_Value.Value) { Int_Distance--; return false; }
+            }
+
+            return false;
+        }
 
         //===========================//
 
@@ -2388,8 +2419,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             {
                 Operation_Mode = "Point";
                 Track_Bar_Tag_Value_Scroll(null, null); // Showing the 2 float values in the textbox for us.  
-              
+                Button_Scripts_MouseLeave(null, null); // Showing the XY image variant of this button
+
                 Label_Tag_Value.Text = "Range of Int values";
+                Int_Distance = 10; // Reset distance between x and y value
+                Last_Value = 0;
 
                 if (Match_Setting("Show_Tooltip"))
                 {   Text_Box_Description.Visible = true;
@@ -2401,9 +2435,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             else if (Combo_Box_Entity_Name.Text == "Insert_Random_Float")
             {
                 Operation_Mode = "Point_Float";
-                Track_Bar_Tag_Value_Scroll(null, null); // Showing the 2 float values in the textbox for us. 
-                
+                Track_Bar_Tag_Value_Scroll(null, null);
+                Button_Scripts_MouseLeave(null, null); 
+
                 Label_Tag_Value.Text = "Range of float values";
+                Float_Distance = 1F;
+                Last_Value = 0;
 
                 if (Match_Setting("Show_Tooltip"))
                 {
@@ -3483,6 +3520,16 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         {
 
             // iConsole(400, 100, Get_Setting_Value("Custom_Start_Parameters")); return;
+
+
+            float Value_3 = 1;
+            float Value_4 = 10;
+  
+            Value_4 = Random_Int((int)Value_3 * 10, (int)Value_4 * 10);
+
+            string Result = (Value_4 / 10).ToString();
+
+            iConsole(400, 100, Result.ToString()); return;
 
 
             if (Backup_Mode) // Just show the last results
