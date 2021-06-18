@@ -1593,6 +1593,7 @@ namespace Xml_Axe
                                             else { Full_Value += Process_Percentage(Factor); break; }
                                         }
                                     }
+                                 
                                     Target.Value = Full_Value;
                                 }
 
@@ -1619,32 +1620,41 @@ namespace Xml_Axe
 
                                     try
                                     {
-                                        if (Operation_Mode == "Point") 
+                                        if (Operation_Mode == "Point" && Combo_Box_Entity_Name.Text == "Insert_Random_Int") 
                                         {
                                             // Result = (Randomize.Next(Value_1, Value_2)).ToString();
                                             Result = Random_Int(Value_1, Value_2).ToString();
                                         }
 
                                         else if (Operation_Mode == "Point_Float") // Don't chain this to the statement above.
-                                        {
-                                            float Value_3 = 0;
-                                            float Value_4 = 0;
+                                        {                                          
+                                            if (Selected_Tag == "Radar_Icon_Size") 
+                                            { if (Result.Contains("|")) { Result = Result.Replace("|", ""); } } // Just set value to what the user sees.
 
-                                            float.TryParse(Input[0], out Value_3);
-                                            float.TryParse(Input[1], out Value_4);
+                                            else if (Combo_Box_Entity_Name.Text == "Insert_Random_Float")
+                                            {
+                                                float Value_3 = 0;
+                                                float Value_4 = 0;
 
-                                            //string Before_Point = Randomize.Next(Value_1, Value_2).ToString();//number before decimal point
-                                            //string After_Point_1 = Randomize.Next(Value_1, Value_2).ToString();//1st decimal point
-                                            //string After_Point_2 = Randomize.Next(Value_1, Value_2).ToString();//2nd decimal point
+                                                float.TryParse(Input[0], out Value_3);
+                                                float.TryParse(Input[1], out Value_4);
 
-                                            // string Before_Point = Random_Int((int)Value_3 * 10, (int)Value_4 * 10).ToString();//number before decimal point
-                                            //string After_Point_1 = Random_Int((int)Value_3 * 10, (int)Value_4 * 10).ToString();//1st decimal point
-                                            //string Combined = Before_Point + "." + After_Point_1; // + After_Point_2;
+                                                //string Before_Point = Randomize.Next(Value_1, Value_2).ToString();//number before decimal point
+                                                //string After_Point_1 = Randomize.Next(Value_1, Value_2).ToString();//1st decimal point
+                                                //string After_Point_2 = Randomize.Next(Value_1, Value_2).ToString();//2nd decimal point
 
-                                            Value_4 = Random_Int((int)Value_3 * 10, (int)Value_4 * 10);
+                                                // string Before_Point = Random_Int((int)Value_3 * 10, (int)Value_4 * 10).ToString();//number before decimal point
+                                                //string After_Point_1 = Random_Int((int)Value_3 * 10, (int)Value_4 * 10).ToString();//1st decimal point
+                                                //string Combined = Before_Point + "." + After_Point_1; // + After_Point_2;
 
-                                            Result = (Value_4/10).ToString();
-                                            //Result = float.Parse(Before_Point).ToString();
+
+                                                // *10 to get rid of decimal nr
+                                                Value_4 = Random_Int((int)Value_3 * 10, (int)Value_4 * 10);
+
+                                                // /100 to turn it back into float with "n1" being 1 slot after decimal point
+                                                Result = (Value_4 / 100).ToString("n1").Replace(",", ".");
+                                                //Result = float.Parse(Before_Point).ToString();                                                
+                                            }
                                         }
                                     } catch {}
                                 }
@@ -3520,16 +3530,6 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         {
 
             // iConsole(400, 100, Get_Setting_Value("Custom_Start_Parameters")); return;
-
-
-            float Value_3 = 1;
-            float Value_4 = 10;
-  
-            Value_4 = Random_Int((int)Value_3 * 10, (int)Value_4 * 10);
-
-            string Result = (Value_4 / 10).ToString();
-
-            iConsole(400, 100, Result.ToString()); return;
 
 
             if (Backup_Mode) // Just show the last results
