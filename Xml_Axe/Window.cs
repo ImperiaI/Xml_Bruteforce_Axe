@@ -3780,17 +3780,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
         private void Button_Scripts_Click(object sender, EventArgs e)
-        {
-            if (Operation_Mode.Contains("Point") | Combo_Box_Tag_Name.Text == "Scale_Galaxies") // Cycle
-            {
-                if (Scale_Mode == "XY") { Scale_Mode = "X"; }
-                else if (Scale_Mode == "X") { Scale_Mode = "Y"; }
-                else if (Scale_Mode == "Y") { Scale_Mode = "XY"; }
-                Button_Scripts_MouseLeave(null, null);       
-            }
-
-
-            else if (Script_Mode) // Toggle between Script Mode
+        {          
+            if (Script_Mode) // Toggle between Script Mode
             {              
                 Script_Mode = false;
                 Drop_Zone.Visible = true;
@@ -3830,7 +3821,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 else if (Current_Backup == Selected_Backup) { iConsole(400, 100, "\nThis should already be the current version."); }
 
                 else if (Current_Backup != "")
-                {
+                {                  
                     //if (!Move_Backwards) // Changed my mind about this
                     //{
                     iDialogue(580, 240, "Restore All", "Cancel", "Only Inside", "false", "\nDo you wish to restore to the backup " +
@@ -3848,14 +3839,25 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                     if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; } // User Abbort
 
+                    Create_New_Backup(true); // Check for AutoStash changes
+
+
                     // Moving backwards in the history means we better not change the newest version of files that are not inside of the target patch
                     // We also ignore all files outside of this patch if the user decided "else" while moving forward  | Move_Backwards)
-                    else if (Caution_Window.Passed_Value_A.Text_Data == "else") { Restore(Current_Backup + User_Name, Selected_Backup, Move_Backwards, false); }
+                    if (Caution_Window.Passed_Value_A.Text_Data == "else") { Restore(Current_Backup + User_Name, Selected_Backup, Move_Backwards, false); }
 
                     else { Restore(Current_Backup + User_Name, Selected_Backup, Move_Backwards, true); } // Current_Backup is allowed to be remaining "" here.
 
                     Current_Backup = Selected_Backup; //Update
                 }
+            }
+
+            else if (Operation_Mode.Contains("Point") | Combo_Box_Tag_Name.Text == "Scale_Galaxies") // Cycle
+            {
+                if (Scale_Mode == "XY") { Scale_Mode = "X"; }
+                else if (Scale_Mode == "X") { Scale_Mode = "Y"; }
+                else if (Scale_Mode == "Y") { Scale_Mode = "XY"; }
+                Button_Scripts_MouseLeave(null, null);
             }
 
             else
@@ -3925,13 +3927,13 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Button_Scripts_MouseHover(object sender, EventArgs e)
         {
-            if (Operation_Mode.Contains("Point") | Combo_Box_Tag_Name.Text == "Scale_Galaxies")
+            if (Backup_Mode) { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Run_Lit); }
+            else if (Operation_Mode.Contains("Point") | Combo_Box_Tag_Name.Text == "Scale_Galaxies")
             {
                 if (Scale_Mode == "XY") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_XY_Lit); }
                 else if (Scale_Mode == "X") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_X_Lit); }
                 else if (Scale_Mode == "Y") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Y_Lit); }
-            }
-            else if (Backup_Mode) { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Run_Lit); }
+            }           
             else { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash_Lit); }
         }
 
@@ -3940,13 +3942,14 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             if (Script_Mode) { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash_Lit); }
             else
             {
-                if (Operation_Mode.Contains("Point") | Combo_Box_Tag_Name.Text == "Scale_Galaxies")
+                if (Backup_Mode) { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Run); }
+                
+                else if (Operation_Mode.Contains("Point") | Combo_Box_Tag_Name.Text == "Scale_Galaxies")
                 {
                     if (Scale_Mode == "XY") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_XY); }
                     else if (Scale_Mode == "X") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_X); }
                     else if (Scale_Mode == "Y") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Y); }
                 }
-                else if (Backup_Mode) { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Run); }
                 else { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash); }
             }
         }
@@ -4403,10 +4406,13 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         // Check files in the Main_Directory for changes that are not contained in any of the Backups:
         // ============================================= 
 
-        private void Create_New_Backup()
+        private void Create_New_Backup(bool Is_Auto_Stash = false)
         {
             if (Is_Time_To_Backup()) { Backup_Time(); }
+
+         
             Package_Name = Time_Stamp + User_Name;
+            if (Is_Auto_Stash) { Package_Name += "_Auto_Stash" ; }
 
 
             List<string> The_Backup_Folders = Get_All_Directories(Backup_Path + Backup_Folder, true);
@@ -4496,7 +4502,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
 
-            if (Difference_List.Count() == 0) { iConsole(200, 100, "\nNo file changes detected."); return; }
+            if (Difference_List.Count() == 0) 
+            {
+                if (!Is_Auto_Stash) { iConsole(200, 100, "\nNo file changes detected."); }
+                return;
+            }
             // else { iConsole(400, 400, string.Join("\n", Difference_List)); } // Beware that Joining the list also modifies it, maybe even clears it..                
             // =============================================    
             // return;
@@ -4634,19 +4644,27 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     + Path.GetFileName(Sync_Path.Remove(Sync_Path.Length - 1)) + " directory?\n\n"
                         // + "This will also delete backups older then the " + Int32.Parse(Get_Setting_Value("Backups_Per_Directory")) + "th slot."
                     );
-
-                    if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
                     */
 
                     if (List_View_Selection.Items.Count > 0)
-                    {   // We need to be up to date, otherwise this action would twist the sync
-                        if (Current_Backup != List_View_Selection.Items[0].Text) 
+                    {
+
+                        Temporal_B = List_View_Selection.Items[0].Text;
+                        if (Temporal_B.EndsWith("Auto_Stash")) { Temporal_B = List_View_Selection.Items[1].Text; } // Trying the next available one
+
+                        // We need to be up to date, otherwise this action would twist the sync
+                        if (Current_Backup != Temporal_B && !Temporal_B.EndsWith("Auto_Stash")) 
                         {
-                            iConsole(520, 160, "\nA older Backup is currently loaded/checked out.\n" +
-                            "Please load the newest/top most backup, because it \nallows us to continue the chain in correct order.");
-                            return;
+                            iDialogue(540, 236, "Continue", "Cancel", "false", "false", "\nA older Backup is currently loaded/checked out.\n" +
+                            //"Please load the newest/top most backup, because it \nallows us to continue the chain in correct order."
+                            "If it doesn't write from the top most one, the \nnew backup will end up in a different branch.\n" +
+                            "Do you wish to continue anyways?");
+                          
                         }                           
                     }
+
+
+                    if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
 
                     Create_New_Backup();
                 }
