@@ -681,8 +681,17 @@ namespace Xml_Axe
                 bool Selected_Base = false;
                 foreach (string Folder_Path in Temporal_E)
                 {
-                    if (Folder_Path.EndsWith("_Base")) { Selected_Base = true; break; }
+                    if (Folder_Path == Current_Backup)
+                    {
+                        iConsole(540, 140, "\nYou can not delete the selected backup, \nplease checkout any other backup and try again.\nI recommend to checkout the newest possible one.");
+                        return; // Exit as the Checked out Backup can not be deleted.
+                    }
+
+                    else if (Folder_Path.EndsWith("_Base")) { Selected_Base = true; break; }
                 }
+
+        
+
 
 
                 if (Selected_Base)
@@ -691,6 +700,7 @@ namespace Xml_Axe
                     "Are you sure you wish to delete the selected backup?\n\n" +
                     "Instead you could merge Backups into a new Base." ); 
                 }
+              
                 else
                 {   string s = "";
                     if (Temporal_E.Count > 1) { s = "s"; }
@@ -3062,11 +3072,14 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         
             List<string> New_Text = new List<string>();
-            foreach (string Line in Text.Split('\n'))
-            { New_Text.Add("      " + Line); }
 
-            Display.Text_Box_Caution_Window.Text = string.Join("\n", New_Text); // "\n      " + Text;
-            Display.Show();
+            try
+            {   foreach (string Line in Text.Split('\n'))
+                { New_Text.Add("      " + Line); }
+
+                Display.Text_Box_Caution_Window.Text = string.Join("\n", New_Text); // "\n      " + Text;
+                Display.Show();
+            } catch {}
 
         }
 
@@ -3534,16 +3547,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         private void Button_Search_Click(object sender, EventArgs e)
         {
 
+            // iConsole(400, 100, Current_Backup); return;
 
-            List<string> Not_Matched_Yet = new List<string>();
-            Not_Matched_Yet.Add("Test");
-            Not_Matched_Yet.Add("Test_2");
-
-            if (Not_Matched_Yet.Contains("Test")) { Not_Matched_Yet.Remove("Test"); } // Clear
-
-
-            iConsole(500, 500, string.Join("\n", Not_Matched_Yet)); return;
-
+            // iConsole(500, 500, string.Join("\n", Not_Matched_Yet)); return;
             // iConsole(400, 100, Get_Setting_Value("Custom_Start_Parameters")); return;
 
 
@@ -4238,7 +4244,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 // Adding a Copy into root directory for Backups, that marks this backup as the loaded one. 
                 // CAUTION, Directory_Name means the different Folders in Backup_Path!
-                if (Load_Backup) { File.Copy(Backup_Path + Directory_Name + @"\" + Package_Name + Info_Name, Root_Backup, true); }
+                if (Load_Backup)
+                {
+                    try { File.Copy(Backup_Path + Directory_Name + @"\" + Package_Name + Info_Name, Root_Backup, true); } catch {}
+                }
 
             } catch { iConsole(600, 200, "\nFailed to create or find the path: \n" + Backup_Path + Directory_Name + @"\" + Package_Name + Info_Name); } 
         }
@@ -4427,7 +4436,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
 
-
+            
 
             // List<string> Backup_File_List = new List<string>();
             List<string> Main_Directory = Get_All_Files(Sync_Path);
@@ -4461,27 +4470,28 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 bool Matched = false;
 
                 foreach (string Register in Registered_Files)
-                {   // We assume Check_Files() above returned full paths, in this case 
-
-                    bool Missing_Matched = false;
-                    string Register_Name = Path.GetFileName(Register);
-
-                    foreach (string Equivalent in Main_Directory)
-                    {
-                        if (Path.GetFileName(Equivalent) == Register_Name) { Missing_Matched = true; break; }
-                    }
-                    if (!Missing_Matched) { Missing_Files.Add(Register); } // Detected a removed file    
-
-                     
-
-                    if (Register_Name == Path.GetFileName(Possability)) { Matched = true; break; }
+                {   // We assume Check_Files() above returned full paths, in this case                   
+                    if (Path.GetFileName(Possability) == Path.GetFileName(Register)) { Matched = true; break; }
                 }
 
                 if (!Matched) { Difference_List.Add(Possability); } // Detected new file!              
             }
 
 
-            //iConsole(500, 500, string.Join("\n", Difference_List));
+
+            foreach (string Register in Registered_Files)
+            { 
+                bool Matched = false;
+
+                foreach (string Equivalent in Main_Directory)
+                {
+                    if (Path.GetFileName(Equivalent) == Path.GetFileName(Register)) { Matched = true; break; }
+                }
+                if (!Matched) { Missing_Files.Add(Register); } // Detected a removed file    
+            }
+
+
+            // iConsole(400, 600, string.Join("\n", Missing_Files));
 
 
 
@@ -4506,7 +4516,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
             Create_Backup_Info(Backup_Folder, Package_Name, "Created a backup, based on different file sizes from:\n\n\n" +
-                string.Join("\n", Temporal_E), false, Has_Collapsed);
+                string.Join("\n", Temporal_E), false, true); // "Load_Backup" was Has_Collapsed
 
             Refresh_Backup_Stack();
 
