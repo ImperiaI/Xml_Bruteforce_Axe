@@ -99,6 +99,11 @@ namespace Xml_Axe
         public List<string> Found_Factions = new List<string>();
         public List<string> Category_Masks = new List<string>();
         public List<string> Found_Entities = new List<string>();
+
+
+        List<string> Registered_Files = new List<string>();
+        List<string> Not_Matched_Yet = new List<string>();
+
         public List<string> File_Collection = new List<string>();
         public List<string> Blacklisted_Xmls = new List<string>();
         List<string> Difference_List = new List<string>();
@@ -525,7 +530,7 @@ namespace Xml_Axe
                 else if (Scale_Mode == "Y") 
                 {
                     Update_Distance(); // Updating moves Int_Distance value up or down according to the scroll bar
-                    Max_Int_Range = New_Value + Int_Distance;               
+                    Max_Int_Range = (int)Last_Value + Int_Distance; // Last_Value because New_Value means +2 instead of +1           
                 }
 
                 
@@ -544,7 +549,7 @@ namespace Xml_Axe
                     Max_Float_Range = New_Value + Float_Distance;
                 }
                 else if (Scale_Mode == "X") { Update_Distance(New_Value); Min_Float_Range = New_Value; }
-                else if (Scale_Mode == "Y") { Update_Distance(New_Value); Max_Float_Range = New_Value + Float_Distance; }
+                else if (Scale_Mode == "Y") { Update_Distance(New_Value); Max_Float_Range = Last_Value + Float_Distance; }
 
 
                 Last_Value = New_Value;
@@ -1617,7 +1622,7 @@ namespace Xml_Axe
                                     Int32.TryParse(Input[0], out Value_1);
                                     Int32.TryParse(Input[1], out Value_2);
                                     // Random Randomize = new Random();
-
+                                    
                                     try
                                     {
                                         if (Operation_Mode == "Point" && Combo_Box_Entity_Name.Text == "Insert_Random_Int") 
@@ -3529,6 +3534,16 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         private void Button_Search_Click(object sender, EventArgs e)
         {
 
+
+            List<string> Not_Matched_Yet = new List<string>();
+            Not_Matched_Yet.Add("Test");
+            Not_Matched_Yet.Add("Test_2");
+
+            if (Not_Matched_Yet.Contains("Test")) { Not_Matched_Yet.Remove("Test"); } // Clear
+
+
+            iConsole(500, 500, string.Join("\n", Not_Matched_Yet)); return;
+
             // iConsole(400, 100, Get_Setting_Value("Custom_Start_Parameters")); return;
 
 
@@ -4414,15 +4429,18 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
 
-            List<string> Backup_File_List = new List<string>();
+            // List<string> Backup_File_List = new List<string>();
             List<string> Main_Directory = Get_All_Files(Sync_Path);
             List<string> Matches_List = new List<string>();
+
+            Registered_Files = new List<string>(); // Clear global Variables
+            Not_Matched_Yet = new List<string>();
 
 
             foreach (string Found_Dir in The_Backup_Folders)
             {
-                Backup_File_List = Get_All_Files(Found_Dir);
-                Matches_List = Check_Files(Main_Directory, Backup_File_List, false, true);
+                // Backup_File_List = Get_All_Files(Found_Dir);
+                Matches_List = Check_Files(Main_Directory, Get_All_Files(Found_Dir), false, true);
 
 
                 if (Found_Dir == The_Backup_Folders[0]) { Difference_List = Matches_List; } // Just dump the whole list into the other one as its empty.
@@ -4431,9 +4449,26 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     foreach (string Entry in Matches_List)
                     {
                         if (!Difference_List.Contains(Entry)) { Difference_List.Add(Entry); }
-                    }
-                }
+                    }               
+                }                         
             }
+
+
+
+            foreach (string Possability in Not_Matched_Yet)
+            {              
+                bool Matched = false;
+
+                foreach (string Register in Registered_Files)              
+                {
+                    if (Path.GetFileName(Register) == Path.GetFileName(Possability)) { Matched = true; break; }
+                }
+
+                if (!Matched) { Difference_List.Add(Possability); } // Detected new file!              
+            }
+
+
+            //iConsole(500, 500, string.Join("\n", Difference_List));
 
 
 
@@ -4471,7 +4506,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         // Set Shall_Match to false to return a list of files that never matched instead of the matched ones.
         public List<string> Check_Files(List<string> Return_If_Not_Matched, List<string> Return_If_Matched, bool Shall_Match = true, bool Return_Full_Path = true)
         {
-            List<string> Results = new List<string>();
+            List<string> Results = new List<string>();         
 
             try
             {   // Difference between Return_If_Matched and Return_If_Not_Matched is, that they have different paths at the beginning, 
@@ -4482,16 +4517,23 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     {
                         bool Name_Matched = false;
                         bool Size_Matched = false;
+                        string Name_A = Path.GetFileName(File_A);
 
 
                         foreach (string File_B in Return_If_Matched)
-                        {
+                        {   
                             try
                             {
-                                if (Path.GetFileName(File_A) == Path.GetFileName(File_B)) // If the Paths do match
+                                string Name_B = Path.GetFileName(File_B);
+
+                                if (Return_Full_Path && !Registered_Files.Contains(File_B)) { Registered_Files.Add(File_B); }
+                                else if (!Return_Full_Path && !Registered_Files.Contains(Name_B)) { Registered_Files.Add(Name_B); } // Registered_Files is a Global Variable
+
+
+                                if (Name_A == Name_B) // If the file names do match
                                 {
                                     Name_Matched = true;
-
+                                   
                                     long Length_A = new System.IO.FileInfo(File_A).Length;
                                     long Length_B = new System.IO.FileInfo(File_B).Length;
 
@@ -4505,7 +4547,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                                         if (Shall_Match && !Results.Contains(File_B) && !File_A.EndsWith("Axe_Info.txt"))
                                         {
                                             if (Return_Full_Path) { Results.Add(File_B); }
-                                            else if (!Results.Contains(Path.GetFileName(File_B))) { Results.Add(Path.GetFileName(File_B)); }
+                                            else if (!Results.Contains(Name_B)) { Results.Add(Name_B); }
 
                                             continue; // Due to matched Size, proceed with the next file instead of looping down through the rest of the list.
                                         }
@@ -4521,20 +4563,33 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                                     }
                                     continue; // Due to the matched name, we stop searching here for the remaining entries in the list
                                 }
-                            }
-                            catch { }
+
+                                else
+                                {
+                                    if (Return_Full_Path && !Not_Matched_Yet.Contains(File_A)) { Not_Matched_Yet.Add(File_A); } 
+                                    else if (!Return_Full_Path && !Not_Matched_Yet.Contains(Name_A)) { Not_Matched_Yet.Add(Name_A); } // Not_Matched_Yet is a Global Variable                                   
+                                }
+                                    
+                                  
+                            } catch {}
                         }
+
+                        if (Name_Matched && Not_Matched_Yet.Contains(Name_A)) { Not_Matched_Yet.Remove(Name_A); } 
 
 
                         // Name_Matched means it is existing but different
-                        if (!Shall_Match && !Size_Matched && Name_Matched && !File_A.EndsWith("Axe_Info.txt")) // Excllusion of my log file
+                        if (!Shall_Match && !Size_Matched && Name_Matched && !File_A.EndsWith("Axe_Info.txt")) // Exclusion of my log file
                         {
                             if (Return_Full_Path && !Results.Contains(File_A)) { Results.Add(File_A); }
-                            else if (!Results.Contains(Path.GetFileName(File_A))) { Results.Add(Path.GetFileName(File_A)); }
+                            else if (!Results.Contains(Name_A)) { Results.Add(Name_A); }
                         }
+                  
                     } catch {}
                 }
             } catch { iConsole(400, 100, "File Comparison function has crashed."); }
+
+
+            // iConsole(500, 500, string.Join("\n", Not_Matched_Yet));
 
             return Results;
         }
