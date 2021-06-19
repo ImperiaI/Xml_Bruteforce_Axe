@@ -4432,6 +4432,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             // List<string> Backup_File_List = new List<string>();
             List<string> Main_Directory = Get_All_Files(Sync_Path);
             List<string> Matches_List = new List<string>();
+            List<string> Missing_Files = new List<string>();
 
             Registered_Files = new List<string>(); // Clear global Variables
             Not_Matched_Yet = new List<string>();
@@ -4459,9 +4460,21 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             {              
                 bool Matched = false;
 
-                foreach (string Register in Registered_Files)              
-                {
-                    if (Path.GetFileName(Register) == Path.GetFileName(Possability)) { Matched = true; break; }
+                foreach (string Register in Registered_Files)
+                {   // We assume Check_Files() above returned full paths, in this case 
+
+                    bool Missing_Matched = false;
+                    string Register_Name = Path.GetFileName(Register);
+
+                    foreach (string Equivalent in Main_Directory)
+                    {
+                        if (Path.GetFileName(Equivalent) == Register_Name) { Missing_Matched = true; break; }
+                    }
+                    if (!Missing_Matched) { Missing_Files.Add(Register); } // Detected a removed file    
+
+                     
+
+                    if (Register_Name == Path.GetFileName(Possability)) { Matched = true; break; }
                 }
 
                 if (!Matched) { Difference_List.Add(Possability); } // Detected new file!              
@@ -4562,19 +4575,18 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                                         { Difference_List.Remove(File_A.Replace(Sync_Path, "")); }
                                     }
                                     continue; // Due to the matched name, we stop searching here for the remaining entries in the list
-                                }
-
-                                else
-                                {
-                                    if (Return_Full_Path && !Not_Matched_Yet.Contains(File_A)) { Not_Matched_Yet.Add(File_A); } 
-                                    else if (!Return_Full_Path && !Not_Matched_Yet.Contains(Name_A)) { Not_Matched_Yet.Add(Name_A); } // Not_Matched_Yet is a Global Variable                                   
-                                }
-                                    
+                                }                                   
                                   
                             } catch {}
                         }
 
-                        if (Name_Matched && Not_Matched_Yet.Contains(Name_A)) { Not_Matched_Yet.Remove(Name_A); } 
+                        if (!Name_Matched && !Not_Matched_Yet.Contains(Name_A)) 
+                        {
+                            if (Return_Full_Path) { Not_Matched_Yet.Add(File_A); }
+                            else { Not_Matched_Yet.Add(Name_A); } // Not_Matched_Yet is a Global Variable                                                               
+                        } 
+
+
 
 
                         // Name_Matched means it is existing but different
