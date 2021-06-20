@@ -4215,7 +4215,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
         // Use "Time_Stamp" as argument for Target_Backup_Name
-        private void Create_Backup_Info(string Directory_Name, string Target_Backup_Name, string Append_File_Info = "", bool Is_Base_Version = false, bool Load_Backup = true)
+        private void Create_Backup_Info(string Directory_Name, string Target_Backup_Name, string Changed_Files = "", bool Is_Base_Version = false, bool Load_Backup = true, string Added_Files = "", string Removed_Files = "")
         {  
             // Package_Name variable is updated by Button_Run_Click() or Create_New_Backup() 
             string Info_Name = Backup_Info;
@@ -4228,42 +4228,52 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 @"Directory_Name = " + Sync_Path.Remove(Sync_Path.Length - 1) +
                 "\nVersion = " + Target_Backup_Name;
 
-                if (Append_File_Info != "")
+                if (Changed_Files != "")
                 {
                     Info_File +=
                         "\n\n\n//============================================================\\\\" +
                         "\nChanged_Files:" +
                         "\n//============================================================\\\\" +
-                        "\n" + Append_File_Info; // Append_File_Info can be a joined List<string> of file names here.
+                        "\n" + Changed_Files + "\n\n\n"; // Append_File_Info can be a joined List<string> of file names here.                 
+                }           
+
+                if (Added_Files != "")
+                {
+                    Info_File +=
+                        "//============================================================\\\\" +
+                        "\nAdded_Files:" +
+                        "\n//============================================================\\\\" +
+                        "\n" + Added_Files + "\n\n\n";                 
                 }
+
+                if (Removed_Files != "")
+                {
+                    Info_File +=
+                        "//============================================================\\\\" +
+                        "\nRemoved_Files:" +
+                        "\n//============================================================\\\\" +
+                        "\n" + Removed_Files + "\n\n\n";                 
+                }
+                
 
                 File.WriteAllText(Backup_Path + Directory_Name + @"\" + Package_Name + Info_Name, Info_File);
 
             } catch { iConsole(600, 200, "\nFailed to create or find the path for Axe_Info.txt."); }
 
 
-
+            
             try
-            {   string Own_Branch = Backup_Path + Directory_Name + @"\" + Package_Name + @"\Axe_Branch.txt";
+            {   Info_File = "";
+                string Own_Branch = Backup_Path + Directory_Name + @"\" + Package_Name + @"\Axe_Branch.txt";
                 string Parent_Branch = Backup_Path + Directory_Name + @"\" + Current_Backup + @"\Axe_Branch.txt";
-                
-
-                string Branch_Header = "Topmost Backup name is the newest one. The lower they are, the older." +
-                  "\n\n\n//============================================================\\\\" +
-                  "\nParent Files:" +
-                  "\n//============================================================\\\\" +
-                  "\n";
 
 
+                // Inherit Axe_Branch.txt of the Parent
+                if (File.Exists(Parent_Branch)) { Info_File = Current_Backup + "\n" + File.ReadAllText(Parent_Branch); }
+                else { Info_File = Current_Backup; } // Create a own Axe_Branch.txt
 
-                if (File.Exists(Parent_Branch)) // Inherit Axe_Branch.txt of the Parent
-                {   Info_File = File.ReadAllText(Parent_Branch);
-                    // Info_File = Info_File.Replace(Branch_Header, Branch_Header + Current_Backup + "\n");
-                }
 
-                else { Info_File = Branch_Header + Current_Backup; } // Create a own Axe_Branch.txt
-
-                File.WriteAllText(Own_Branch, Info_File + Current_Backup + "\n");
+                File.WriteAllText(Own_Branch, Info_File);
 
             } catch { iConsole(600, 200, "\nFailed to create or find the path for Axe_Branch.txt."); } 
        
@@ -4475,7 +4485,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             // List<string> Backup_File_List = new List<string>();
             List<string> Main_Directory = Get_All_Files(Sync_Path);
             List<string> Matches_List = new List<string>();
+
+            List<string> Added_Files = new List<string>();
             List<string> Missing_Files = new List<string>();
+
 
             Registered_Files = new List<string>(); // Clear global Variables
             Not_Matched_Yet = new List<string>();
@@ -4497,7 +4510,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }                         
             }
 
-
+            
 
             foreach (string Possability in Not_Matched_Yet)
             {              
@@ -4508,7 +4521,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     if (Path.GetFileName(Possability) == Path.GetFileName(Register)) { Matched = true; break; }
                 }
 
-                if (!Matched) { Difference_List.Add(Possability); } // Detected new file!              
+                if (!Matched) { Added_Files.Add(Path.GetFileName(Possability)); Difference_List.Add(Possability); } // Detected new file!              
             }
 
 
@@ -4521,7 +4534,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 {
                     if (Path.GetFileName(Equivalent) == Path.GetFileName(Register)) { Matched = true; break; }
                 }
-                if (!Matched) { Missing_Files.Add(Register); } // Detected a removed file    
+
+                // + "\n" because these are full paths and the eye should be able to tell where the next path beginns
+                if (!Matched) { Missing_Files.Add(Register + "\n"); } // Detected a removed file               
             }
 
 
@@ -4553,8 +4568,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             bool Has_Collapsed = Collapse_Oldest_Backup("Last");
 
 
-            Create_Backup_Info(Backup_Folder, Package_Name, "Created a backup, based on different file sizes from:\n\n\n" +
-                string.Join("\n", Temporal_E), false, true); // "Load_Backup" was Has_Collapsed
+            Create_Backup_Info(Backup_Folder, Package_Name, // "Created a backup, based on different file sizes from:\n\n\n" +
+                string.Join("\n", Temporal_E), false, true,
+                string.Join("\n", Added_Files), string.Join("\n", Missing_Files)); // "Load_Backup" was Has_Collapsed
 
             Refresh_Backup_Stack();
 
@@ -4628,17 +4644,26 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                             } catch {}
                         }
 
-                        if (!Name_Matched && !Not_Matched_Yet.Contains(Name_A)) 
+
+                        if (!Name_Matched) 
                         {
-                            if (Return_Full_Path) { Not_Matched_Yet.Add(File_A); }
-                            else { Not_Matched_Yet.Add(Name_A); } // Not_Matched_Yet is a Global Variable                                                               
+                            if (Return_Full_Path) 
+                            {   bool Matched = false;
+
+                                foreach (string Possability in Not_Matched_Yet) // Not_Matched_Yet is a Global Variable                                                            
+                                {
+                                    if (Path.GetFileName(Possability) == Name_A) { Matched = true; break; }                                
+                                }
+                                if (!Matched) { Not_Matched_Yet.Add(File_A); }                                                                          
+                            }
+                            else if (!Not_Matched_Yet.Contains(Name_A)) { Not_Matched_Yet.Add(Name_A + "\n"); }    
                         } 
 
 
 
 
                         // Name_Matched means it is existing but different
-                        if (!Shall_Match && !Size_Matched && Name_Matched && !File_A.EndsWith("Axe_Info.txt")) // Exclusion of my log file
+                        if (!Shall_Match && !Size_Matched && Name_Matched && !File_A.EndsWith("Axe_Info.txt") && !File_A.EndsWith("Axe_Branch.txt")) // Exclusion of my log file
                         {
                             if (Return_Full_Path && !Results.Contains(File_A)) { Results.Add(File_A); }
                             else if (!Results.Contains(Name_A)) { Results.Add(Name_A); }
