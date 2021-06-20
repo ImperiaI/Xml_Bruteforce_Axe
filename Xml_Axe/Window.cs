@@ -4071,6 +4071,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 List<string> Backups = Get_All_Directories(Backup_Path + Backup_Folder, true);
                 List<string> Backup_Files = new List<string>();
 
+             
+
 
                 foreach(string Entry in Backups)
                 {
@@ -4165,6 +4167,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }
 
 
+            
+
                 string Update = "UPDATED";
 
                 string Intruduction = "\nMoved up the Backup stack in Historical order.";
@@ -4205,11 +4209,24 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }
 
 
+                // List<string> Deletion_Files = Get_Segment_Info(Target_Backup, "Removed_Files", "", true, true);                
+                // iConsole(400, 600, string.Join("\n", Deletion_Files));
+
+
                 // iConsole(600, 100, Working_Directory + "   To   " + Sync_Path + "This");
                 if (Directory.Exists(Working_Directory))
                 {   Copy_Now(Working_Directory, Sync_Path);
                     Deleting(Working_Directory);
+              
+
+                    // Execute deletion, but only of entries inside of the Axe_Info.txt of the Target_Backup
+                    foreach (string Deletion_File in Get_Segment_Info(Target_Backup, "Removed_Files", "", true, true))
+                    {
+                        Deleting(Sync_Path + Deletion_File);
+                    }
                 }
+
+
             } catch {}         
         }
 
@@ -4526,7 +4543,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             }
 
 
-
+            
 
             List<string> Older_Missing_Files = Get_Segment_Info("Any", "Removed_Files", "", true);
 
@@ -4601,7 +4618,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         //=====================//
 
-        public List<string> Get_Segment_Info(string Backup_Name, string Segment_Name, string Stop_Segment = "", bool Is_Full_Path = false)
+        public List<string> Get_Segment_Info(string Backup_Name, string Segment_Name, string Stop_Segment = "", bool Is_Full_Path = false, bool Return_Filename = false)
         {
             List<string> Segment_Info = new List<string>();
 
@@ -4625,7 +4642,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         else if (Line.StartsWith("//") || Line.StartsWith("#") || Line == "\n" || Line == "") { continue; }
 
 
-                        else if (Is_Full_Path && !List_Matches_Filename(Segment_Info, Line, true)) { Segment_Info.Add(Line); }// Preventing double entries 
+                        else if (Is_Full_Path)
+                        {   try
+                            {   if (Return_Filename && !Segment_Info.Contains(Path.GetFileName(Line))) { Segment_Info.Add(Path.GetFileName(Line)); }
+                                else if (!Return_Filename && !List_Matches_Filename(Segment_Info, Line, true)) { Segment_Info.Add(Line); }// Preventing double entries 
+                            } catch {}
+                        }
                         else if (!Is_Full_Path && !Segment_Info.Contains(Line)) { Segment_Info.Add(Line); }
                     }
                 }
