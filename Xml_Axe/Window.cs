@@ -4140,13 +4140,49 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 int Cycles = 0;
                 List<string> Stack_History = new List<string>();
+               
 
 
                 for (int i = Start_At; i <= Passed_Slots; i++)
                 {
                     Cycles++;
-                    Stack_History.Add(Path.GetFileName(Backups[i]));
-                  
+                    
+                    string Backup_Name = Path.GetFileName(Backups[i]);
+                    Stack_History.Add(Backup_Name);
+
+
+
+                    List<string> Deletions_Of_Last_Patch = new List<string>();
+                    List<string> Deletion_Files = new List<string>();
+
+                    // ============ Deletion Process ============ 
+                    if (All_Files_Since_This) // Remove deletion files from all backups between top most backup and the bottom one.
+                    {
+                        iConsole(400, 600, "Targeting " + Backup_Name);
+
+                        // Deliberately NOT using "Any" as backupname here because we need to filter out only the selected backups!
+                        foreach (string Deletion_File in Get_Segment_Info(Backup_Name, "Removed_Files", "", true, !Move_Backwards))
+                        {
+
+                            if (Move_Backwards) // Means restore it from the newest possible backup
+                            {   
+                                // Deletion_File is a full path here, contrary to below!                           
+                                if (File.Exists(Deletion_File)) { File.Copy(Deletion_File, Working_Directory + @"\" + Path.GetFileName(Deletion_File), true); }
+
+                                Deletion_Files.Add(Deletion_File + "\nInto \n" + Working_Directory + @"\" + Path.GetFileName(Deletion_File));
+                                // Deletion_Files.Add(Working_Directory + @"\" + Path.GetFileName(Deletion_File));
+                            }
+
+                            // CAUTION, !Move_Backwards will cause Get_Segment_Info() to return only file names without path here - which is a different meaning.
+                            else { Deleting(Sync_Path + Deletion_File); Deletion_Files.Add(Sync_Path + Deletion_File); }
+
+                          
+                        }
+                        iConsole(400, 600, string.Join("\n", Deletion_Files));
+                    }
+                    // ========================================= 
+
+
 
                     foreach (string File_Path in Backup_Files)
                     {
@@ -4209,9 +4245,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }
 
 
-                // List<string> Deletion_Files = Get_Segment_Info(Target_Backup, "Removed_Files", "", true, true);                
-                // iConsole(400, 600, string.Join("\n", Deletion_Files));
-
+           
 
                 // iConsole(600, 100, Working_Directory + "   To   " + Sync_Path + "This");
                 if (Directory.Exists(Working_Directory))
@@ -4220,10 +4254,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
               
 
                     // Execute deletion, but only of entries inside of the Axe_Info.txt of the Target_Backup
-                    foreach (string Deletion_File in Get_Segment_Info(Target_Backup, "Removed_Files", "", true, true))
-                    {
-                        Deleting(Sync_Path + Deletion_File);
-                    }
+                    //foreach (string Deletion_File in Get_Segment_Info(Target_Backup, "Removed_Files", "", true, true))
+                    //{
+                    //    Deleting(Sync_Path + Deletion_File);
+                    //}
                 }
 
 
@@ -4651,7 +4685,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         else if (!Is_Full_Path && !Segment_Info.Contains(Line)) { Segment_Info.Add(Line); }
                     }
                 }
+
+                // Quit the loop because we alread got the info of the Backup we need
+                if (Backup_Name != "Any" && Path.GetFileName(Backup) == Backup_Name) { break; } 
             }
+
 
             return Segment_Info;
         }
