@@ -4224,14 +4224,19 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
             try
-            {   Info_File =
+            {   // Make sure there is a backup dir      
+                if (!File.Exists(Backup_Path + Directory_Name + @"\" + Package_Name))
+                { Directory.CreateDirectory(Backup_Path + Directory_Name + @"\" + Package_Name); }
+                
+                
+                Info_File =
                 @"Directory_Name = " + Sync_Path.Remove(Sync_Path.Length - 1) +
-                "\nVersion = " + Target_Backup_Name;
+                "\nVersion = " + Target_Backup_Name + "\n\n\n";
 
                 if (Changed_Files != "")
                 {
                     Info_File +=
-                        "\n\n\n//============================================================\\\\" +
+                        "//============================================================\\\\" +
                         "\nChanged_Files:" +
                         "\n//============================================================\\\\" +
                         "\n" + Changed_Files + "\n\n\n"; // Append_File_Info can be a joined List<string> of file names here.                 
@@ -4488,7 +4493,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
             List<string> Added_Files = new List<string>();
             List<string> Missing_Files = new List<string>();
-
+           
 
             Registered_Files = new List<string>(); // Clear global Variables
             Not_Matched_Yet = new List<string>();
@@ -4520,18 +4525,28 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }            
             }
 
+
+
+
+            List<string> Older_Missing_Files = Get_Segment_Info("Any", "Removed_Files", "", true);
+
+         
             foreach (string Register in Registered_Files)
             { 
                 // + "\n" because these are full paths and the eye should be able to tell where the next path beginns
-                if (!List_Matches_Filename(Main_Directory, Register, true)) { Missing_Files.Add(Register); } // Detected a removed file               
+                if (!List_Matches_Filename(Main_Directory, Register, true)) // Detected a removed file 
+                {
+                    // Add to list, if this file is not already mentioned in any older patch
+                    if (!List_Matches_Filename(Older_Missing_Files, Register, true)) { Missing_Files.Add(Register); }
+                }               
             }
 
-            // iConsole(400, 600, string.Join("\n", Missing_Files));
+            // iConsole(400, 600, string.Join("\n", Older_Missing_Files));
 
 
 
 
-            if (Difference_List.Count() == 0) 
+            if (Difference_List.Count() == 0 && Missing_Files.Count() == 0) 
             {
                 if (!Is_Auto_Stash) { iConsole(200, 100, "\nNo file changes detected."); }
                 return;
@@ -4543,20 +4558,25 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
             Temporal_E.Clear(); // From the usage above
 
-            foreach (string Entry in Difference_List)
-            {
-                Temporal_B = Entry.Replace(Sync_Path, "");
 
-                Temporal_E.Add(Temporal_B); // Gonna use this in the Info report below
-                Verify_Copy(Entry, Backup_Path + Backup_Folder + @"\" + Package_Name + @"\" + Temporal_B);
+            if (Difference_List.Count() > 0)
+            {   foreach (string Entry in Difference_List)
+                {
+                    Temporal_B = Entry.Replace(Sync_Path, "");
+
+                    Temporal_E.Add(Temporal_B); // Gonna use this in the Info report below
+                    Verify_Copy(Entry, Backup_Path + Backup_Folder + @"\" + Package_Name + @"\" + Temporal_B);
+                }
             }
+      
+
 
             bool Has_Collapsed = Collapse_Oldest_Backup("Last");
 
 
             Create_Backup_Info(Backup_Folder, Package_Name, // "Created a backup, based on different file sizes from:\n\n\n" +
                 string.Join("\n", Temporal_E), false, true, true,
-                string.Join("\n", Added_Files), string.Join("\n", Missing_Files)); // "Load_Backup" was Has_Collapsed
+                string.Join("\n", Added_Files), string.Join("\n\n", Missing_Files)); // "Load_Backup" was Has_Collapsed
 
             Refresh_Backup_Stack();
 
@@ -4565,18 +4585,58 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
         //=====================//
-
         public bool List_Matches_Filename(List<string> Path_List, string File_Name, bool File_Name_Is_Path = false)
         {
             foreach (string File_Path in Path_List)
             {
-                if (File_Name_Is_Path && Path.GetFileName(File_Path) == Path.GetFileName(File_Name)) { return true; }
-                else if (!File_Name_Is_Path && Path.GetFileName(File_Path) == File_Name) { return true; }
+                try // Sometimes illegal characters crash this..
+                {
+                    if (File_Name_Is_Path && Path.GetFileName(File_Path) == Path.GetFileName(File_Name)) { return true; }
+                    else if (!File_Name_Is_Path && Path.GetFileName(File_Path) == File_Name) { return true; }
+                }
+                catch { }
             }
             return false;
         }
 
         //=====================//
+
+        public List<string> Get_Segment_Info(string Backup_Name, string Segment_Name, string Stop_Segment = "", bool Is_Full_Path = false)
+        {
+            List<string> Segment_Info = new List<string>();
+
+
+            foreach (string Backup in Get_All_Directories(Backup_Path + Mod_Name, true))
+            {
+                if (Backup_Name != "Any" && Path.GetFileName(Backup) != Backup_Name) { continue; } // We only want info from target Backup(s)
+
+
+                if (File.Exists(Backup + Backup_Info))
+                {
+                    bool Started = false;
+
+                    foreach (string Line in File.ReadAllLines(Backup + Backup_Info))
+                    {
+                        // Skipping everything but the chapter after "Removed_Files"
+                        if (Line.StartsWith(Segment_Name)) { Started = true; }
+                        else if (Stop_Segment != "" && Line.StartsWith(Stop_Segment)) { break; } // Exit at Stop_Segment
+
+                        else if (!Started) { continue; }
+                        else if (Line.StartsWith("//") || Line.StartsWith("#") || Line == "\n" || Line == "") { continue; }
+
+
+                        else if (Is_Full_Path && !List_Matches_Filename(Segment_Info, Line, true)) { Segment_Info.Add(Line); }// Preventing double entries 
+                        else if (!Is_Full_Path && !Segment_Info.Contains(Line)) { Segment_Info.Add(Line); }
+                    }
+                }
+            }
+
+            return Segment_Info;
+        }
+
+        //=====================//
+
+
         // Set Shall_Match to false to return a list of files that never matched instead of the matched ones.
         public List<string> Check_Files(List<string> Return_If_Not_Matched, List<string> Return_If_Matched, bool Shall_Match = true, bool Return_Full_Path = true)
         {
