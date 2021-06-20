@@ -4056,6 +4056,50 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         }
 
 
+
+        
+
+        public void Manage_File_Presence(string Backup_Name, string Working_Directory, string Segment_Name, string Stop_Segment, bool Move_Backwards, bool All_Files_Since_This)
+        {
+            // List<string> Deletion_Files = new List<string>();
+        
+            if (All_Files_Since_This) // Remove deletion files from all backups between top most backup and the bottom one.
+            {
+                // iConsole(400, 600, "Targeting " + Backup_Name);
+
+                // Deliberately NOT using "Any" as backupname here because we need to filter out only the selected backups!
+                foreach (string Noted_File in Get_Segment_Info(Backup_Name, Segment_Name, Stop_Segment, true, !Move_Backwards))
+                {
+
+
+                    if (Segment_Name == "Removed_Files")
+                    {
+                        if (Move_Backwards) // Means restore it from the newest possible backup
+                        {
+                            // Deletion_File is a full path here, contrary to below!                           
+                            if (File.Exists(Noted_File)) { File.Copy(Noted_File, Working_Directory + @"\" + Path.GetFileName(Noted_File), true); }
+                            // Deletion_Files.Add(Working_Directory + @"\" + Path.GetFileName(Deletion_File));
+                        }
+
+                            // CAUTION, !Move_Backwards will cause Get_Segment_Info() to return only file names without path here - which is a different meaning.
+                        else { Deleting(Sync_Path + Noted_File); } // Deletion_Files.Add(Sync_Path + Deletion_File); }
+                    }
+
+
+                    else if (Segment_Name == "Added_Files") // Then reverse the order
+                    {
+                        if (!Move_Backwards) { if (File.Exists(Noted_File)) { File.Copy(Noted_File, Working_Directory + @"\" + Path.GetFileName(Noted_File), true); } }
+                        else { Deleting(Sync_Path + Noted_File); }                   
+                    }
+
+                }
+                // iConsole(400, 600, string.Join("\n", Deletion_Files));
+            }
+        }
+
+
+
+
         // All_Files_Since_This means all files in other Backups then this one, that are between the Current_Version and the Target_Backup.
         public void Restore(string Current_Version, string Target_Backup, bool Move_Backwards, bool All_Files_Since_This = true)
         {   // string Current = Select_List_View_First(List_View_Selection);
@@ -4147,69 +4191,45 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 for (int i = Start_At; i <= Passed_Slots; i++)
                 {
                     Cycles++;
-                    
-                    string Backup_Name = Path.GetFileName(Backups[i]);
-                    Stack_History.Add(Backup_Name);
 
 
-                
-                    List<string> Deletion_Files = new List<string>();
 
                     // ============ Deletion Process ============ 
-                    if (All_Files_Since_This) // Remove deletion files from all backups between top most backup and the bottom one.
+                    try // Path.GetFileName(Backups[i - 1] might cause crashes..
                     {
-                        // iConsole(400, 600, "Targeting " + Backup_Name);
+                        string Backup_Name = Path.GetFileName(Backups[i]);
+                        Stack_History.Add(Backup_Name);
+
+                        // Need the shift of -1 slot because the removed files shall be re-added once we pass this Backup to the next oldest one, not instantly.
+                        if (Move_Backwards) { Backup_Name = Path.GetFileName(Backups[i - 1]); }
 
 
-                        if (Deletions_Of_Last_Patch.Count > 0) // Undoing Deletions from the Backup in the last loop cycle
-                        {   // Need the delay of 1 slot because the removed files shall be re-added once we pass this Backup to the next oldest one
-                            foreach (string File_Path in Deletions_Of_Last_Patch)
-                            {
-                                File.Copy(File_Path, Working_Directory + @"\" + Path.GetFileName(File_Path), true); 
-                            }
+                        Manage_File_Presence(Backup_Name, Working_Directory, "Added_Files", "Removed_Files", Move_Backwards, All_Files_Since_This);          
+                        Manage_File_Presence(Backup_Name, Working_Directory, "Removed_Files", "", Move_Backwards, All_Files_Since_This);
+                                              
+                    } catch {}
+                    // ==========================================
 
-                            Deletions_Of_Last_Patch = new List<string>();
-                        }
-
-
-                        // Deliberately NOT using "Any" as backupname here because we need to filter out only the selected backups!
-                        foreach (string Deletion_File in Get_Segment_Info(Backup_Name, "Removed_Files", "", true, !Move_Backwards))
-                        {
-
-                            if (Move_Backwards) // Means restore it from the newest possible backup
-                            {   
-                                // Deletion_File is a full path here, contrary to below!                           
-                                if (File.Exists(Deletion_File)) { Deletions_Of_Last_Patch.Add(Deletion_File); } 
-                                // { Deletions_Of_Last_Patch.Add(Working_Directory + @"\" + Path.GetFileName(Deletion_File)); }                                                       
-                            }
-
-                            // CAUTION, !Move_Backwards will cause Get_Segment_Info() to return only file names without path here - which is a different meaning.
-                            else { Deleting(Sync_Path + Deletion_File); } // Deletion_Files.Add(Sync_Path + Deletion_File); }
-                          
-                        }
-                     
-
-                        iConsole(400, 600, string.Join("\n", Deletion_Files));
-                    }
-                    // ========================================= 
 
 
 
                     foreach (string File_Path in Backup_Files)
-                    {
-                        string Target_Directory = Path.GetDirectoryName(Working_Directory + File_Path);
-                        if (!Directory.Exists(Target_Directory)) { Directory.CreateDirectory(Target_Directory); }
-
-                        
-
-                        string Selected_File = Backups[i] + File_Path; // The file path inside of older or newer backups!
-                        
-                        if (File.Exists(Selected_File))
+                    {   try 
                         {
-                            // Overwrite Copy the last iteration inside of the Working Directory!
-                            File.Copy(Selected_File, Working_Directory + File_Path, true);
-                            // iConsole(600, 100, Selected_File + "   To   " + Working_Directory + File_Path);
-                        }
+                            string Target_Directory = Path.GetDirectoryName(Working_Directory + File_Path);
+                            if (!Directory.Exists(Target_Directory)) { Directory.CreateDirectory(Target_Directory); }
+
+                        
+
+                            string Selected_File = Backups[i] + File_Path; // The file path inside of older or newer backups!
+                        
+                            if (File.Exists(Selected_File))
+                            {
+                                // Overwrite Copy the last iteration inside of the Working Directory!
+                                File.Copy(Selected_File, Working_Directory + File_Path, true);
+                                // iConsole(600, 100, Selected_File + "   To   " + Working_Directory + File_Path);
+                            }
+                        } catch {}
                     }
                 }
 
