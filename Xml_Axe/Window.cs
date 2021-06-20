@@ -4215,7 +4215,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
         // Use "Time_Stamp" as argument for Target_Backup_Name
-        private void Create_Backup_Info(string Directory_Name, string Target_Backup_Name, string Changed_Files = "", bool Is_Base_Version = false, bool Load_Backup = true, string Added_Files = "", string Removed_Files = "")
+        private void Create_Backup_Info(string Directory_Name, string Target_Backup_Name, string Changed_Files = "", bool Is_Base_Version = false, bool Load_Backup = true, bool Create_Branches = false, string Added_Files = "", string Removed_Files = "")
         {  
             // Package_Name variable is updated by Button_Run_Click() or Create_New_Backup() 
             string Info_Name = Backup_Info;
@@ -4261,8 +4261,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             } catch { iConsole(600, 200, "\nFailed to create or find the path for Axe_Info.txt."); }
 
 
-            
-            try
+
+            if (Create_Branches) try
             {   Info_File = "";
                 string Own_Branch = Backup_Path + Directory_Name + @"\" + Package_Name + @"\Axe_Branch.txt";
                 string Parent_Branch = Backup_Path + Directory_Name + @"\" + Current_Backup + @"\Axe_Branch.txt";
@@ -4514,31 +4514,17 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
             foreach (string Possability in Not_Matched_Yet)
             {              
-                bool Matched = false;
-
-                foreach (string Register in Registered_Files)
-                {   // We assume Check_Files() above returned full paths, in this case                   
-                    if (Path.GetFileName(Possability) == Path.GetFileName(Register)) { Matched = true; break; }
-                }
-
-                if (!Matched) { Added_Files.Add(Path.GetFileName(Possability)); Difference_List.Add(Possability); } // Detected new file!              
+                if (!List_Matches_Filename(Registered_Files, Possability, true)) 
+                {   Added_Files.Add(Path.GetFileName(Possability));
+                    Difference_List.Add(Possability); // Detected new file!   
+                }            
             }
-
-
 
             foreach (string Register in Registered_Files)
             { 
-                bool Matched = false;
-
-                foreach (string Equivalent in Main_Directory)
-                {
-                    if (Path.GetFileName(Equivalent) == Path.GetFileName(Register)) { Matched = true; break; }
-                }
-
                 // + "\n" because these are full paths and the eye should be able to tell where the next path beginns
-                if (!Matched) { Missing_Files.Add(Register + "\n"); } // Detected a removed file               
+                if (!List_Matches_Filename(Main_Directory, Register, true)) { Missing_Files.Add(Register); } // Detected a removed file               
             }
-
 
             // iConsole(400, 600, string.Join("\n", Missing_Files));
 
@@ -4569,7 +4555,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
             Create_Backup_Info(Backup_Folder, Package_Name, // "Created a backup, based on different file sizes from:\n\n\n" +
-                string.Join("\n", Temporal_E), false, true,
+                string.Join("\n", Temporal_E), false, true, true,
                 string.Join("\n", Added_Files), string.Join("\n", Missing_Files)); // "Load_Backup" was Has_Collapsed
 
             Refresh_Backup_Stack();
@@ -4578,6 +4564,17 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         }
 
 
+        //=====================//
+
+        public bool List_Matches_Filename(List<string> Path_List, string File_Name, bool File_Name_Is_Path = false)
+        {
+            foreach (string File_Path in Path_List)
+            {
+                if (File_Name_Is_Path && Path.GetFileName(File_Path) == Path.GetFileName(File_Name)) { return true; }
+                else if (!File_Name_Is_Path && Path.GetFileName(File_Path) == File_Name) { return true; }
+            }
+            return false;
+        }
 
         //=====================//
         // Set Shall_Match to false to return a list of files that never matched instead of the matched ones.
@@ -4603,7 +4600,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                             {
                                 string Name_B = Path.GetFileName(File_B);
 
-                                if (Return_Full_Path && !Registered_Files.Contains(File_B)) { Registered_Files.Add(File_B); }
+                                if (Return_Full_Path && !Registered_Files.Contains(File_B)) { Registered_Files.Add(File_B); } 
                                 else if (!Return_Full_Path && !Registered_Files.Contains(Name_B)) { Registered_Files.Add(Name_B); } // Registered_Files is a Global Variable
 
 
@@ -4645,20 +4642,19 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         }
 
 
-                        if (!Name_Matched) 
-                        {
-                            if (Return_Full_Path) 
+                        if (!Name_Matched)
+                        {   if (Return_Full_Path)
                             {   bool Matched = false;
 
                                 foreach (string Possability in Not_Matched_Yet) // Not_Matched_Yet is a Global Variable                                                            
                                 {
-                                    if (Path.GetFileName(Possability) == Name_A) { Matched = true; break; }                                
+                                    if (Path.GetFileName(Possability) == Name_A) { Matched = true; break; }
                                 }
-                                if (!Matched) { Not_Matched_Yet.Add(File_A); }                                                                          
-                            }
-                            else if (!Not_Matched_Yet.Contains(Name_A)) { Not_Matched_Yet.Add(Name_A + "\n"); }    
-                        } 
+                                if (!Matched) { Not_Matched_Yet.Add(File_A); }
 
+                            }
+                            else if (!Not_Matched_Yet.Contains(Name_A)) { Not_Matched_Yet.Add(Name_A); }
+                        }
 
 
 
