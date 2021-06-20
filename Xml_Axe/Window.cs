@@ -683,7 +683,7 @@ namespace Xml_Axe
                 {
                     if (Folder_Path == Current_Backup)
                     {
-                        iConsole(540, 140, "\nYou can not delete the selected backup, \nplease checkout any other backup and try again.\nI recommend to checkout the newest possible one.");
+                        iConsole(540, 140, "\nYou can not delete the selected backup, \nplease checkout -> any other backup and try again.\nI recommend to checkout the newest possible one.");
                         return; // Exit as the Checked out Backup can not be deleted.
                     }
 
@@ -4220,10 +4220,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             // Package_Name variable is updated by Button_Run_Click() or Create_New_Backup() 
             string Info_Name = Backup_Info;
             string Root_Backup = Backup_Path + Directory_Name + Info_Name;
+            string Info_File = "";
 
 
             try
-            {   string Info_File =
+            {   Info_File =
                 @"Directory_Name = " + Sync_Path.Remove(Sync_Path.Length - 1) +
                 "\nVersion = " + Target_Backup_Name;
 
@@ -4238,9 +4239,36 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 File.WriteAllText(Backup_Path + Directory_Name + @"\" + Package_Name + Info_Name, Info_File);
 
-            } catch { iConsole(600, 200, "\nFailed to create or find the path for Axe_Info.txt."); } 
+            } catch { iConsole(600, 200, "\nFailed to create or find the path for Axe_Info.txt."); }
+
+
+
+            try
+            {   string Own_Branch = Backup_Path + Directory_Name + @"\" + Package_Name + @"\Axe_Branch.txt";
+                string Parent_Branch = Backup_Path + Directory_Name + @"\" + Current_Backup + @"\Axe_Branch.txt";
+                
+
+                string Branch_Header = "Topmost Backup name is the newest one. The lower they are, the older." +
+                  "\n\n\n//============================================================\\\\" +
+                  "\nParent Files:" +
+                  "\n//============================================================\\\\" +
+                  "\n";
+
+
+
+                if (File.Exists(Parent_Branch)) // Inherit Axe_Branch.txt of the Parent
+                {   Info_File = File.ReadAllText(Parent_Branch);
+                    // Info_File = Info_File.Replace(Branch_Header, Branch_Header + Current_Backup + "\n");
+                }
+
+                else { Info_File = Branch_Header + Current_Backup; } // Create a own Axe_Branch.txt
+
+                File.WriteAllText(Own_Branch, Info_File + Current_Backup + "\n");
+
+            } catch { iConsole(600, 200, "\nFailed to create or find the path for Axe_Branch.txt."); } 
        
-            
+
+
             try
             {
                 if (Is_Base_Version) { Info_Name = @"_Base" + Backup_Info; }
@@ -4649,11 +4677,16 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     if (List_View_Selection.Items.Count > 0)
                     {
 
-                        Temporal_B = List_View_Selection.Items[0].Text;
-                        if (Temporal_B.EndsWith("Auto_Stash")) { Temporal_B = List_View_Selection.Items[1].Text; } // Trying the next available one
+                        Temporal_B = "";
 
+                        foreach (ListViewItem Item in List_View_Selection.Items)
+                        {
+                            if (!Item.Text.EndsWith("Auto_Stash")) { Temporal_B = Item.Text; break; } // Just get the first that is no Auto_Stash
+                        }
+
+                 
                         // We need to be up to date, otherwise this action would twist the sync
-                        if (Current_Backup != Temporal_B && !Temporal_B.EndsWith("Auto_Stash")) 
+                        if (Current_Backup != Temporal_B) // If Current_Backup is NOT the top-most one
                         {
                             iDialogue(540, 236, "Continue", "Cancel", "false", "false", "\nA older Backup is currently loaded/checked out.\n" +
                             //"Please load the newest/top most backup, because it \nallows us to continue the chain in correct order."
