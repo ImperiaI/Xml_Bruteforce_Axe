@@ -4076,7 +4076,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 foreach(string Entry in Backups)
                 {
-                    if (Entry.EndsWith("Current")) { Backups.Remove(Entry); } // break; }
+                    if (Entry.EndsWith("Current")) { Backups.Remove(Entry); break; }
                 }
 
 
@@ -4140,7 +4140,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 int Cycles = 0;
                 List<string> Stack_History = new List<string>();
-               
+                List<string> Deletions_Of_Last_Patch = new List<string>();
+
 
 
                 for (int i = Start_At; i <= Passed_Slots; i++)
@@ -4151,14 +4152,25 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     Stack_History.Add(Backup_Name);
 
 
-
-                    List<string> Deletions_Of_Last_Patch = new List<string>();
+                
                     List<string> Deletion_Files = new List<string>();
 
                     // ============ Deletion Process ============ 
                     if (All_Files_Since_This) // Remove deletion files from all backups between top most backup and the bottom one.
                     {
-                        iConsole(400, 600, "Targeting " + Backup_Name);
+                        // iConsole(400, 600, "Targeting " + Backup_Name);
+
+
+                        if (Deletions_Of_Last_Patch.Count > 0) // Undoing Deletions from the Backup in the last loop cycle
+                        {   // Need the delay of 1 slot because the removed files shall be re-added once we pass this Backup to the next oldest one
+                            foreach (string File_Path in Deletions_Of_Last_Patch)
+                            {
+                                File.Copy(File_Path, Working_Directory + @"\" + Path.GetFileName(File_Path), true); 
+                            }
+
+                            Deletions_Of_Last_Patch = new List<string>();
+                        }
+
 
                         // Deliberately NOT using "Any" as backupname here because we need to filter out only the selected backups!
                         foreach (string Deletion_File in Get_Segment_Info(Backup_Name, "Removed_Files", "", true, !Move_Backwards))
@@ -4167,17 +4179,16 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                             if (Move_Backwards) // Means restore it from the newest possible backup
                             {   
                                 // Deletion_File is a full path here, contrary to below!                           
-                                if (File.Exists(Deletion_File)) { File.Copy(Deletion_File, Working_Directory + @"\" + Path.GetFileName(Deletion_File), true); }
-
-                                Deletion_Files.Add(Deletion_File + "\nInto \n" + Working_Directory + @"\" + Path.GetFileName(Deletion_File));
-                                // Deletion_Files.Add(Working_Directory + @"\" + Path.GetFileName(Deletion_File));
+                                if (File.Exists(Deletion_File)) { Deletions_Of_Last_Patch.Add(Deletion_File); } 
+                                // { Deletions_Of_Last_Patch.Add(Working_Directory + @"\" + Path.GetFileName(Deletion_File)); }                                                       
                             }
 
                             // CAUTION, !Move_Backwards will cause Get_Segment_Info() to return only file names without path here - which is a different meaning.
-                            else { Deleting(Sync_Path + Deletion_File); Deletion_Files.Add(Sync_Path + Deletion_File); }
-
+                            else { Deleting(Sync_Path + Deletion_File); } // Deletion_Files.Add(Sync_Path + Deletion_File); }
                           
                         }
+                     
+
                         iConsole(400, 600, string.Join("\n", Deletion_Files));
                     }
                     // ========================================= 
