@@ -86,7 +86,7 @@ namespace Xml_Axe
         bool At_Top_Level = true;
         string Last_Backup_Time, Time_Stamp, Current_Hour = "";
         public int Last_Backup_Minute, Current_Minute = 0;
-        public int Fetch_Intervall_Minutes = 5;
+        public int Fetch_Intervall_Minutes = 1;
        
 
         string[] Balancing_Tags = null; // new string[] { };
@@ -4610,9 +4610,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             // List<string> Backup_File_List = new List<string>();
             List<string> Main_Directory = Get_All_Files(Sync_Path);
             List<string> Matches_List = new List<string>();
-
+           
+            List<string> Added_File_Paths = new List<string>();
             List<string> Added_Files = new List<string>();
             List<string> Missing_Files = new List<string>();
+            List<string> Changed_Files = new List<string>();
            
 
             Registered_Files = new List<string>(); // Clear global Variables
@@ -4625,12 +4627,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Matches_List = Check_Files(Main_Directory, Get_All_Files(Found_Dir), false, true);
 
 
-                if (Found_Dir == The_Backup_Folders[0]) { Difference_List = Matches_List; } // Just dump the whole list into the other one as its empty.
+                if (Found_Dir == The_Backup_Folders[0]) { Difference_List = Matches_List; } // Just dump the whole path list into the other one as its empty.
                 else
                 {
-                    foreach (string Entry in Matches_List)
+                    foreach (string File_Path in Matches_List)
                     {
-                        if (!Difference_List.Contains(Entry)) { Difference_List.Add(Entry); }
+                        if (!Difference_List.Contains(File_Path)) { Difference_List.Add(File_Path); }
                     }               
                 }                         
             }
@@ -4638,11 +4640,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             
 
             foreach (string Possability in Not_Matched_Yet)
-            {              
-                if (!List_Matches_Filename(Registered_Files, Possability, true)) 
-                {   Added_Files.Add(Path.GetFileName(Possability));
-                    Difference_List.Add(Possability); // Detected new file!   
-                }            
+            {
+                if (!List_Matches_Filename(Registered_Files, Possability, true))
+                { Added_File_Paths.Add(Possability); }// Detected new file!                               
             }
 
 
@@ -4685,25 +4685,34 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 {
                     Temporal_B = Entry.Replace(Sync_Path, "");
 
-                    Temporal_E.Add(Temporal_B); // Gonna use this in the Info report below
+                    Changed_Files.Add(Temporal_B); // Gonna use this in the Info report below
                     Verify_Copy(Entry, Backup_Path + Backup_Folder + @"\" + Package_Name + @"\" + Temporal_B);
                 }
             }
-      
+
+            if (Added_File_Paths.Count() > 0)
+            {
+                foreach (string Entry in Added_File_Paths)
+                {
+                    Temporal_B = Entry.Replace(Sync_Path, "");
+
+                    Added_Files.Add(Temporal_B);
+                    Verify_Copy(Entry, Backup_Path + Backup_Folder + @"\" + Package_Name + @"\" + Temporal_B);
+                }
+            }
+
 
 
             bool Has_Collapsed = Collapse_Oldest_Backup("Last");
 
 
             Create_Backup_Info(Backup_Folder, Package_Name, // "Created a backup, based on different file sizes from:\n\n\n" +
-                string.Join("\n", Temporal_E), false, true, true,
+                string.Join("\n", Changed_Files), false, true, true,
                 string.Join("\n", Added_Files), string.Join("\n", Missing_Files)); // "Load_Backup" was Has_Collapsed
 
             // Use "\n\n" for additional new lines between the entries.
 
-            Refresh_Backup_Stack();
-
-            Temporal_E.Clear();         
+            Refresh_Backup_Stack();      
         }
 
 
