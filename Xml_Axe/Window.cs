@@ -3839,7 +3839,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                     if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; } // User Abbort
 
-                    Create_New_Backup(true); // Check for AutoStash changes
+                    // Create_New_Backup(true); // Check for AutoStash changes
 
 
                     // Moving backwards in the history means we better not change the newest version of files that are not inside of the target patch
@@ -4200,12 +4200,33 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         string Backup_Name = Path.GetFileName(Backups[i]);
                         Stack_History.Add(Backup_Name);
 
-                        // Need the shift of -1 slot because the removed files shall be re-added once we pass this Backup to the next oldest one, not instantly.
-                        if (Move_Backwards) { Backup_Name = Path.GetFileName(Backups[i - 1]); }
-
 
                         Manage_File_Presence(Backup_Name, Working_Directory, "Added_Files", "Removed_Files", Move_Backwards, All_Files_Since_This);          
                         Manage_File_Presence(Backup_Name, Working_Directory, "Removed_Files", "", Move_Backwards, All_Files_Since_This);
+
+
+                    
+                        // Need the shift of -1 slot because the removed files shall be re-added once we pass this Backup to the next oldest one, not instantly.
+                        if (Move_Backwards)
+                        {
+                            if (i == Passed_Slots) // When reached the bottom-most slot 
+                            {
+                                iConsole(400, 100, "Backwards to " + i + " and edit " + Path.GetFileName(Backups[i])); 
+                                Manage_File_Presence(Path.GetFileName(Backups[i]), Working_Directory, "Added_Files", "Removed_Files", Move_Backwards, All_Files_Since_This);
+                                Manage_File_Presence(Path.GetFileName(Backups[i]), Working_Directory, "Removed_Files", "", Move_Backwards, All_Files_Since_This);
+                            }
+                            Backup_Name = Path.GetFileName(Backups[i - 1]); 
+                        }
+                        else if (i == 1) // When reached the top-most slot 
+                        {
+                            iConsole(400, 100, "Progressing to " + i + " and " + Passed_Slots + " and edit " + Path.GetFileName(Backups[Passed_Slots]));
+                            Manage_File_Presence(Path.GetFileName(Backups[Passed_Slots]), Working_Directory, "Added_Files", "Removed_Files", Move_Backwards, All_Files_Since_This);
+                            Manage_File_Presence(Path.GetFileName(Backups[Passed_Slots]), Working_Directory, "Removed_Files", "", Move_Backwards, All_Files_Since_This);
+                        }
+
+
+                        iConsole(400, 100, "Backwards to " + i + " and edit " + Backup_Name); 
+                                               
                                               
                     } catch {}
                     // ==========================================
