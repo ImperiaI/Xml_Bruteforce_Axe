@@ -4060,9 +4060,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
 
-        
 
-        public void Manage_File_Presence(string Backup_Name, string Working_Directory, string Segment_Name, string Stop_Segment, bool Move_Backwards, bool All_Files_Since_This)
+        public void Apply_Changes(string Backup_Name, string Working_Directory, string Segment_Name, string Stop_Segment, bool Move_Backwards)
         {
             string Noted_Path = "";
             List<string> Managed_Files = new List<string>();
@@ -4072,10 +4071,55 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             if (Move_Backwards) { Backups.Reverse(); }
 
 
+            // try { 
+         
+                // Deliberately NOT using "Any" as backupname here because we need to filter out only the selected backups!
+                foreach (string Noted_File in Get_Segment_Info(Backup_Name, Segment_Name, Stop_Segment, false, !Move_Backwards))
+                {
+
+                    Noted_Path = "";
+                    bool Found_File = false;
+
+                    // foreach (string Found_Dir in Backups)
+                    for (int i = 0; i < Backups.Count(); i++)
+                    {
+                        Noted_Path = Backups[i] + @"\" + Noted_File;
+                        if (File.Exists(Noted_Path)) { Found_File = true; break; } // Assigned the right path
+                    }
 
 
-            if (All_Files_Since_This) // Remove deletion files from all backups between top most backup and the bottom one.
-            {   
+
+
+                    if (Segment_Name == "Removed_Files")
+                    {
+                        Deleting(Sync_Path + Noted_File);
+                        if (!Dont_Copy.Contains(Noted_File)) { Dont_Copy.Add(Noted_File); }
+                        if (Debug_Mode) { Managed_Files.Add("Delete  " + Sync_Path + Noted_File); }
+                    }
+                    else if (Segment_Name == "Added_Files")
+                    {
+                        File.Copy(Noted_Path, Working_Directory + @"\" + Noted_File, true);             
+                        if (Debug_Mode) { Managed_Files.Add("Create  " + Noted_File); }
+                    }                                                                
+                }
+
+                if (Debug_Mode && Managed_Files.Count() > 1) { iConsole(400, 600, "\n" + string.Join("\n", Managed_Files)); }
+            //} catch {}
+        }
+
+        
+
+        public void Revert_Changes(string Backup_Name, string Working_Directory, string Segment_Name, string Stop_Segment, bool Move_Backwards)
+        {
+            string Noted_Path = "";
+            List<string> Managed_Files = new List<string>();
+            List<string> Backups = Get_All_Directories(Backup_Path + Backup_Folder, true);
+
+            if (Debug_Mode) { Managed_Files.Add("Targeting " + Backup_Name + "\n"); }
+            if (Move_Backwards) { Backups.Reverse(); }
+
+
+ 
                 // Deliberately NOT using "Any" as backupname here because we need to filter out only the selected backups!
                 foreach (string Noted_File in Get_Segment_Info(Backup_Name, Segment_Name, Stop_Segment, false, !Move_Backwards))
                 {
@@ -4096,7 +4140,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     if (Segment_Name == "Removed_Files")
                     {
                         // Means restore it from the newest possible backup
-                        if (Move_Backwards && Found_File)  // Deletion_File is a full path here, contrary to below!   
+                        if (Move_Backwards && Found_File && !Dont_Copy.Contains(Noted_File))  // Deletion_File is a full path here, contrary to below!   
                         { 
                             File.Copy(Noted_Path, Working_Directory + @"\" + Noted_File, true);
                             // if (Dont_Copy.Contains(Noted_File)) { Dont_Copy.Remove(Noted_File); } // Revert that command
@@ -4106,7 +4150,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         // CAUTION, !Move_Backwards will cause Get_Segment_Info() to return only file names without path here - which is a different meaning.
                         else
                         {
-                            Deleting(Sync_Path + Noted_File); Dont_Copy.Add(Noted_File); 
+                            Deleting(Sync_Path + Noted_File);
+                            if (!Dont_Copy.Contains(Noted_File)) { Dont_Copy.Add(Noted_File); }
                             if (Debug_Mode) { Managed_Files.Add("Delete  " + Sync_Path + Noted_File); }                       
                         }                     
                     }
@@ -4116,21 +4161,20 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     {
                         if (Move_Backwards) 
                         {
-                            Deleting(Sync_Path + Noted_File); Dont_Copy.Add(Noted_File); 
+                            Deleting(Sync_Path + Noted_File);
+                            if (!Dont_Copy.Contains(Noted_File)) { Dont_Copy.Add(Noted_File); }
                             if (Debug_Mode) { Managed_Files.Add("Delete  " + Sync_Path + Noted_File); }                          
                         }
-                        else if (Found_File) 
+                        else if (Found_File && !Dont_Copy.Contains(Noted_File)) 
                         { 
                             File.Copy(Noted_Path, Working_Directory + @"\" + Noted_File, true);
                             // if (Dont_Copy.Contains(Noted_File)) { Dont_Copy.Remove(Noted_File); }
                             if (Debug_Mode) { Managed_Files.Add("Create  " + Noted_File); }
                         }             
-                    }
-
+                    }                           
                 }
 
                 if (Debug_Mode && Managed_Files.Count() > 1) { iConsole(400, 600, "\n" + string.Join("\n", Managed_Files)); }
-            }
         }
 
 
@@ -4238,26 +4282,51 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         if (Move_Backwards) { Backup_Name = Path.GetFileName(Backups[i - 1]); }
 
                         // Need the shift of -1 slot because the removed files shall be re-added once we pass this Backup to the next oldest one, not instantly.
-                        //else if (i == Start_At) // When reached the top-most slot 
+                        else if (i == Start_At) // When reached the top-most slot 
+                        {
+                            // iConsole(400, 100, "Progressing to " + i + " and " + 0 + " and edit " + Path.GetFileName(Backups[0]));
+                            Revert_Changes(Path.GetFileName(Backups[0]), Working_Directory, "Added_Files", "Removed_Files", Move_Backwards);
+                            Revert_Changes(Path.GetFileName(Backups[0]), Working_Directory, "Removed_Files", "", Move_Backwards);
+                        }
+
+
+
+                        if (All_Files_Since_This) // Remove deletion files from all backups between top most backup and the bottom one.
+                        {
+                            Revert_Changes(Backup_Name, Working_Directory, "Added_Files", "Removed_Files", Move_Backwards);
+                            Revert_Changes(Backup_Name, Working_Directory, "Removed_Files", "", Move_Backwards);
+                        }
+
+
+                        //if (Move_Backwards && i == Start_At) // First Slot, don't place this into a || satement above
                         //{
-                        //     // iConsole(400, 100, "Progressing to " + i + " and " + 0 + " and edit " + Path.GetFileName(Backups[0]));
-                        //    Manage_File_Presence(Path.GetFileName(Backups[0]), Working_Directory, "Added_Files", "Removed_Files", Move_Backwards, All_Files_Since_This);
-                        //    Manage_File_Presence(Path.GetFileName(Backups[0]), Working_Directory, "Removed_Files", "", Move_Backwards, All_Files_Since_This);
+                        //    Apply_Changes(Backup_Name, Working_Directory, "Added_Files", "Removed_Files", Move_Backwards);
+                        //    Apply_Changes(Backup_Name, Working_Directory, "Removed_Files", "", Move_Backwards);
+
+                        //    iConsole(400, 100, "First is " + i + " and edit " + Backup_Name);
                         //}
-                        
+
+                        //if (!Move_Backwards && i == Passed_Slots) // Last Slot
+                        //{
+                        //    Apply_Changes(Backup_Name, Working_Directory, "Added_Files", "Removed_Files", Move_Backwards);
+                        //    Apply_Changes(Backup_Name, Working_Directory, "Removed_Files", "", Move_Backwards);
+
+                        //    iConsole(400, 100, "Last is " + i + " and edit " + Backup_Name); 
+                        //}
 
 
-                        Manage_File_Presence(Backup_Name, Working_Directory, "Added_Files", "Removed_Files", Move_Backwards, All_Files_Since_This);          
-                        Manage_File_Presence(Backup_Name, Working_Directory, "Removed_Files", "", Move_Backwards, All_Files_Since_This);
+
+                        // System.Threading.Thread.Sleep(1000);
+
                         // iConsole(400, 100, "Middle to " + i + " and edit " + Backup_Name); 
-                     
 
-                        //if (Move_Backwards && i == Passed_Slots) // When reached the bottom-most slot 
-                        //{
-                        //    //  iConsole(400, 100, "Backwards to " + i + " and edit " + Path.GetFileName(Backups[Passed_Slots]));
-                        //    Manage_File_Presence(Path.GetFileName(Backups[Passed_Slots]), Working_Directory, "Added_Files", "Removed_Files", Move_Backwards, All_Files_Since_This);
-                        //    Manage_File_Presence(Path.GetFileName(Backups[Passed_Slots]), Working_Directory, "Removed_Files", "", Move_Backwards, All_Files_Since_This);                                              
-                        //}
+
+                        if (Move_Backwards && i == Passed_Slots) // When reached the bottom-most slot 
+                        {
+                            //  iConsole(400, 100, "Backwards to " + i + " and edit " + Path.GetFileName(Backups[Passed_Slots]));
+                            Revert_Changes(Path.GetFileName(Backups[Passed_Slots]), Working_Directory, "Added_Files", "Removed_Files", Move_Backwards);
+                            Revert_Changes(Path.GetFileName(Backups[Passed_Slots]), Working_Directory, "Removed_Files", "", Move_Backwards);
+                        }
                         
                                                                 
                     } catch {}              
