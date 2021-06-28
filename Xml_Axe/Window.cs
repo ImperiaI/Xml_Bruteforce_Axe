@@ -3549,6 +3549,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
+         
+
+        
+
 
             // iConsole(400, 100, Current_Backup); return;
 
@@ -4074,7 +4078,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             try { 
          
                 // Deliberately NOT using "Any" as backupname here because we need to filter out only the selected backups!
-                foreach (string Noted_File in Get_Segment_Info(Backup_Name, Segment_Name, Stop_Segment, false, !Move_Backwards))
+                foreach (string Noted_File in Get_Segment_Info(Backup_Name, Segment_Name, Stop_Segment, false, false))
                 {
 
                     Noted_Path = "";
@@ -4120,9 +4124,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             if (Move_Backwards) { Backups.Reverse(); }
 
 
- 
+            try 
+            {
                 // Deliberately NOT using "Any" as backupname here because we need to filter out only the selected backups!
-                foreach (string Noted_File in Get_Segment_Info(Backup_Name, Segment_Name, Stop_Segment, false, !Move_Backwards))
+                foreach (string Noted_File in Get_Segment_Info(Backup_Name, Segment_Name, Stop_Segment, false, false))
                 {
 
                     Noted_Path = "";
@@ -4182,6 +4187,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }
 
                 // if (Debug_Mode && Managed_Files.Count() > 1) { iConsole(400, 600, "\n" + string.Join("\n", Managed_Files)); }
+
+            } catch {}
         }
 
 
@@ -4249,43 +4256,65 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 int Cycles = 0;
                 List<string> Stack_History = new List<string>();
+                List<string> Current_Branch = new List<string>();
 
-                if (Move_Backwards) { Passed_Slots++; } // Additional Slot
+                Current_Branch.Add(Current_Version); // To prevent it from not being executed below
+             
 
+                if (Move_Backwards) 
+                {
+                    Passed_Slots++; // Additional Slot
 
+                    foreach (string Backup in Get_Segment_Info(Current_Version, "Branches", "", false, false))
+                    {
+                        if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); }
+                    }
+                } 
+
+              
 
 
                 // ============ Invert existence of the added or removed files ============ 
                 for (int i = Start_At; i <= Passed_Slots; i++)
-                {
+                {   
+                    try 
+                    {   // Path.GetFileName(Backups[i - 1] might cause crashes..
 
-                    try { // Path.GetFileName(Backups[i - 1] might cause crashes..
-                   
-                        string Backup_Name = Path.GetFileName(Backups[i]);
-                        Stack_History.Add(Backup_Name);
+                        bool Matched_Same_Branch = false;
+                        string Backup_Name = Path.GetFileName(Backups[i]);      
+                 
+                        if (Move_Backwards)
+                        {  // Need the shift of -1 slot because the removed files shall be re-added once we pass this Backup to the next oldest one, not instantly.                      
+                            Backup_Name = Path.GetFileName(Backups[i - 1]); 
+                            // Skip if not part of this branch  
+                            if (!List_Matches(Current_Branch, Backup_Name)) { Stack_History.Add("\n1 skipped because not same branch as selection:\n" + Backup_Name + "\n"); continue; }                      
+                        }
+                        else
+                        {   // If current version is among the ancestor backups of the Backup_Name: 
+                            if (List_Matches(Get_Segment_Info(Backup_Name, "Branches"), Current_Version)) { Matched_Same_Branch = true; }
+                            if (!Matched_Same_Branch) { Stack_History.Add("\n1 skipped because not same branch as selection:\n" + Backup_Name + "\n"); continue; }                                               
+                        }
 
 
-                        // Need the shift of -1 slot because the removed files shall be re-added once we pass this Backup to the next oldest one, not instantly.
-                        if (Move_Backwards) { Backup_Name = Path.GetFileName(Backups[i - 1]); }
-       
+                       Stack_History.Add(Backup_Name); // Because this backup passed the branch check above.
+
+
 
                         if (Move_Backwards && i == Passed_Slots) // When reached the bottom-most slot 
                         {
                             Load_Changes(Backup_Name, Working_Directory, "Added_Files", "Removed_Files", Move_Backwards);
-                            Load_Changes(Backup_Name, Working_Directory, "Removed_Files", "", Move_Backwards);
+                            Load_Changes(Backup_Name, Working_Directory, "Removed_Files", "Branches", Move_Backwards);
                             // if (Debug_Mode) {  iConsole(400, 100, "Bottom most is " + i + " with " + Backup_Name); }
                         }
 
                         else if (All_Files_Since_This) // Remove deletion files from all backups between top most backup and the bottom one.
                         {
                             Revert_Changes(Backup_Name, Working_Directory, "Added_Files", "Removed_Files", Move_Backwards);
-                            Revert_Changes(Backup_Name, Working_Directory, "Removed_Files", "", Move_Backwards);
-                        }
-
-                        
-                                                                
+                            Revert_Changes(Backup_Name, Working_Directory, "Removed_Files", "Branches", Move_Backwards);
+                        }                                                                                      
                     } catch {}              
                 }
+
 
 
 
@@ -4347,7 +4376,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Temporal_C = (Stack_History.Count() * 30) + 190;
                 if (Temporal_C > 680) { Temporal_C = 680; }
 
-                iConsole(480, Temporal_C, Intruduction + string.Join("\n", Stack_History));
+                iConsole(520, Temporal_C, Intruduction + string.Join("\n", Stack_History));
 
 
                 //string s = "";
@@ -4435,7 +4464,30 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         "\n//============================================================\\\\" +
                         "\n" + Removed_Files + "\n\n\n";                 
                 }
-                
+
+
+                if (Create_Branches) try
+                {
+                    // Info_File = "";
+                    string Own_Branch = Backup_Path + Directory_Name + @"\" + Package_Name + @"\Axe_Branch.txt";
+                    string Parent_Branch = Backup_Path + Directory_Name + @"\" + Current_Backup + @"\Axe_Branch.txt";
+
+
+                    Info_File +=
+                       "//============================================================\\\\" +
+                       "\nBranches:" +
+                       "\n//============================================================\\\\" +
+                       "\n";
+
+                    // Inherit Axe_Branch.txt of the Parent
+                    if (File.Exists(Parent_Branch)) { Info_File += Current_Backup + "\n" + File.ReadAllText(Parent_Branch) + "\n\n\n"; }
+                    else { Info_File += Current_Backup; } // Create a own Axe_Branch.txt
+
+
+                    // File.WriteAllText(Own_Branch, Info_File);
+                } catch { iConsole(600, 200, "\nFailed to create or find the path for Axe_Branch.txt."); } 
+       
+
 
                 File.WriteAllText(Backup_Path + Directory_Name + @"\" + Package_Name + Info_Name, Info_File);
 
@@ -4443,22 +4495,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
 
-            if (Create_Branches) try
-            {   Info_File = "";
-                string Own_Branch = Backup_Path + Directory_Name + @"\" + Package_Name + @"\Axe_Branch.txt";
-                string Parent_Branch = Backup_Path + Directory_Name + @"\" + Current_Backup + @"\Axe_Branch.txt";
-
-
-                // Inherit Axe_Branch.txt of the Parent
-                if (File.Exists(Parent_Branch)) { Info_File = Current_Backup + "\n" + File.ReadAllText(Parent_Branch); }
-                else { Info_File = Current_Backup; } // Create a own Axe_Branch.txt
-
-
-                File.WriteAllText(Own_Branch, Info_File);
-
-            } catch { iConsole(600, 200, "\nFailed to create or find the path for Axe_Branch.txt."); } 
-       
-
+        
 
             try
             {
