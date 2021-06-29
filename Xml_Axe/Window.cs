@@ -895,7 +895,7 @@ namespace Xml_Axe
                 {   // iConsole(400, 100, Path_And_Backup); 
 
             
-                    foreach (string Present_File in Get_Segment_Info(Current_Backup, "Changed_Files", "Removed_Files"))
+                    foreach (string Present_File in Get_Segment_Info(Current_Backup, "Changed_Files"))
                     {   // Removing duplicates
                         if (Related_Xmls.Contains(Present_File)) { Related_Xmls.Remove(Present_File); }
                     }
@@ -4112,7 +4112,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
 
-        public void Load_Changes(string Backup_Name, string Working_Directory, string Segment_Name, string Stop_Segment, bool Move_Backwards)
+        public void Load_Changes(string Backup_Name, string Working_Directory, string Segment_Name, bool Move_Backwards)
         {
             string Noted_Path = "";
             List<string> Managed_Files = new List<string>();
@@ -4125,7 +4125,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             try { 
          
                 // Deliberately NOT using "Any" as backupname here because we need to filter out only the selected backups!
-                foreach (string Noted_File in Get_Segment_Info(Backup_Name, Segment_Name, Stop_Segment, false, false))
+                foreach (string Noted_File in Get_Segment_Info(Backup_Name, Segment_Name, false, false))
                 {
 
                     Noted_Path = "";
@@ -4161,7 +4161,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         
 
-        public void Revert_Changes(string Backup_Name, string Working_Directory, string Segment_Name, string Stop_Segment, bool Move_Backwards)
+        public void Revert_Changes(string Backup_Name, string Working_Directory, string Segment_Name, bool Move_Backwards)
         {
             string Noted_Path = "";
             List<string> Managed_Files = new List<string>();
@@ -4174,7 +4174,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             try 
             {
                 // Deliberately NOT using "Any" as backupname here because we need to filter out only the selected backups!
-                foreach (string Noted_File in Get_Segment_Info(Backup_Name, Segment_Name, Stop_Segment, false, false))
+                foreach (string Noted_File in Get_Segment_Info(Backup_Name, Segment_Name, false, false))
                 {
 
                     Noted_Path = "";
@@ -4309,7 +4309,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
              
 
                 if (Move_Backwards) 
-                {   foreach (string Backup in Get_Segment_Info(Current_Version, "Branches", "", false, false))
+                {   foreach (string Backup in Get_Segment_Info(Current_Version, "Branches", false, false))
                     {
                         if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); }
                     }
@@ -4346,8 +4346,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                    
                         if (All_Files_Since_This) // Remove deletion files from all backups between top most backup and the bottom one.
                         {
-                            Revert_Changes(Backup_Name, Working_Directory, "Added_Files", "Removed_Files", Move_Backwards);
-                            Revert_Changes(Backup_Name, Working_Directory, "Removed_Files", "Branches", Move_Backwards);
+                            Revert_Changes(Backup_Name, Working_Directory, "Added_Files", Move_Backwards);
+                            Revert_Changes(Backup_Name, Working_Directory, "Removed_Files", Move_Backwards);
 
                             Stack_History.Add(Backup_Name); // Because this backup passed the branch check above.
 
@@ -4357,8 +4357,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         if (!All_Files_Since_This || Move_Backwards && i == Passed_Slots)
                         {
                             // Instead of using Revert_Changes() like all backups on the way, the last one does Load_Changes() instead
-                            Load_Changes(Target_Backup, Working_Directory, "Added_Files", "Removed_Files", Move_Backwards);
-                            Load_Changes(Target_Backup, Working_Directory, "Removed_Files", "Branches", Move_Backwards);
+                            Load_Changes(Target_Backup, Working_Directory, "Added_Files", Move_Backwards);
+                            Load_Changes(Target_Backup, Working_Directory, "Removed_Files", Move_Backwards);
                             // if (Debug_Mode) { iConsole(400, 100, "Bottom most is " + i + " with " + Target_Backup); }
 
                             Stack_History.Add(Target_Backup);
@@ -4795,7 +4795,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
             
 
-            List<string> Older_Missing_Files = Get_Segment_Info("Any", "Removed_Files", "", true);
+            List<string> Older_Missing_Files = Get_Segment_Info("Any", "Removed_Files", true);
 
          
             foreach (string Register in Registered_Files)
@@ -4926,7 +4926,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         //=====================//
 
-        public List<string> Get_Segment_Info(string Backup_Name, string Segment_Name, string Stop_Segment = "", bool Is_Full_Path = false, bool Return_Filename = false)
+        public List<string> Get_Segment_Info(string Backup_Name, string Segment_Name, bool Is_Full_Path = false, bool Return_Filename = false)
         {
             List<string> Segment_Info = new List<string>();
 
@@ -4944,7 +4944,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 {
                     // Skipping everything but the chapter after "Removed_Files"
                     if (Line.StartsWith(Segment_Name)) { Started = true; }
-                    else if (Stop_Segment != "" && Line.StartsWith(Stop_Segment)) { break; } // Exit at Stop_Segment
+                    else if (Started && Line.StartsWith("//=============")) { break; } // Exit at Stop_Segment
 
                     else if (!Started) { continue; }
                     else if (Line.StartsWith("//") || Line.StartsWith("#") || Line == "\n" || Line == "") { continue; }
