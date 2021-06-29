@@ -85,6 +85,7 @@ namespace Xml_Axe
  
         bool Backup_Mode = false;
         bool At_Top_Level = true;
+        bool Enable_Undo = false;
         string Last_Backup_Time, Time_Stamp, Current_Hour = "";
         public int Last_Backup_Minute, Current_Minute = 0;
         public int Fetch_Intervall_Minutes = 1;
@@ -128,18 +129,19 @@ namespace Xml_Axe
             Set_Resource_Button(Drop_Zone, Get_Start_Image()); 
             Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Green); 
             Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs);
-            Set_Resource_Button(Button_Undo, Properties.Resources.Button_Clock);
+            Set_Resource_Button(Button_Backup, Properties.Resources.Button_Clock);
             Set_Resource_Button(Button_Search, Properties.Resources.Button_Search);
             Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent);
             Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash);
             Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus);
             Set_Resource_Button(Button_Run, Properties.Resources.Button_Axe);
             Set_Resource_Button(Button_Toggle_Settings, Properties.Resources.Button_Settings);
+            Set_Resource_Button(Button_Undo, Properties.Resources.Button_Refresh);
             Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller);
 
 
-            Control[] Controls = { Button_Browse_Folder, Button_Start, Button_Undo, Button_Run, Button_Search, 
-                                   Button_Percentage, Button_Scripts, Button_Operator, Button_Reset_Blacklist, Button_Toggle_Settings };
+            Control[] Controls = { Button_Browse_Folder, Button_Start, Button_Backup, Button_Run, Button_Search, 
+                                   Button_Percentage, Button_Scripts, Button_Operator, Button_Reset_Blacklist, Button_Undo, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.BackColor = Color.Transparent; }   
     
      
@@ -859,7 +861,11 @@ namespace Xml_Axe
 
             Related_Xmls = Slice(true); // This line does the actual Job!
 
-            bool Has_Collapsed = Collapse_Oldest_Backup("Silent"); 
+            bool Has_Collapsed = Collapse_Oldest_Backup("Silent");
+
+            Enable_Undo = true;
+            Toggle_Undo_Button(true);
+
 
             Set_Resource_Button(Drop_Zone, Get_Done_Image());
             if (List_View_Selection.Visible) { Button_Start_Click(null, null); } // Hiding open Xml
@@ -1788,7 +1794,7 @@ namespace Xml_Axe
       
         //===========================//
         private void Button_Toggle_Settings_Click(object sender, EventArgs e)
-        {
+        {            
             if (Text_Box_Tags.Visible == true)
             {
                 if (Combo_Box_Type_Filter.Text != "Faction Name Filter" && Combo_Box_Type_Filter.Text != "Category Mask Filter") 
@@ -1820,7 +1826,7 @@ namespace Xml_Axe
                 Reset_Tag_Box();
                 Reset_Root_Tag_Box();
 
-
+                Toggle_Undo_Button(Enable_Undo); // Show it if it was visible before
              
 
                 if (Match_Setting("Disable_EAW_Mode"))
@@ -1879,13 +1885,16 @@ namespace Xml_Axe
                        "The expected variable type can be:\nbool, string or int\n" +
                        "You can also set any number after = sign as scale factor for the scrollbar.";
                  }
+
+                Toggle_Undo_Button(); // Hide it
+
                 return;
             }
         }
 
         private void Set_UI_Into_Settings_Mode(bool Mode)
         {
-            Control[] Controls = { Button_Search, Button_Run, Button_Undo, Button_Percentage, Button_Scripts, Button_Operator, Label_Type_Filter };
+            Control[] Controls = { Button_Search, Button_Run, Button_Backup, Button_Percentage, Button_Scripts, Button_Operator, Label_Type_Filter };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
         }
 
@@ -1899,6 +1908,43 @@ namespace Xml_Axe
             { Set_Resource_Button(Button_Toggle_Settings, Properties.Resources.Button_Settings_Lit); }
             else { Set_Resource_Button(Button_Toggle_Settings, Properties.Resources.Button_Settings); }    
         }
+
+
+
+
+        //===========================//
+
+        private void Button_Undo_Click(object sender, EventArgs e)
+        {
+            List<string> Found_Backups = Get_All_Directories(Backup_Path + Mod_Name, true);               
+            Found_Backups.Reverse();
+     
+            // iConsole(500, 500, Found_Backups[0]);  // Get the first one    
+            Restore(Current_Backup + User_Name, Found_Backups[0], false, true, true);
+
+            Enable_Undo = false; // Hide it
+            Toggle_Undo_Button(false);
+        }
+
+        private void Button_Undo_MouseHover(object sender, EventArgs e)
+        { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Refresh_Lit); }
+
+        private void Button_Undo_MouseLeave(object sender, EventArgs e)
+        { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Refresh); }
+
+
+
+        private void Toggle_Undo_Button(bool Show_It = false)
+        {   if (Show_It)
+            {   Combo_Box_Tag_Value.Size = new Size(331, 26);
+                Button_Undo.Visible = true;
+            }
+            else 
+            {   Combo_Box_Tag_Value.Size = new Size(367, 26); // Back to normal size
+                Button_Undo.Visible = false;
+            }        
+        }
+       
 
 
         //===========================//
@@ -3464,7 +3510,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
         //=====================//
-        private void Button_Undo_Click(object sender, EventArgs e)
+        private void Button_Backup_Click(object sender, EventArgs e)
         {          
             if (Backup_Mode) 
             {               
@@ -3472,7 +3518,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible  
 
                 Button_Operator.Location = new Point(1, 430); // Back to its original location
-    
+                Toggle_Undo_Button(Enable_Undo);
+             
                 //Set_Label_Entity_Name_Text();
                 //Label_Entity_Name.Location = new Point(31, 238);
             }            
@@ -3488,6 +3535,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
                 Refresh_Backup_Directory();
+                Toggle_Undo_Button(false);
                 // if (Temporal_E.Count() == 1) { Refresh_Backup_Stack(); } // Then auto forward into the one backup dir
                 // Otherwise let the user choose              
             }
@@ -3502,13 +3550,14 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             Button_Operator_MouseLeave(null, null);
         }
 
-        private void Button_Undo_MouseHover(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Clock_Lit); }
+        private void Button_Backup_MouseHover(object sender, EventArgs e)
+        { Set_Resource_Button(Button_Backup, Properties.Resources.Button_Clock_Lit); }
 
-        private void Button_Undo_MouseLeave(object sender, EventArgs e)
-        {   if (Backup_Mode) { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Clock_Lit); }
-            else { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Clock); }
+        private void Button_Backup_MouseLeave(object sender, EventArgs e)
+        {   if (Backup_Mode) { Set_Resource_Button(Button_Backup, Properties.Resources.Button_Clock_Lit); }
+            else { Set_Resource_Button(Button_Backup, Properties.Resources.Button_Clock); }
         }
+
 
 
 
@@ -3549,10 +3598,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-         
-
-        
-
+            Enable_Undo = true;
+            Toggle_Undo_Button(Enable_Undo); return;
 
             // iConsole(400, 100, Current_Backup); return;
 
@@ -3567,7 +3614,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 {
                     Backup_Mode = false;
                     At_Top_Level = true;
-                    Button_Undo_MouseLeave(null, null);
+                    Button_Backup_MouseLeave(null, null);
                     Button_Scripts.Visible = false;
                     Button_Operator.Visible = false;
 
@@ -3801,10 +3848,13 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit);
 
                 if (Text_Box_Description.Visible) { Disable_Description(); }
+                Toggle_Undo_Button(Enable_Undo);
             }
 
             else if (Backup_Mode)
-            {     
+            {
+                Toggle_Undo_Button(Enable_Undo);
+
                 if (At_Top_Level) { return; } // Leave this as it is.
 
                 string Selected_Backup = Select_List_View_First(List_View_Selection);
@@ -3871,6 +3921,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             {
                 Script_Mode = true;
                 Drop_Zone.Visible = false;
+                Toggle_Undo_Button(false);
+
                 List_View_Selection.Visible = true;
                 Zoom_List_View(true);
                 Set_UI_Into_Script_Mode(!Script_Mode);
@@ -3900,6 +3952,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }
             }
 
+            
             Button_Browse_Folder_MouseLeave(null, null); // Ordering the Icon to change color
             try { List_View_Selection.Columns[0].Width = List_View_Selection.Width - 8; } catch {}
                 
@@ -4195,7 +4248,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
         // All_Files_Since_This means all files in other Backups then this one, that are between the Current_Version and the Target_Backup.
-        public void Restore(string Current_Version, string Target_Backup, bool Move_Backwards, bool All_Files_Since_This = true)
+        public void Restore(string Current_Version, string Target_Backup, bool Move_Backwards, bool All_Files_Since_This = true, bool Ignore_Branches = false)
         {   // string Current = Select_List_View_First(List_View_Selection);
 
             if (Current_Version == Target_Backup) 
@@ -4262,10 +4315,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
              
 
                 if (Move_Backwards) 
-                {
-                    Passed_Slots++; // Additional Slot
-
-                    foreach (string Backup in Get_Segment_Info(Current_Version, "Branches", "", false, false))
+                {   foreach (string Backup in Get_Segment_Info(Current_Version, "Branches", "", false, false))
                     {
                         if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); }
                     }
@@ -4281,38 +4331,48 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     {   // Path.GetFileName(Backups[i - 1] might cause crashes..
 
                         bool Matched_Same_Branch = false;
-                        string Backup_Name = Path.GetFileName(Backups[i]);      
-                 
-                        if (Move_Backwards)
+                        string Backup_Name = Path.GetFileName(Backups[i]);
+
+                        if (!Ignore_Branches && Move_Backwards)
                         {  // Need the shift of -1 slot because the removed files shall be re-added once we pass this Backup to the next oldest one, not instantly.                      
                             Backup_Name = Path.GetFileName(Backups[i - 1]); 
                             // Skip if not part of this branch  
-                            if (!List_Matches(Current_Branch, Backup_Name)) { Stack_History.Add("\n1 skipped because not same branch as selection:\n" + Backup_Name + "\n"); continue; }                      
+                            if (!List_Matches(Current_Branch, Backup_Name)) { Stack_History.Add(Backup_Name + "   skipped (wrong branch)"); continue; }                      
                         }
-                        else
-                        {   // If current version is among the ancestor backups of the Backup_Name: 
-                            if (List_Matches(Get_Segment_Info(Backup_Name, "Branches"), Current_Version)) { Matched_Same_Branch = true; }
-                            if (!Matched_Same_Branch) { Stack_History.Add("\n1 skipped because not same branch as selection:\n" + Backup_Name + "\n"); continue; }                                               
-                        }
+                        else if (!Ignore_Branches)
+                        {   // string Target_Backup = Path.GetFileName(Backups[Passed_Slots]); // Is already received as parameter of this function.
 
-
-                       Stack_History.Add(Backup_Name); // Because this backup passed the branch check above.
-
-
-
-                        if (Move_Backwards && i == Passed_Slots) // When reached the bottom-most slot 
-                        {
-                            Load_Changes(Backup_Name, Working_Directory, "Added_Files", "Removed_Files", Move_Backwards);
-                            Load_Changes(Backup_Name, Working_Directory, "Removed_Files", "Branches", Move_Backwards);
-                            // if (Debug_Mode) {  iConsole(400, 100, "Bottom most is " + i + " with " + Backup_Name); }
+                            // If the ancestors in the branch of Target Backup matches the the Backup_Name || or if this backup is Target_Backup itself
+                            if (List_Matches(Get_Segment_Info(Target_Backup, "Branches"), Backup_Name) || Target_Backup == Backup_Name) { Matched_Same_Branch = true; }
+                            if (!Matched_Same_Branch) { Stack_History.Add(Backup_Name + "   skipped (wrong branch)"); continue; }                                               
                         }
 
-                        else if (All_Files_Since_This) // Remove deletion files from all backups between top most backup and the bottom one.
+
+
+                   
+                        if (All_Files_Since_This) // Remove deletion files from all backups between top most backup and the bottom one.
                         {
                             Revert_Changes(Backup_Name, Working_Directory, "Added_Files", "Removed_Files", Move_Backwards);
                             Revert_Changes(Backup_Name, Working_Directory, "Removed_Files", "Branches", Move_Backwards);
-                        }                                                                                      
-                    } catch {}              
+
+                            Stack_History.Add(Backup_Name); // Because this backup passed the branch check above.
+
+                        }
+
+                        // When reached the bottom-most slot, this is 1 slot before the Target_Backup.
+                        if (!All_Files_Since_This || Move_Backwards && i == Passed_Slots)
+                        {
+                            // Instead of using Revert_Changes() like all backups on the way, the last one does Load_Changes() instead
+                            Load_Changes(Target_Backup, Working_Directory, "Added_Files", "Removed_Files", Move_Backwards);
+                            Load_Changes(Target_Backup, Working_Directory, "Removed_Files", "Branches", Move_Backwards);
+                            // if (Debug_Mode) { iConsole(400, 100, "Bottom most is " + i + " with " + Target_Backup); }
+
+                            Stack_History.Add(Target_Backup);
+
+                        }
+
+
+                    } catch { iConsole(400, 100, "Reverting functions crashed."); }             
                 }
 
 
@@ -4321,9 +4381,6 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 // ============ Invert existence of the added or removed files ============ 
                 // if (Debug_Mode) { iConsole(400, 600, "\nDont Copy \n\n" + string.Join("\n", Dont_Copy)); }
-
-                if (Move_Backwards) { Passed_Slots--; } // Remove that virtual additional Slot from above, otherwise it'd throw out of range exception.
-
 
 
                 List<string> Execution_Order = new List<string>();
@@ -4376,7 +4433,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Temporal_C = (Stack_History.Count() * 30) + 190;
                 if (Temporal_C > 680) { Temporal_C = 680; }
 
-                iConsole(520, Temporal_C, Intruduction + string.Join("\n", Stack_History));
+
+                // Silent mode if Ignore_Branches
+                if (!Ignore_Branches) { iConsole(560, Temporal_C, Intruduction + string.Join("\n", Stack_History)); }
 
 
                 //string s = "";
@@ -4538,7 +4597,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Set_UI_Into_Script_Mode(bool Mode)
         {
-            Control[] Controls = { Button_Start, Button_Run, Button_Undo, Button_Search, Button_Percentage, Button_Operator, Button_Toggle_Settings };
+            Control[] Controls = { Button_Start, Button_Run, Button_Backup, Button_Search, Button_Percentage, Button_Operator, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
         }
 
@@ -4689,7 +4748,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
                 // Base version to true, otherwise it will complain about a missmatched path
-                Create_Backup_Info(Backup_Folder, Package_Name + @"_Base", Temporal_B, true);
+                Create_Backup_Info(Backup_Folder, Package_Name + @"_Base", Temporal_B, true, true, true);
                 Refresh_Backup_Stack(); 
                 
                 Temporal_B = "";
@@ -5082,6 +5141,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus); }
             }
         }
+
+
 
 
 

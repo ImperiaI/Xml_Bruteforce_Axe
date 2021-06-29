@@ -54,8 +54,9 @@
             this.Button_Operator = new System.Windows.Forms.PictureBox();
             this.Button_Search = new System.Windows.Forms.PictureBox();
             this.Button_Scripts = new System.Windows.Forms.PictureBox();
-            this.Button_Undo = new System.Windows.Forms.PictureBox();
+            this.Button_Backup = new System.Windows.Forms.PictureBox();
             this.Button_Browse_Folder = new System.Windows.Forms.PictureBox();
+            this.Button_Undo = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.Drop_Zone)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Track_Bar_Tag_Value)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Start)).BeginInit();
@@ -66,8 +67,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.Button_Operator)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Search)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Scripts)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.Button_Undo)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Backup)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Browse_Folder)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Undo)).BeginInit();
             this.SuspendLayout();
             // 
             // Drop_Zone
@@ -370,17 +372,17 @@
             this.Button_Scripts.MouseLeave += new System.EventHandler(this.Button_Scripts_MouseLeave);
             this.Button_Scripts.MouseHover += new System.EventHandler(this.Button_Scripts_MouseHover);
             // 
-            // Button_Undo
+            // Button_Backup
             // 
-            this.Button_Undo.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.Button_Undo.Location = new System.Drawing.Point(1, 270);
-            this.Button_Undo.Name = "Button_Undo";
-            this.Button_Undo.Size = new System.Drawing.Size(30, 30);
-            this.Button_Undo.TabIndex = 37;
-            this.Button_Undo.TabStop = false;
-            this.Button_Undo.Click += new System.EventHandler(this.Button_Undo_Click);
-            this.Button_Undo.MouseLeave += new System.EventHandler(this.Button_Undo_MouseLeave);
-            this.Button_Undo.MouseHover += new System.EventHandler(this.Button_Undo_MouseHover);
+            this.Button_Backup.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.Button_Backup.Location = new System.Drawing.Point(1, 270);
+            this.Button_Backup.Name = "Button_Backup";
+            this.Button_Backup.Size = new System.Drawing.Size(30, 30);
+            this.Button_Backup.TabIndex = 37;
+            this.Button_Backup.TabStop = false;
+            this.Button_Backup.Click += new System.EventHandler(this.Button_Backup_Click);
+            this.Button_Backup.MouseLeave += new System.EventHandler(this.Button_Backup_MouseLeave);
+            this.Button_Backup.MouseHover += new System.EventHandler(this.Button_Backup_MouseHover);
             // 
             // Button_Browse_Folder
             // 
@@ -394,6 +396,19 @@
             this.Button_Browse_Folder.MouseHover += new System.EventHandler(this.Button_Browse_Folder_MouseHover);
             this.Button_Browse_Folder.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Button_Browse_Folder_MouseUp);
             // 
+            // Button_Undo
+            // 
+            this.Button_Undo.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.Button_Undo.Location = new System.Drawing.Point(363, 430);
+            this.Button_Undo.Name = "Button_Undo";
+            this.Button_Undo.Size = new System.Drawing.Size(30, 30);
+            this.Button_Undo.TabIndex = 39;
+            this.Button_Undo.TabStop = false;
+            this.Button_Undo.Visible = false;
+            this.Button_Undo.Click += new System.EventHandler(this.Button_Undo_Click);
+            this.Button_Undo.MouseLeave += new System.EventHandler(this.Button_Undo_MouseLeave);
+            this.Button_Undo.MouseHover += new System.EventHandler(this.Button_Undo_MouseHover);
+            // 
             // Window
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -401,6 +416,7 @@
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.ClientSize = new System.Drawing.Size(428, 542);
             this.Controls.Add(this.Button_Undo);
+            this.Controls.Add(this.Button_Backup);
             this.Controls.Add(this.Button_Scripts);
             this.Controls.Add(this.Button_Search);
             this.Controls.Add(this.Button_Operator);
@@ -441,8 +457,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.Button_Operator)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Search)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Scripts)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.Button_Undo)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Backup)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Browse_Folder)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Undo)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -475,8 +492,9 @@
         private System.Windows.Forms.PictureBox Button_Operator;
         private System.Windows.Forms.PictureBox Button_Search;
         private System.Windows.Forms.PictureBox Button_Scripts;
-        private System.Windows.Forms.PictureBox Button_Undo;
+        private System.Windows.Forms.PictureBox Button_Backup;
         private System.Windows.Forms.PictureBox Button_Browse_Folder;
+        private System.Windows.Forms.PictureBox Button_Undo;
     }
 }
 
