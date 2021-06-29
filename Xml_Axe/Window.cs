@@ -891,7 +891,7 @@ namespace Xml_Axe
                 // Update the Backup Version and AUTOMATICALLY CREATE BACKUP from the list of Related_Xmls
                 // It happens to fail to Collapse when the User has the last backup in the stack loaded.
                 if (!File.Exists(Path_And_Backup + Backup_Info))
-                { Create_Backup_Info(Mod_Name, This_Backup, string.Join("\n", Related_Xmls), false, false, true); }
+                { Create_Backup_Info(Mod_Name, This_Backup, string.Join("\n", Related_Xmls), false, true); }
                
                 else
                 {   // iConsole(400, 100, Path_And_Backup); 
@@ -1170,7 +1170,7 @@ namespace Xml_Axe
 
 
                     // Base version to true, otherwise it will complain about a missmatched path
-                    Create_Backup_Info(Mod_Name, Package_Name + @"_Base", Temporal_B, true);
+                    Create_Backup_Info(Mod_Name, Package_Name + @"_Base", Temporal_B);
                     Refresh_Backup_Stack();
                     At_Top_Level = false; // Correcting
 
@@ -4474,11 +4474,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
         // Use "Time_Stamp" as argument for Target_Backup_Name
-        private void Create_Backup_Info(string Directory_Name, string Target_Backup_Name, string Changed_Files = "", bool Is_Base_Version = false, bool Load_Backup = true, bool Create_Branches = false, string Added_Files = "", string Removed_Files = "")
+        private void Create_Backup_Info(string Directory_Name, string Target_Backup_Name, string Changed_Files = "", bool Load_Backup = true, bool Create_Branches = false, string Added_Files = "", string Removed_Files = "")
         {  
             // Package_Name variable is updated by Button_Run_Click() or Create_New_Backup()        
             string This_Backup_Path = Backup_Path + Directory_Name + @"\" + Target_Backup_Name;
-            if (Is_Base_Version) { This_Backup_Path += "_Base"; }
 
             string This_Backup_Info = This_Backup_Path + Backup_Info; 
             string Root_Backup_Info = Backup_Path + Directory_Name + Backup_Info;
@@ -4741,7 +4740,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
                 // Base version to true, otherwise it will complain about a missmatched path
-                Create_Backup_Info(Backup_Folder, Package_Name + @"_Base", Temporal_B, true, true, true);
+                Create_Backup_Info(Backup_Folder, Package_Name + @"_Base", Temporal_B, true, true);
                 Refresh_Backup_Stack(); 
                 
                 Temporal_B = "";
@@ -4852,7 +4851,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
             Create_Backup_Info(Backup_Folder, Package_Name, // "Created a backup, based on different file sizes from:\n\n\n" +
-                string.Join("\n", Changed_Files), false, true, true,
+                string.Join("\n", Changed_Files), true, true,
                 string.Join("\n", Added_Files), string.Join("\n", Missing_Files)); // "Load_Backup" was Has_Collapsed
 
             // Use "\n\n" for additional new lines between the entries.
@@ -5102,7 +5101,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                         foreach (ListViewItem Item in List_View_Selection.Items)
                         {
-                            if (!Item.Text.EndsWith("Auto_Stash")) { Temporal_B = Item.Text; break; } // Just get the first that is no Auto_Stash
+                            if (!Item.Text.EndsWith("Auto_Stash") && !Item.Text.EndsWith("Auto")) { Temporal_B = Item.Text; break; } // Just get the first that is no Auto_Stash
                         }
 
                  
@@ -5114,11 +5113,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                             "If it doesn't write from the top most one, the \nnew backup will end up in a different branch.\n" +
                             "Do you wish to continue anyways?");
                           
-                        }                           
+                        }
+
+                        if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
                     }
-
-
-                    if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
+               
 
                     Create_New_Backup();
                 }
