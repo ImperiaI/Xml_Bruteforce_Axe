@@ -880,16 +880,18 @@ namespace Xml_Axe
 
             try
             {
+                string This_Backup = Package_Name + "_Auto";
+
                 // if (Verify_Setting("Backups_Per_Directory")) { // Disabled Feature
                 // Using Mod_Name instead of Backup_Folder here, because that's the current working directory!
-                string Path_And_Backup = Backup_Path + Mod_Name + @"\" + Package_Name;
+                string Path_And_Backup = Backup_Path + Mod_Name + @"\" + This_Backup;
     
 
 
                 // Update the Backup Version and AUTOMATICALLY CREATE BACKUP from the list of Related_Xmls
                 // It happens to fail to Collapse when the User has the last backup in the stack loaded.
-                if (!File.Exists(Path_And_Backup + Backup_Info)) 
-                { Create_Backup_Info(Mod_Name, Package_Name, string.Join("\n", Related_Xmls), false, false, true); }
+                if (!File.Exists(Path_And_Backup + Backup_Info))
+                { Create_Backup_Info(Mod_Name, This_Backup, string.Join("\n", Related_Xmls), false, false, true); }
                
                 else
                 {   // iConsole(400, 100, Path_And_Backup); 
@@ -902,7 +904,7 @@ namespace Xml_Axe
 
 
                     // CAUTION, there are difference between this method and Create_Backup_Info() above.
-                    Write_Into_Segment(Package_Name, "Changed_Files", Related_Xmls);
+                    Write_Into_Segment(This_Backup, "Changed_Files", Related_Xmls);
                 }              
             
                     
@@ -1451,8 +1453,9 @@ namespace Xml_Axe
                         }
                     }
                     
-                    if (Apply_Changes) 
-                    {   Backup_File = Backup_Path + Mod_Name + @"\" + Package_Name + @"\" + (Selected_Xml.Replace(Sync_Path, "")); // Creating Sub-Directories:                        
+                    if (Apply_Changes)
+                    {
+                        Backup_File = Backup_Path + Mod_Name + @"\" + Package_Name + @"_Auto\" + (Selected_Xml.Replace(Sync_Path, "")); // Creating Sub-Directories:                        
                         if (!Directory.Exists(Path.GetDirectoryName(Backup_File))) { Directory.CreateDirectory(Path.GetDirectoryName(Backup_File)); }
 
                         File.Copy(Selected_Xml, Backup_File, true);  // Creating a Backup                           
@@ -1906,11 +1909,11 @@ namespace Xml_Axe
             Found_Backups.Reverse();
      
             // iConsole(500, 500, Found_Backups[0]);  // Get the first one    
-            Restore(Current_Backup + User_Name, Found_Backups[0], false, true, true);
+            Restore(Current_Backup + User_Name, Found_Backups[0], false, true, true, false);
+            Deleting(Found_Backups[0]); // Getting rid of it after Undo
 
-            // Todo Delete Temporary Backup here
 
-            Enable_Undo = false; // Hide it
+            Enable_Undo = false; 
             Toggle_Undo_Button(false);
         }
 
@@ -3585,9 +3588,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
-        {          
+        {
+            Current_Backup = Get_Backup_Info(Root_Backup_Path)[1];
 
-            // iConsole(400, 100, da); return;
+            iConsole(400, 100, Current_Backup); return;
             // iConsole(500, 500, string.Join("\n", dd)); return;
             // iConsole(400, 100, Get_Setting_Value("Custom_Start_Parameters")); return;
 
@@ -4237,7 +4241,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
         // All_Files_Since_This means all files in other Backups then this one, that are between the Current_Version and the Target_Backup.
-        public void Restore(string Current_Version, string Target_Backup, bool Move_Backwards, bool All_Files_Since_This = true, bool Ignore_Branches = false)
+        public void Restore(string Current_Version, string Target_Backup, bool Move_Backwards, bool All_Files_Since_This = true, bool Ignore_Branches = false, bool Set_Selected = true)
         {   // string Current = Select_List_View_First(List_View_Selection);
 
             if (Current_Version == Target_Backup) 
@@ -4433,11 +4437,13 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
                 // Copying the Backup info of the selected backup up into the root dir, this is from where the program stores which is selected.               
-                try
-                {   // This always sets the target Backup as active one
-                    File.Copy(Backup_Path + Backup_Folder + @"\" + Target_Backup + Backup_Info, Root_Backup_Path, true);
-                } catch { Create_Backup_Info(Backup_Folder, Target_Backup); } // If failed to find it, we just create a new one.
-
+                if (Set_Selected)
+                {   try
+                    {   // This always sets the target Backup as active one
+                        File.Copy(Backup_Path + Backup_Folder + @"\" + Target_Backup + Backup_Info, Root_Backup_Path, true);
+                    }
+                    catch { Create_Backup_Info(Backup_Folder, Target_Backup); } // If failed to find it, we just create a new one.
+                }
 
                
                 // Label_Entity_Name.Text = Target_Backup; // Updating UI Info (outdated)
@@ -4471,7 +4477,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         private void Create_Backup_Info(string Directory_Name, string Target_Backup_Name, string Changed_Files = "", bool Is_Base_Version = false, bool Load_Backup = true, bool Create_Branches = false, string Added_Files = "", string Removed_Files = "")
         {  
             // Package_Name variable is updated by Button_Run_Click() or Create_New_Backup()        
-            string This_Backup_Path = Backup_Path + Directory_Name + @"\" + Package_Name;
+            string This_Backup_Path = Backup_Path + Directory_Name + @"\" + Target_Backup_Name;
             if (Is_Base_Version) { This_Backup_Path += "_Base"; }
 
             string This_Backup_Info = This_Backup_Path + Backup_Info; 
