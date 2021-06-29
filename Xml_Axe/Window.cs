@@ -1882,7 +1882,7 @@ namespace Xml_Axe
             Control[] Controls = { Button_Search, Button_Run, Button_Backup, Button_Percentage, Button_Scripts, Button_Operator, Label_Type_Filter };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
         }
-
+        
 
         private void Button_Toggle_Settings_MouseHover(object sender, EventArgs e)
         { Set_Resource_Button(Button_Toggle_Settings, Properties.Resources.Button_Settings_Lit); }
@@ -1906,6 +1906,8 @@ namespace Xml_Axe
      
             // iConsole(500, 500, Found_Backups[0]);  // Get the first one    
             Restore(Current_Backup + User_Name, Found_Backups[0], false, true, true);
+
+            // Todo Delete Temporary Backup here
 
             Enable_Undo = false; // Hide it
             Toggle_Undo_Button(false);
@@ -3582,23 +3584,15 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
-        {
-            //Enable_Undo = true;
-            //Toggle_Undo_Button(Enable_Undo); return;
+        {          
 
-
-            //string Working_Directory = Backup_Path + Mod_Name + @"\Current";
-            //Create_Backup_Info(Working_Directory, "2021.06.29_02.02", "File_A\nFileB"); return;
-
-            // Write_Into_Segment("2021.06.29_03.53", "Changed_Files", "File_A\nFile_B", "New_Backup");
-
-
-            // iConsole(400, 100, Backup_Path + Mod_Name); return;
-
-            // iConsole(500, 500, string.Join("\n", Not_Matched_Yet)); return;
+            // iConsole(400, 100, da); return;
+            // iConsole(500, 500, string.Join("\n", dd)); return;
             // iConsole(400, 100, Get_Setting_Value("Custom_Start_Parameters")); return;
 
             // return;
+
+
 
 
             if (Backup_Mode) // Just show the last results
@@ -4309,7 +4303,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
              
 
                 if (Move_Backwards) 
-                {   foreach (string Backup in Get_Segment_Info(Current_Version, "Branches", false, false))
+                {   foreach (string Backup in Get_Segment_Info(Current_Version, "Branches"))
                     {
                         if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); }
                     }
@@ -4521,25 +4515,23 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 if (Create_Branches) try
                 {
-                    // Info_File = "";
-                    string Own_Branch = Backup_Path + Directory_Name + @"\" + Package_Name + @"\Axe_Branch.txt";
-                    string Parent_Branch = Backup_Path + Directory_Name + @"\" + Current_Backup + @"\Axe_Branch.txt";
-
-
                     Info_File +=
                        "//============================================================\\\\" +
                        "\nBranches" +
                        "\n//============================================================\\\\" +
-                       "\n";
+                       "\n" + Current_Backup;
 
-                    // Todo
-                    // Inherit Axe_Branch.txt of the Parent
-                    if (File.Exists(Parent_Branch)) { Info_File += Current_Backup + "\n" + File.ReadAllText(Parent_Branch) + "\n\n\n"; }
-                    else { Info_File += Current_Backup; } // Create a own Axe_Branch.txt
+
+                    Temporal_E.Clear();
+                    Temporal_E = Get_Segment_Info(Current_Backup, "Branches");
+
+                    // Inherit Branches from the Parents Axe_Info.txt
+                    if (Temporal_E.Count() > 0) { Info_File += "\n" + string.Join("\n", Temporal_E) + "\n\n\n"; }
+                 
 
 
                     // File.WriteAllText(Own_Branch, Info_File);
-                } catch { iConsole(600, 200, "\nFailed to create or find the path for Axe_Branch.txt."); } 
+                } catch { iConsole(600, 200, "\nFailed to create Branch info."); } 
        
 
 
@@ -4939,12 +4931,16 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
                 bool Started = false;
+                bool Ignored_First = false;
 
                 foreach (string Line in File.ReadAllLines(Backup + Backup_Info))
                 {
                     // Skipping everything but the chapter after "Removed_Files"
                     if (Line.StartsWith(Segment_Name)) { Started = true; }
-                    else if (Started && Line.StartsWith("//=============")) { break; } // Exit at Stop_Segment
+                    else if (Started && Line.StartsWith("//============="))
+                    {   if (!Ignored_First) { Ignored_First = true; } // Ignore the first //============= that comes after the Segment Name
+                        else break; // Exit at Stop_Segment
+                    } 
 
                     else if (!Started) { continue; }
                     else if (Line.StartsWith("//") || Line.StartsWith("#") || Line == "\n" || Line == "") { continue; }
@@ -5054,7 +5050,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
                         // Name_Matched means it is existing but different
-                        if (!Shall_Match && !Size_Matched && Name_Matched && !File_A.EndsWith("Axe_Info.txt") && !File_A.EndsWith("Axe_Branch.txt")) // Exclusion of my log file
+                        if (!Shall_Match && !Size_Matched && Name_Matched && !File_A.EndsWith("Axe_Info.txt")) // Exclusion of my log file
                         {
                             if (Return_Full_Path && !Results.Contains(File_A)) { Results.Add(File_A); }
                             else if (!Results.Contains(Name_A)) { Results.Add(Name_A); }
