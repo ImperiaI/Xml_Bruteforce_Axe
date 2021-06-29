@@ -876,53 +876,38 @@ namespace Xml_Axe
 
 
 
+            if (Related_Xmls == null || Related_Xmls.Count() == 0) { return; }
 
-            if (Related_Xmls != null)
-            {   try
-                {   if (Related_Xmls.Count() > 0) // && Verify_Setting("Backups_Per_Directory")) Disabled Feature
-                    {   // Using Mod_Name instead of Backup_Folder here, because that's the current working directory!
-                        string Path_And_Backup = Backup_Path + Mod_Name + @"\" + Package_Name;
-                        bool Info_File_Exists = true;
-
-
-                        if (Directory.Exists(Path_And_Backup)) // Means timestamp is the same
-                        {   // iConsole(400, 100, Path_And_Backup);
-
-                            if (!File.Exists(Path_And_Backup + Backup_Info)) { Info_File_Exists = false; }
-                            else
-                            {
-                                string The_File = File.ReadAllText(Path_And_Backup + Backup_Info);
-
-                                // Nah that old Timestamp is still the same with this timing..
-                                // string Old_Timestamp = Get_Backup_Info(Info_File)[1];
+            try
+            {
+                // if (Verify_Setting("Backups_Per_Directory")) { // Disabled Feature
+                // Using Mod_Name instead of Backup_Folder here, because that's the current working directory!
+                string Path_And_Backup = Backup_Path + Mod_Name + @"\" + Package_Name;
+    
 
 
-                                foreach (string Line in The_File.Split('\n'))
-                                {
-                                    if (Line == "") { continue; }
-                                    else if (Related_Xmls.Contains(Line)) { Related_Xmls.Remove(Line); }
-                                }
+                // Update the Backup Version and AUTOMATICALLY CREATE BACKUP from the list of Related_Xmls
+                // It happens to fail to Collapse when the User has the last backup in the stack loaded.
+                if (!File.Exists(Path_And_Backup + Backup_Info)) 
+                { Create_Backup_Info(Mod_Name, Package_Name, string.Join("\n", Related_Xmls), false, false, true); }
+               
+                else
+                {   // iConsole(400, 100, Path_And_Backup); 
 
-                                // Append the Related_Xmls it does not already contain :)
-                                The_File += "\n\n" + string.Join("\n", Related_Xmls);
-
-                                // CAUTION, there are difference between this method and Create_Backup_Info() above.
-                                File.WriteAllText(Sync_Path + "Axe_Info.txt", The_File); // Update it
-
-                                File.Copy(Sync_Path + "Axe_Info.txt", Path_And_Backup + Backup_Info, true);
-                            }
-                        }
-                        // Update the Backup Version and AUTOMATICALLY CREATE BACKUP from the list of Related_Xmls
-                        else { Info_File_Exists = false; }
-
-
-                         // Set only as the active backup if no older backup blocked the process to merge old backups and load the newest.
-                        // It happens to fail to Collapse when the User has the last backup in the stack loaded.                   
-                        if (!Info_File_Exists) { Create_Backup_Info(Mod_Name, Package_Name, string.Join("\n", Related_Xmls), false, Has_Collapsed); }
-
+            
+                    foreach (string Present_File in Get_Segment_Info(Current_Backup, "Changed_Files", "Removed_Files"))
+                    {   // Removing duplicates
+                        if (Related_Xmls.Contains(Present_File)) { Related_Xmls.Remove(Present_File); }
                     }
-                } catch { iConsole(400, 100, "\nFailed to create Axe_Info.txt for the current backup."); }
-            }
+
+
+                    // CAUTION, there are difference between this method and Create_Backup_Info() above.
+                    Write_Into_Segment(Package_Name, "Changed_Files", Related_Xmls);
+                }              
+            
+                    
+            } catch { iConsole(400, 100, "\nFailed to create Axe_Info.txt for the current backup."); }
+           
 
 
             // Disabled Feature, quite obsolete
@@ -3598,13 +3583,22 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-            Enable_Undo = true;
-            Toggle_Undo_Button(Enable_Undo); return;
+            //Enable_Undo = true;
+            //Toggle_Undo_Button(Enable_Undo); return;
 
-            // iConsole(400, 100, Current_Backup); return;
+
+            //string Working_Directory = Backup_Path + Mod_Name + @"\Current";
+            //Create_Backup_Info(Working_Directory, "2021.06.29_02.02", "File_A\nFileB"); return;
+
+            // Write_Into_Segment("2021.06.29_03.53", "Changed_Files", "File_A\nFile_B", "New_Backup");
+
+
+            // iConsole(400, 100, Backup_Path + Mod_Name); return;
 
             // iConsole(500, 500, string.Join("\n", Not_Matched_Yet)); return;
             // iConsole(400, 100, Get_Setting_Value("Custom_Start_Parameters")); return;
+
+            // return;
 
 
             if (Backup_Mode) // Just show the last results
@@ -4485,7 +4479,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             string Info_Name = Backup_Info;
             string Root_Backup = Backup_Path + Directory_Name + Info_Name;
             string Info_File = "";
-
+            
 
             try
             {   // Make sure there is a backup dir      
@@ -4501,7 +4495,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 {
                     Info_File +=
                         "//============================================================\\\\" +
-                        "\nChanged_Files:" +
+                        "\nChanged_Files" +
                         "\n//============================================================\\\\" +
                         "\n" + Changed_Files + "\n\n\n"; // Append_File_Info can be a joined List<string> of file names here.                 
                 }           
@@ -4510,7 +4504,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 {
                     Info_File +=
                         "//============================================================\\\\" +
-                        "\nAdded_Files:" +
+                        "\nAdded_Files" +
                         "\n//============================================================\\\\" +
                         "\n" + Added_Files + "\n\n\n";                 
                 }
@@ -4519,7 +4513,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 {
                     Info_File +=
                         "//============================================================\\\\" +
-                        "\nRemoved_Files:" +
+                        "\nRemoved_Files" +
                         "\n//============================================================\\\\" +
                         "\n" + Removed_Files + "\n\n\n";                 
                 }
@@ -4534,10 +4528,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                     Info_File +=
                        "//============================================================\\\\" +
-                       "\nBranches:" +
+                       "\nBranches" +
                        "\n//============================================================\\\\" +
                        "\n";
 
+                    // Todo
                     // Inherit Axe_Branch.txt of the Parent
                     if (File.Exists(Parent_Branch)) { Info_File += Current_Backup + "\n" + File.ReadAllText(Parent_Branch) + "\n\n\n"; }
                     else { Info_File += Current_Backup; } // Create a own Axe_Branch.txt
@@ -4883,6 +4878,52 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             return false;
         }
 
+
+         //=====================//
+
+        public void Write_Into_Segment(string Source_Backup, string Segment_Name, List<string> Content, string Target_Backup = "Same")
+        { Write_Into_Segment(Source_Backup, Segment_Name, string.Join("\n", Content), Target_Backup); }
+
+
+
+        public void Write_Into_Segment(string Source_Backup, string Segment_Name, string Content, string Target_Backup = "Same")
+        {
+          
+            foreach (string Backup in Get_All_Directories(Backup_Path + Mod_Name, true))
+            {
+                if (Source_Backup != "Any" && Path.GetFileName(Backup) != Source_Backup) { continue; }
+                else if (!File.Exists(Backup + Backup_Info)) { continue; }
+
+                // iConsole(600, 200, Backup + "  \n" + Content);
+
+
+                string Segment = 
+                    "//============================================================\\\\" +
+                    "\n" + Segment_Name +
+                    "\n//============================================================\\\\";
+
+
+                string The_File = File.ReadAllText(Backup + Backup_Info);
+                The_File = The_File.Replace(Segment, Segment + "\n" + Content + "\n");
+
+            
+
+                // Use the Input File to write into itself
+                if (Target_Backup == "Same") { File.WriteAllText(Backup + Backup_Info, The_File); }
+                else 
+                {   string New_Backup = Path.GetDirectoryName(Backup) + @"\" + Target_Backup;
+                    if (!Directory.Exists(New_Backup)) { Directory.CreateDirectory(New_Backup); }
+
+                    File.WriteAllText(New_Backup + Backup_Info, The_File);
+                }
+
+
+                // Quit because we already edited the Backup we need
+                if (Source_Backup != "Any" && Path.GetFileName(Backup) == Source_Backup) { return; } 
+            }
+        }
+
+
         //=====================//
 
         public List<string> Get_Segment_Info(string Backup_Name, string Segment_Name, string Stop_Segment = "", bool Is_Full_Path = false, bool Return_Filename = false)
@@ -4893,33 +4934,34 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             foreach (string Backup in Get_All_Directories(Backup_Path + Mod_Name, true))
             {
                 if (Backup_Name != "Any" && Path.GetFileName(Backup) != Backup_Name) { continue; } // We only want info from target Backup(s)
+                else if (!File.Exists(Backup + Backup_Info)) { continue; }
 
 
-                if (File.Exists(Backup + Backup_Info))
+
+                bool Started = false;
+
+                foreach (string Line in File.ReadAllLines(Backup + Backup_Info))
                 {
-                    bool Started = false;
+                    // Skipping everything but the chapter after "Removed_Files"
+                    if (Line.StartsWith(Segment_Name)) { Started = true; }
+                    else if (Stop_Segment != "" && Line.StartsWith(Stop_Segment)) { break; } // Exit at Stop_Segment
 
-                    foreach (string Line in File.ReadAllLines(Backup + Backup_Info))
-                    {
-                        // Skipping everything but the chapter after "Removed_Files"
-                        if (Line.StartsWith(Segment_Name)) { Started = true; }
-                        else if (Stop_Segment != "" && Line.StartsWith(Stop_Segment)) { break; } // Exit at Stop_Segment
-
-                        else if (!Started) { continue; }
-                        else if (Line.StartsWith("//") || Line.StartsWith("#") || Line == "\n" || Line == "") { continue; }
+                    else if (!Started) { continue; }
+                    else if (Line.StartsWith("//") || Line.StartsWith("#") || Line == "\n" || Line == "") { continue; }
 
 
-                        else if (Is_Full_Path)
-                        {   try
-                            {   if (Return_Filename && !Segment_Info.Contains(Path.GetFileName(Line))) { Segment_Info.Add(Path.GetFileName(Line)); }
-                                else if (!Return_Filename && !List_Matches_Filename(Segment_Info, Line, true)) { Segment_Info.Add(Line); }// Preventing double entries 
-                            } catch {}
+                    else if (Is_Full_Path)
+                    {   try
+                        {
+                            if (Return_Filename && !Segment_Info.Contains(Path.GetFileName(Line))) { Segment_Info.Add(Path.GetFileName(Line)); }
+                            else if (!Return_Filename && !List_Matches_Filename(Segment_Info, Line, true)) { Segment_Info.Add(Line); }// Preventing double entries 
                         }
-                        else if (!Is_Full_Path && !Segment_Info.Contains(Line)) { Segment_Info.Add(Line); }
-                    }
+                        catch { }
+                    } else if (!Is_Full_Path && !Segment_Info.Contains(Line)) { Segment_Info.Add(Line); }
                 }
+                
 
-                // Quit the loop because we alread got the info of the Backup we need
+                // Quit the loop because we already got the info of the Backup we need
                 if (Backup_Name != "Any" && Path.GetFileName(Backup) == Backup_Name) { break; } 
             }
 
