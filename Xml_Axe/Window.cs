@@ -1151,6 +1151,7 @@ namespace Xml_Axe
                 // iConsole(560, 600, Xml_Directory + string.Join("\n", File_Collection)); // return null; // Debug Code
 
 
+
                 // Using Mod_Name instead of Backup_Folder here, because we're explicitely targeting the working directory.
                 if (!Directory.Exists(Backup_Path + Mod_Name)) { Directory.CreateDirectory(Backup_Path + Mod_Name); }
 
@@ -4469,16 +4470,19 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         // Use "Time_Stamp" as argument for Target_Backup_Name
         private void Create_Backup_Info(string Directory_Name, string Target_Backup_Name, string Changed_Files = "", bool Is_Base_Version = false, bool Load_Backup = true, bool Create_Branches = false, string Added_Files = "", string Removed_Files = "")
         {  
-            // Package_Name variable is updated by Button_Run_Click() or Create_New_Backup() 
-            string Info_Name = Backup_Info;
-            string Root_Backup = Backup_Path + Directory_Name + Info_Name;
+            // Package_Name variable is updated by Button_Run_Click() or Create_New_Backup()        
+            string This_Backup_Path = Backup_Path + Directory_Name + @"\" + Package_Name;
+            if (Is_Base_Version) { This_Backup_Path += "_Base"; }
+
+            string This_Backup_Info = This_Backup_Path + Backup_Info; 
+            string Root_Backup_Info = Backup_Path + Directory_Name + Backup_Info;
+
             string Info_File = "";
             
 
             try
             {   // Make sure there is a backup dir      
-                if (!File.Exists(Backup_Path + Directory_Name + @"\" + Package_Name))
-                { Directory.CreateDirectory(Backup_Path + Directory_Name + @"\" + Package_Name); }
+                if (!Directory.Exists(This_Backup_Path)) { Directory.CreateDirectory(This_Backup_Path); }
                 
                 
                 Info_File =
@@ -4513,7 +4517,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }
 
 
-                if (Create_Branches) try
+                if (Create_Branches && Current_Backup != "None") try
                 {
                     Info_File +=
                        "//============================================================\\\\" +
@@ -4531,11 +4535,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
                     // File.WriteAllText(Own_Branch, Info_File);
-                } catch { iConsole(600, 200, "\nFailed to create Branch info."); } 
-       
+                } catch { iConsole(600, 200, "\nFailed to create Branch info."); }
 
 
-                File.WriteAllText(Backup_Path + Directory_Name + @"\" + Package_Name + Info_Name, Info_File);
+
+                File.WriteAllText(This_Backup_Info, Info_File);
 
             } catch { iConsole(600, 200, "\nFailed to create or find the path for Axe_Info.txt."); }
 
@@ -4544,18 +4548,14 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         
 
             try
-            {
-                if (Is_Base_Version) { Info_Name = @"_Base" + Backup_Info; }
-
-                // Adding a Copy into root directory for Backups, that marks this backup as the loaded one. 
+            {   // Adding a Copy into root directory for Backups, that marks this backup as the loaded one. 
                 // CAUTION, Directory_Name means the different Folders in Backup_Path!
-                if (Load_Backup)
-                {
-                    try { File.Copy(Backup_Path + Directory_Name + @"\" + Package_Name + Info_Name, Root_Backup, true); } catch {}
-                }
+                if (Load_Backup) { File.Copy(This_Backup_Info, Root_Backup_Info, true); }
 
-            } catch { iConsole(600, 200, "\nFailed to create or find the path: \n" + Backup_Path + Directory_Name + @"\" + Package_Name + Info_Name); } 
+            } catch { iConsole(600, 200, "\nFailed to create or find the path: \n" + This_Backup_Info); } 
         }
+
+
 
 
 
@@ -4983,13 +4983,16 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         bool Name_Matched = false;
                         bool Size_Matched = false;
                         string Name_A = Path.GetFileName(File_A);
+                        if (Name_A == "Axe_Info.txt") { continue; }
 
 
                         foreach (string File_B in Return_If_Matched)
                         {   
                             try
-                            {
+                            {                              
                                 string Name_B = Path.GetFileName(File_B);
+                                if (Name_B == "Axe_Info.txt") { continue; }
+
 
                                 if (Return_Full_Path && !Registered_Files.Contains(File_B)) { Registered_Files.Add(File_B); } 
                                 else if (!Return_Full_Path && !Registered_Files.Contains(Name_B)) { Registered_Files.Add(Name_B); } // Registered_Files is a Global Variable
@@ -5009,7 +5012,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                                     {
                                         Size_Matched = true;
 
-                                        if (Shall_Match && !Results.Contains(File_B) && !File_A.EndsWith("Axe_Info.txt"))
+                                        if (Shall_Match && !Results.Contains(File_B))
                                         {
                                             if (Return_Full_Path) { Results.Add(File_B); }
                                             else if (!Results.Contains(Name_B)) { Results.Add(Name_B); }
@@ -5050,7 +5053,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
                         // Name_Matched means it is existing but different
-                        if (!Shall_Match && !Size_Matched && Name_Matched && !File_A.EndsWith("Axe_Info.txt")) // Exclusion of my log file
+                        if (!Shall_Match && !Size_Matched && Name_Matched) // Exclusion of my log file
                         {
                             if (Return_Full_Path && !Results.Contains(File_A)) { Results.Add(File_A); }
                             else if (!Results.Contains(Name_A)) { Results.Add(Name_A); }
