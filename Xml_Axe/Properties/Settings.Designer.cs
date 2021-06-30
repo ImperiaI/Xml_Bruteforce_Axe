@@ -142,5 +142,17 @@ namespace Xml_Axe.Properties {
                 this["Steam_Exe_Path"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Name")]
+        public string Attribute_Name {
+            get {
+                return ((string)(this["Attribute_Name"]));
+            }
+            set {
+                this["Attribute_Name"] = value;
+            }
+        }
     }
 }

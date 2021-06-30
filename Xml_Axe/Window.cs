@@ -69,6 +69,7 @@ namespace Xml_Axe
         bool Script_Mode = false;
         bool Silent_Mode = false;
         bool Debug_Mode = true;
+        bool Ying_Dominates = false;
 
         string Temporal_A, Temporal_B = "";
         int Temporal_C = 0;
@@ -112,6 +113,7 @@ namespace Xml_Axe
         List<string> Difference_List = new List<string>();
         public List<string> Temporal_E = new List<string>();
 
+        // "First Attribute" is not included here because it isn't supposed to be ignored
         string[] Ignored_Attribute_Values = new string[] { "", "None", "Find_And_Replace", "Insert_Random_Int", "Insert_Random_Float" };
 
 
@@ -131,6 +133,7 @@ namespace Xml_Axe
             Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs);
             Set_Resource_Button(Button_Backup, Properties.Resources.Button_Clock);
             Set_Resource_Button(Button_Search, Properties.Resources.Button_Search);
+            Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Ying);
             Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent);
             Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash);
             Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus);
@@ -140,7 +143,7 @@ namespace Xml_Axe
             Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller);
 
 
-            Control[] Controls = { Button_Browse_Folder, Button_Start, Button_Backup, Button_Run, Button_Search, 
+            Control[] Controls = { Button_Browse_Folder, Button_Start, Button_Backup, Button_Run, Button_Search, Button_Attribute, 
                                    Button_Percentage, Button_Scripts, Button_Operator, Button_Reset_Blacklist, Button_Undo, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.BackColor = Color.Transparent; }   
     
@@ -160,7 +163,7 @@ namespace Xml_Axe
             Reset_Root_Tag_Box();
 
 
-            Queried_Attribute = Get_Setting_Value("Queried_Attribute"); // Needs to run after Reset_Tag_List()!
+            Queried_Attribute = Properties.Settings.Default.Attribute_Name; 
             Text_Format_Delimiter = Get_Setting_Value("Text_Format_Delimiter");
 
 
@@ -220,6 +223,9 @@ namespace Xml_Axe
                 EAW_Mode = false;                      
                 Label_Type_Filter.Text = "Parent Name";
             }
+
+
+            Text_Box_Original_Path.BackColor = Theme_Color;
 
             User_Input = true;
         }
@@ -1798,7 +1804,6 @@ namespace Xml_Axe
                     Properties.Settings.Default.Save();
                     Tag_List = Text_Box_Tags.Text;
                     // Refreshing Values:
-                    Queried_Attribute = Get_Setting_Value("Queried_Attribute");
                     Text_Format_Delimiter = Get_Setting_Value("Text_Format_Delimiter");
 
                     if (Text_Format_Delimiter == "\\t" | Text_Format_Delimiter == "t") { Text_Format_Delimiter = "\"\t\""; } // Correction Override
@@ -1927,11 +1932,11 @@ namespace Xml_Axe
 
         private void Toggle_Undo_Button(bool Show_It = false)
         {   if (Show_It)
-            {   Combo_Box_Tag_Value.Size = new Size(331, 26);
+            {   // Combo_Box_Tag_Value.Size = new Size(331, 26);
                 Button_Undo.Visible = true;
             }
             else 
-            {   Combo_Box_Tag_Value.Size = new Size(367, 26); // Back to normal size
+            {   // Combo_Box_Tag_Value.Size = new Size(367, 26); // Back to normal size
                 Button_Undo.Visible = false;
             }        
         }
@@ -2294,16 +2299,16 @@ namespace Xml_Axe
         {
             Tag_List = @"# ====================== Settings ======================
 # Show_Tooltip = true
-# Queried_Attribute = Name
 # Store_Last_Settings = true
 # Request_File_Approval = true
-# RGBA_Color = 100, 170, 170, 255 # Marine Blue
+# RGBA_Color = 100, 170, 170, 255 # Cadet Blue
+
 # Set_Launch_Affinity = true
 # High_Launch_Priority = true
 # Custom_Program_Path = 
 # Custom_Start_Parameters = 
 # User_Name = false
-# Backups_Per_Directory = 20
+# Backups_Per_Directory = 10
 # Script_Directory = %AppData%\Local\Xml_Axe\Scripts
 # Disable_EAW_Mode = false
 # Text_Format_Delimiter = ;
@@ -2520,14 +2525,30 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Operation_Mode = "Int";
                 Label_Tag_Value.Text = "New Tag Value";
             }
+
+
+            if (Ying_Dominates) 
+            {
+                Queried_Attribute = Combo_Box_Entity_Name.Text;
+
+                if (Combo_Box_Entity_Name.Text == "First Attribute") { Properties.Settings.Default.Attribute_Name = "first"; }
+                else { Properties.Settings.Default.Attribute_Name = Queried_Attribute; }
+
+                Properties.Settings.Default.Save();
+            }
          
         }
+
+
 
 
         private void Combo_Box_Entity_Name_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (e.KeyChar == Convert.ToChar(Keys.Return))
-            { Button_Search_Click(null, null); }
+            {
+                if (Ying_Dominates) { Button_Attribute_Click(null, null); }
+                else { Button_Search_Click(null, null); } // Otherwise understand the enter key as order to search for this term.
+            }
         }
 
  
@@ -2564,11 +2585,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             {   
                 Last_Combo_Box_Entity_Name = "";
                 Combo_Box_Entity_Name.Text = "";
-                Combo_Box_Entity_Name.Items.Clear();
-                Combo_Box_Entity_Name.Items.Add("None");
-                Combo_Box_Entity_Name.Items.Add("Find_And_Replace"); 
-                Combo_Box_Entity_Name.Items.Add("Insert_Random_Int"); 
-                Combo_Box_Entity_Name.Items.Add("Insert_Random_Float");  
+                Reset_Combo_Box_Entity_Name(); 
             } // Don't chain here!
     
 
@@ -2665,6 +2682,16 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         }
 
+
+
+        public void Reset_Combo_Box_Entity_Name()
+        {
+            Combo_Box_Entity_Name.Items.Clear();
+            Combo_Box_Entity_Name.Items.Add("None");
+            Combo_Box_Entity_Name.Items.Add("Find_And_Replace");
+            Combo_Box_Entity_Name.Items.Add("Insert_Random_Int");
+            Combo_Box_Entity_Name.Items.Add("Insert_Random_Float");
+        }
 
         public void Set_Label_Entity_Name_Text()
         {
@@ -3508,7 +3535,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Backup_Mode = false; At_Top_Level = true;
                 Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible  
 
-                Button_Operator.Location = new Point(1, 430); // Back to its original location
+                Button_Operator.Location = new Point(1, 510); // Back to its original location
                 Toggle_Undo_Button(Enable_Undo);
              
                 //Set_Label_Entity_Name_Text();
@@ -3588,15 +3615,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
-        {
-            Current_Backup = Get_Backup_Info(Root_Backup_Path)[1];
-
-            iConsole(400, 100, Current_Backup); return;
+        {  
+            // iConsole(400, 100, Current_Backup); return;
             // iConsole(500, 500, string.Join("\n", dd)); return;
             // iConsole(400, 100, Get_Setting_Value("Custom_Start_Parameters")); return;
 
             // return;
-
 
 
 
@@ -3753,6 +3777,65 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         {   if (Backup_Mode && !At_Top_Level) { Set_Resource_Button(Button_Search, Properties.Resources.Button_Stack); }
             else { Set_Resource_Button(Button_Search, Properties.Resources.Button_Search); }
         }
+
+
+
+
+
+
+
+        private void Button_Attribute_Click(object sender, EventArgs e)
+        {
+            if (Ying_Dominates)
+            {
+                Ying_Dominates = false; // toggling
+
+                Label_Entity_Name.Text = Combo_Box_Entity_Name.Text;
+                Combo_Box_Entity_Name.Text = Properties.Settings.Default.Entity_Name;
+
+                Reset_Combo_Box_Entity_Name();
+
+                Combo_Box_Entity_Name.ForeColor = Color.Black;
+                Combo_Box_Entity_Name.BackColor = Color.LightGray;
+            }
+
+            else
+            {
+                Properties.Settings.Default.Entity_Name = Combo_Box_Entity_Name.Text;
+                Properties.Settings.Default.Save();
+
+                Combo_Box_Entity_Name.Items.Clear(); // Special selection type
+                Combo_Box_Entity_Name.Items.Add("First Attribute");
+
+                Combo_Box_Entity_Name.Text = Label_Entity_Name.Text;                          
+                Label_Entity_Name.Text = "";
+
+
+                Combo_Box_Entity_Name.ForeColor = Color.White;
+                Combo_Box_Entity_Name.BackColor = Color.Black;
+
+                // Run after "Label_Entity_Name.Text =" to prevent it from unnecessary re-saving the old value:
+                Ying_Dominates = true;
+            }
+
+
+            Button_Attribute_MouseHover(null, null); // Update UI
+        }
+
+
+        private void Button_Attribute_MouseHover(object sender, EventArgs e)
+        {
+            if (Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Yang_Lit); }
+            else if (!Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Ying_Lit); }
+        }
+
+        private void Button_Attribute_MouseLeave(object sender, EventArgs e)
+        {
+            if (Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Yang); }
+            else if (!Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Ying); }
+        }
+
+   
 
 
 
@@ -4583,7 +4666,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Set_UI_Backup_Mode(bool Mode)
         {
-            Control[] Controls = { Button_Run, Button_Scripts, Button_Percentage, Button_Toggle_Settings };
+            Control[] Controls = { Button_Run, Button_Attribute, Button_Scripts, Button_Percentage, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
         }
 
@@ -5187,7 +5270,6 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus); }
             }
         }
-
 
 
 

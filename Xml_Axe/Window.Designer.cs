@@ -57,6 +57,7 @@
             this.Button_Backup = new System.Windows.Forms.PictureBox();
             this.Button_Browse_Folder = new System.Windows.Forms.PictureBox();
             this.Button_Undo = new System.Windows.Forms.PictureBox();
+            this.Button_Attribute = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.Drop_Zone)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Track_Bar_Tag_Value)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Start)).BeginInit();
@@ -70,6 +71,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.Button_Backup)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Browse_Folder)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Undo)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Attribute)).BeginInit();
             this.SuspendLayout();
             // 
             // Drop_Zone
@@ -87,8 +89,9 @@
             // 
             // Text_Box_Original_Path
             // 
-            this.Text_Box_Original_Path.BackColor = System.Drawing.SystemColors.ScrollBar;
+            this.Text_Box_Original_Path.BackColor = System.Drawing.Color.CadetBlue;
             this.Text_Box_Original_Path.Font = new System.Drawing.Font("Georgia", 12F);
+            this.Text_Box_Original_Path.ForeColor = System.Drawing.SystemColors.Window;
             this.Text_Box_Original_Path.Location = new System.Drawing.Point(31, 195);
             this.Text_Box_Original_Path.Name = "Text_Box_Original_Path";
             this.Text_Box_Original_Path.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
@@ -98,7 +101,7 @@
             // Track_Bar_Tag_Value
             // 
             this.Track_Bar_Tag_Value.LargeChange = 1;
-            this.Track_Bar_Tag_Value.Location = new System.Drawing.Point(25, 480);
+            this.Track_Bar_Tag_Value.Location = new System.Drawing.Point(25, 560);
             this.Track_Bar_Tag_Value.Name = "Track_Bar_Tag_Value";
             this.Track_Bar_Tag_Value.Size = new System.Drawing.Size(381, 45);
             this.Track_Bar_Tag_Value.TabIndex = 3;
@@ -109,7 +112,7 @@
             this.Label_Tag_Value.AutoSize = true;
             this.Label_Tag_Value.Font = new System.Drawing.Font("Georgia", 20F);
             this.Label_Tag_Value.ForeColor = System.Drawing.SystemColors.ActiveCaption;
-            this.Label_Tag_Value.Location = new System.Drawing.Point(28, 398);
+            this.Label_Tag_Value.Location = new System.Drawing.Point(28, 478);
             this.Label_Tag_Value.Name = "Label_Tag_Value";
             this.Label_Tag_Value.Size = new System.Drawing.Size(196, 31);
             this.Label_Tag_Value.TabIndex = 4;
@@ -120,7 +123,7 @@
             this.Label_Tag_Name.AutoSize = true;
             this.Label_Tag_Name.Font = new System.Drawing.Font("Georgia", 20F);
             this.Label_Tag_Name.ForeColor = System.Drawing.SystemColors.ActiveCaption;
-            this.Label_Tag_Name.Location = new System.Drawing.Point(31, 318);
+            this.Label_Tag_Name.Location = new System.Drawing.Point(31, 398);
             this.Label_Tag_Name.Name = "Label_Tag_Name";
             this.Label_Tag_Name.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.Label_Tag_Name.Size = new System.Drawing.Size(138, 31);
@@ -146,7 +149,7 @@
             // Button_Toggle_Settings
             // 
             this.Button_Toggle_Settings.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.Button_Toggle_Settings.Location = new System.Drawing.Point(1, 510);
+            this.Button_Toggle_Settings.Location = new System.Drawing.Point(1, 590);
             this.Button_Toggle_Settings.Name = "Button_Toggle_Settings";
             this.Button_Toggle_Settings.Size = new System.Drawing.Size(30, 30);
             this.Button_Toggle_Settings.TabIndex = 15;
@@ -158,7 +161,7 @@
             // Button_Reset_Blacklist
             // 
             this.Button_Reset_Blacklist.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.Button_Reset_Blacklist.Location = new System.Drawing.Point(399, 510);
+            this.Button_Reset_Blacklist.Location = new System.Drawing.Point(399, 590);
             this.Button_Reset_Blacklist.Name = "Button_Reset_Blacklist";
             this.Button_Reset_Blacklist.Size = new System.Drawing.Size(30, 30);
             this.Button_Reset_Blacklist.TabIndex = 16;
@@ -172,7 +175,7 @@
             this.Combo_Box_Tag_Name.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.Combo_Box_Tag_Name.Font = new System.Drawing.Font("Georgia", 12F);
             this.Combo_Box_Tag_Name.FormattingEnabled = true;
-            this.Combo_Box_Tag_Name.Location = new System.Drawing.Point(31, 352);
+            this.Combo_Box_Tag_Name.Location = new System.Drawing.Point(31, 432);
             this.Combo_Box_Tag_Name.Name = "Combo_Box_Tag_Name";
             this.Combo_Box_Tag_Name.Size = new System.Drawing.Size(367, 26);
             this.Combo_Box_Tag_Name.TabIndex = 18;
@@ -185,9 +188,9 @@
             this.Combo_Box_Type_Filter.Font = new System.Drawing.Font("Georgia", 12F);
             this.Combo_Box_Type_Filter.FormattingEnabled = true;
             this.Combo_Box_Type_Filter.IntegralHeight = false;
-            this.Combo_Box_Type_Filter.Location = new System.Drawing.Point(220, 272);
+            this.Combo_Box_Type_Filter.Location = new System.Drawing.Point(31, 272);
             this.Combo_Box_Type_Filter.Name = "Combo_Box_Type_Filter";
-            this.Combo_Box_Type_Filter.Size = new System.Drawing.Size(178, 26);
+            this.Combo_Box_Type_Filter.Size = new System.Drawing.Size(367, 26);
             this.Combo_Box_Type_Filter.TabIndex = 24;
             this.Combo_Box_Type_Filter.Text = "All Types";
             this.Combo_Box_Type_Filter.TextChanged += new System.EventHandler(this.Combo_Box_Type_Filter_TextChanged);
@@ -197,7 +200,7 @@
             this.Label_Type_Filter.AutoSize = true;
             this.Label_Type_Filter.Font = new System.Drawing.Font("Georgia", 20F);
             this.Label_Type_Filter.ForeColor = System.Drawing.SystemColors.ActiveCaption;
-            this.Label_Type_Filter.Location = new System.Drawing.Point(219, 238);
+            this.Label_Type_Filter.Location = new System.Drawing.Point(31, 238);
             this.Label_Type_Filter.Name = "Label_Type_Filter";
             this.Label_Type_Filter.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.Label_Type_Filter.Size = new System.Drawing.Size(144, 31);
@@ -209,7 +212,7 @@
             this.Label_Entity_Name.AutoSize = true;
             this.Label_Entity_Name.Font = new System.Drawing.Font("Georgia", 20F);
             this.Label_Entity_Name.ForeColor = System.Drawing.SystemColors.ActiveCaption;
-            this.Label_Entity_Name.Location = new System.Drawing.Point(31, 238);
+            this.Label_Entity_Name.Location = new System.Drawing.Point(31, 318);
             this.Label_Entity_Name.Name = "Label_Entity_Name";
             this.Label_Entity_Name.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
             this.Label_Entity_Name.Size = new System.Drawing.Size(166, 31);
@@ -227,7 +230,7 @@
             "",
             "Yes",
             "No"});
-            this.Combo_Box_Tag_Value.Location = new System.Drawing.Point(31, 432);
+            this.Combo_Box_Tag_Value.Location = new System.Drawing.Point(31, 512);
             this.Combo_Box_Tag_Value.Name = "Combo_Box_Tag_Value";
             this.Combo_Box_Tag_Value.Size = new System.Drawing.Size(367, 26);
             this.Combo_Box_Tag_Value.TabIndex = 25;
@@ -245,9 +248,9 @@
             "Find_And_Replace",
             "Insert_Random_Int",
             "Insert_Random_Float"});
-            this.Combo_Box_Entity_Name.Location = new System.Drawing.Point(31, 272);
+            this.Combo_Box_Entity_Name.Location = new System.Drawing.Point(31, 352);
             this.Combo_Box_Entity_Name.Name = "Combo_Box_Entity_Name";
-            this.Combo_Box_Entity_Name.Size = new System.Drawing.Size(178, 26);
+            this.Combo_Box_Entity_Name.Size = new System.Drawing.Size(367, 26);
             this.Combo_Box_Entity_Name.TabIndex = 26;
             this.Combo_Box_Entity_Name.TextChanged += new System.EventHandler(this.Combo_Box_Entity_Name_TextChanged);
             this.Combo_Box_Entity_Name.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.Combo_Box_Entity_Name_KeyPress);
@@ -257,7 +260,7 @@
             this.Text_Box_Tags.BackColor = System.Drawing.SystemColors.ScrollBar;
             this.Text_Box_Tags.Location = new System.Drawing.Point(31, 272);
             this.Text_Box_Tags.Name = "Text_Box_Tags";
-            this.Text_Box_Tags.Size = new System.Drawing.Size(367, 239);
+            this.Text_Box_Tags.Size = new System.Drawing.Size(367, 319);
             this.Text_Box_Tags.TabIndex = 27;
             this.Text_Box_Tags.Text = "";
             this.Text_Box_Tags.Visible = false;
@@ -269,7 +272,7 @@
             this.Text_Box_Description.ForeColor = System.Drawing.SystemColors.Info;
             this.Text_Box_Description.Location = new System.Drawing.Point(12, 12);
             this.Text_Box_Description.Name = "Text_Box_Description";
-            this.Text_Box_Description.Size = new System.Drawing.Size(386, 164);
+            this.Text_Box_Description.Size = new System.Drawing.Size(404, 164);
             this.Text_Box_Description.TabIndex = 29;
             this.Text_Box_Description.Text = "";
             this.Text_Box_Description.Click += new System.EventHandler(this.Text_Box_Description_Click);
@@ -279,7 +282,7 @@
             this.Check_Box_All_Occurances.AutoSize = true;
             this.Check_Box_All_Occurances.Font = new System.Drawing.Font("Georgia", 12F);
             this.Check_Box_All_Occurances.ForeColor = System.Drawing.SystemColors.ActiveCaption;
-            this.Check_Box_All_Occurances.Location = new System.Drawing.Point(219, 327);
+            this.Check_Box_All_Occurances.Location = new System.Drawing.Point(219, 407);
             this.Check_Box_All_Occurances.Name = "Check_Box_All_Occurances";
             this.Check_Box_All_Occurances.Size = new System.Drawing.Size(184, 22);
             this.Check_Box_All_Occurances.TabIndex = 30;
@@ -314,7 +317,7 @@
             // Button_Run
             // 
             this.Button_Run.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.Button_Run.Location = new System.Drawing.Point(399, 430);
+            this.Button_Run.Location = new System.Drawing.Point(399, 510);
             this.Button_Run.Name = "Button_Run";
             this.Button_Run.Size = new System.Drawing.Size(30, 30);
             this.Button_Run.TabIndex = 32;
@@ -326,7 +329,7 @@
             // Button_Percentage
             // 
             this.Button_Percentage.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.Button_Percentage.Location = new System.Drawing.Point(1, 350);
+            this.Button_Percentage.Location = new System.Drawing.Point(1, 430);
             this.Button_Percentage.Name = "Button_Percentage";
             this.Button_Percentage.Size = new System.Drawing.Size(30, 30);
             this.Button_Percentage.TabIndex = 33;
@@ -339,7 +342,7 @@
             // Button_Operator
             // 
             this.Button_Operator.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.Button_Operator.Location = new System.Drawing.Point(1, 430);
+            this.Button_Operator.Location = new System.Drawing.Point(1, 510);
             this.Button_Operator.Name = "Button_Operator";
             this.Button_Operator.Size = new System.Drawing.Size(30, 30);
             this.Button_Operator.TabIndex = 34;
@@ -363,7 +366,7 @@
             // Button_Scripts
             // 
             this.Button_Scripts.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.Button_Scripts.Location = new System.Drawing.Point(399, 350);
+            this.Button_Scripts.Location = new System.Drawing.Point(399, 430);
             this.Button_Scripts.Name = "Button_Scripts";
             this.Button_Scripts.Size = new System.Drawing.Size(30, 30);
             this.Button_Scripts.TabIndex = 36;
@@ -399,7 +402,7 @@
             // Button_Undo
             // 
             this.Button_Undo.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.Button_Undo.Location = new System.Drawing.Point(363, 430);
+            this.Button_Undo.Location = new System.Drawing.Point(1, 350);
             this.Button_Undo.Name = "Button_Undo";
             this.Button_Undo.Size = new System.Drawing.Size(30, 30);
             this.Button_Undo.TabIndex = 39;
@@ -409,12 +412,25 @@
             this.Button_Undo.MouseLeave += new System.EventHandler(this.Button_Undo_MouseLeave);
             this.Button_Undo.MouseHover += new System.EventHandler(this.Button_Undo_MouseHover);
             // 
+            // Button_Attribute
+            // 
+            this.Button_Attribute.BackColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.Button_Attribute.Location = new System.Drawing.Point(399, 350);
+            this.Button_Attribute.Name = "Button_Attribute";
+            this.Button_Attribute.Size = new System.Drawing.Size(30, 30);
+            this.Button_Attribute.TabIndex = 40;
+            this.Button_Attribute.TabStop = false;
+            this.Button_Attribute.Click += new System.EventHandler(this.Button_Attribute_Click);
+            this.Button_Attribute.MouseLeave += new System.EventHandler(this.Button_Attribute_MouseLeave);
+            this.Button_Attribute.MouseHover += new System.EventHandler(this.Button_Attribute_MouseHover);
+            // 
             // Window
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
-            this.ClientSize = new System.Drawing.Size(428, 542);
+            this.ClientSize = new System.Drawing.Size(428, 622);
+            this.Controls.Add(this.Button_Attribute);
             this.Controls.Add(this.Button_Undo);
             this.Controls.Add(this.Button_Backup);
             this.Controls.Add(this.Button_Scripts);
@@ -442,8 +458,8 @@
             this.Controls.Add(this.Button_Browse_Folder);
             this.Controls.Add(this.Text_Box_Tags);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MaximumSize = new System.Drawing.Size(444, 580);
-            this.MinimumSize = new System.Drawing.Size(444, 580);
+            this.MaximumSize = new System.Drawing.Size(444, 660);
+            this.MinimumSize = new System.Drawing.Size(444, 660);
             this.Name = "Window";
             this.Text = "Imperialware                    Bruteforce Axe v0.1";
             this.Load += new System.EventHandler(this.Window_Load);
@@ -460,6 +476,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.Button_Backup)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Browse_Folder)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Undo)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.Button_Attribute)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -495,6 +512,7 @@
         private System.Windows.Forms.PictureBox Button_Backup;
         private System.Windows.Forms.PictureBox Button_Browse_Folder;
         private System.Windows.Forms.PictureBox Button_Undo;
+        private System.Windows.Forms.PictureBox Button_Attribute;
     }
 }
 

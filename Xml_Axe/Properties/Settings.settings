@@ -1,5 +1,5 @@
 ﻿<?xml version='1.0' encoding='utf-8'?>
-<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Log_Compactor.Properties" GeneratedClassName="Settings">
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="Xml_Axe.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
     <Setting Name="Last_File" Type="System.String" Scope="User">
@@ -31,6 +31,9 @@
     </Setting>
     <Setting Name="Steam_Exe_Path" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="Attribute_Name" Type="System.String" Scope="User">
+      <Value Profile="(Default)">Name</Value>
     </Setting>
   </Settings>
 </SettingsFile>
