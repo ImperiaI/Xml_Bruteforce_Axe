@@ -214,9 +214,7 @@ namespace Xml_Axe
             // Running this AFTER loading of settings so Combo_Box_Entity_Name.Text can select the last attribute that was selected before close of application.
             Load_Xml_Content(Properties.Settings.Default.Last_File, false); // Need this loaded so In_Selected_Xml(); can match true
             
-
-            if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Label_Entity_Name.Text = "First Attribute"; }
-            else { Label_Entity_Name.Text = Queried_Attribute; }
+            Label_Entity_Name.Text = Queried_Attribute; 
 
             if (Match_Setting("Disable_EAW_Mode"))
             {
@@ -1025,7 +1023,7 @@ namespace Xml_Axe
                 {   if (Instance.Descendants().Any())
                     {
                         string Entity_Name = (string)Instance.Attribute(Queried_Attribute);
-                        if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Entity_Name = (string)Instance.FirstAttribute; }
+                        if (Match_Without_Emptyspace(Queried_Attribute, "First Attribute")) { Entity_Name = (string)Instance.FirstAttribute; }
 
                         if (Entity_Name != null)
                         {
@@ -1213,7 +1211,7 @@ namespace Xml_Axe
                         List<string> Selected_Entities = Select_List_View_Items(List_View_Selection);
 
 
-                        if (Match_Without_Emptyspace(Queried_Attribute, "first"))
+                        if (Match_Without_Emptyspace(Queried_Attribute, "First Attribute"))
                         {
                             Instances =
                                from All_Tags in Xml_File.Root.Descendants()
@@ -1257,7 +1255,7 @@ namespace Xml_Axe
                         Query = 4;
 
 
-                        if (Match_Without_Emptyspace(Queried_Attribute, "first"))
+                        if (Match_Without_Emptyspace(Queried_Attribute, "First Attribute"))
                         {   Instances =
                               from All_Tags in Xml_File.Root.Descendants()
                               where (string)All_Tags.FirstAttribute == Entity_Name                 
@@ -1825,8 +1823,7 @@ namespace Xml_Axe
 
                 if (Match_Setting("Disable_EAW_Mode"))
                 {
-                    if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Label_Entity_Name.Text = "First Attribute"; }
-                    else { Label_Entity_Name.Text = Queried_Attribute; }
+                    Label_Entity_Name.Text = Queried_Attribute; 
 
                     EAW_Mode = false;                   
                     Label_Type_Filter.Text = "Parent Name";
@@ -1854,8 +1851,7 @@ namespace Xml_Axe
                 }
                 else // EAW Mode
                 {
-                    if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Label_Entity_Name.Text = "First Attribute"; }
-                    else { Label_Entity_Name.Text = Queried_Attribute; }
+                    Label_Entity_Name.Text = Queried_Attribute; 
 
                     EAW_Mode = true;
                     Label_Type_Filter.Text = "Filter Type";
@@ -2531,9 +2527,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             {
                 Queried_Attribute = Combo_Box_Entity_Name.Text;
 
-                if (Combo_Box_Entity_Name.Text == "First Attribute") { Properties.Settings.Default.Attribute_Name = "first"; }
-                else { Properties.Settings.Default.Attribute_Name = Queried_Attribute; }
-
+                Properties.Settings.Default.Attribute_Name = Queried_Attribute; 
                 Properties.Settings.Default.Save();
             }
          
@@ -2697,8 +2691,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         {
             if (!EAW_Mode)
             {
-                if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Label_Entity_Name.Text = "First Attribute"; }
-                else { Label_Entity_Name.Text = Queried_Attribute; }
+                Label_Entity_Name.Text = Queried_Attribute; 
 
                 Label_Type_Filter.Text = "Parent Name";
                 Button_Search.Visible = true;
@@ -2711,9 +2704,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             }
             else
             {
-                if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Label_Entity_Name.Text = "First Attribute"; }
-                else { Label_Entity_Name.Text = Queried_Attribute; }
-
+                Label_Entity_Name.Text = Queried_Attribute; 
                 Label_Type_Filter.Text = "Filter Type";
                 Button_Search.Visible = true;
             }
@@ -2752,7 +2743,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         try
                         {   // Be aware Queried_Attribute is a variable that decides the outcome!
                             string Faction_Name = (string)Instance.Attribute(Queried_Attribute);
-                            if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Faction_Name = (string)Instance.FirstAttribute; }
+                            if (Match_Without_Emptyspace(Queried_Attribute, "First Attribute")) { Faction_Name = (string)Instance.FirstAttribute; }
 
                             if (!Found_Entities.Contains(Faction_Name))
                             { Found_Entities.Add(Faction_Name); }
@@ -2808,7 +2799,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         try
                         {   // Be aware Queried_Attribute is a variable that decides the outcome!
                             string Current_Name = (string)Instance.Attribute(Queried_Attribute);
-                            if (Match_Without_Emptyspace(Queried_Attribute, "first")) { Current_Name = (string)Instance.FirstAttribute; }
+                            if (Match_Without_Emptyspace(Queried_Attribute, "First Attribute")) { Current_Name = (string)Instance.FirstAttribute; }
 
                             if (Return_Tag_Content) { Current_Name = (string)Instance.Descendants(Tag_Name).Last().Value; }
 
@@ -3717,7 +3708,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 {   // ===================== Opening Xml File =====================                            
                     XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
 
-                    if (Match_Without_Emptyspace(Queried_Attribute, "first"))
+                    if (Match_Without_Emptyspace(Queried_Attribute, "First Attribute"))
                     {  Instances =
                           from All_Tags in Xml_File.Root.Descendants()
                           where (string)All_Tags.FirstAttribute == Entity_Name                 
@@ -3743,7 +3734,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 {   try
                     {   XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
 
-                        if (Match_Without_Emptyspace(Queried_Attribute, "first"))
+                        if (Match_Without_Emptyspace(Queried_Attribute, "First Attribute"))
                         {   Instances =
                                from All_Tags in Xml_File.Root.Descendants()
                                where Is_Match((string)All_Tags.FirstAttribute, Entity_Name)
