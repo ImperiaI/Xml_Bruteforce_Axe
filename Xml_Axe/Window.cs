@@ -113,7 +113,7 @@ namespace Xml_Axe
         List<string> Difference_List = new List<string>();
         public List<string> Temporal_E = new List<string>();
 
-        // "First Attribute" is not included here because it isn't supposed to be ignored
+        // "First_Attribute" is not included here because it isn't supposed to be ignored
         string[] Ignored_Attribute_Values = new string[] { "", "None", "Find_And_Replace", "Insert_Random_Int", "Insert_Random_Float" };
 
 
@@ -300,7 +300,8 @@ namespace Xml_Axe
             else if (Backup_Mode) // Just move into the Xml Directory that is currently selected 
             {   if (At_Top_Level) // Leave this below here
                 {   Button_Operator_MouseLeave(null, null);
-                    Button_Scripts.Visible = true;
+                    // Button_Scripts.Visible = true;
+                    Button_Attribute.Visible = true;
 
                     Backup_Folder = Select_List_View_First(List_View_Selection); // This defines which Backup dir is targeted!!
 
@@ -1023,7 +1024,7 @@ namespace Xml_Axe
                 {   if (Instance.Descendants().Any())
                     {
                         string Entity_Name = (string)Instance.Attribute(Queried_Attribute);
-                        if (Match_Without_Emptyspace(Queried_Attribute, "First Attribute")) { Entity_Name = (string)Instance.FirstAttribute; }
+                        if (Match_Without_Emptyspace(Queried_Attribute, "First_Attribute")) { Entity_Name = (string)Instance.FirstAttribute; }
 
                         if (Entity_Name != null)
                         {
@@ -1211,7 +1212,7 @@ namespace Xml_Axe
                         List<string> Selected_Entities = Select_List_View_Items(List_View_Selection);
 
 
-                        if (Match_Without_Emptyspace(Queried_Attribute, "First Attribute"))
+                        if (Match_Without_Emptyspace(Queried_Attribute, "First_Attribute"))
                         {
                             Instances =
                                from All_Tags in Xml_File.Root.Descendants()
@@ -1255,7 +1256,7 @@ namespace Xml_Axe
                         Query = 4;
 
 
-                        if (Match_Without_Emptyspace(Queried_Attribute, "First Attribute"))
+                        if (Match_Without_Emptyspace(Queried_Attribute, "First_Attribute"))
                         {   Instances =
                               from All_Tags in Xml_File.Root.Descendants()
                               where (string)All_Tags.FirstAttribute == Entity_Name                 
@@ -1884,7 +1885,7 @@ namespace Xml_Axe
 
         private void Set_UI_Into_Settings_Mode(bool Mode)
         {
-            Control[] Controls = { Button_Search, Button_Run, Button_Backup, Button_Percentage, Button_Scripts, Button_Operator, Label_Type_Filter };
+            Control[] Controls = { Button_Search, Button_Run, Button_Backup, Button_Attribute, Button_Percentage, Button_Scripts, Button_Operator, Label_Type_Filter };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
         }
         
@@ -2524,8 +2525,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
             if (Ying_Dominates) 
-            {
-                Queried_Attribute = Combo_Box_Entity_Name.Text;
+            {   Queried_Attribute = Combo_Box_Entity_Name.Text;
 
                 Properties.Settings.Default.Attribute_Name = Queried_Attribute; 
                 Properties.Settings.Default.Save();
@@ -2743,7 +2743,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         try
                         {   // Be aware Queried_Attribute is a variable that decides the outcome!
                             string Faction_Name = (string)Instance.Attribute(Queried_Attribute);
-                            if (Match_Without_Emptyspace(Queried_Attribute, "First Attribute")) { Faction_Name = (string)Instance.FirstAttribute; }
+                            if (Match_Without_Emptyspace(Queried_Attribute, "First_Attribute")) { Faction_Name = (string)Instance.FirstAttribute; }
 
                             if (!Found_Entities.Contains(Faction_Name))
                             { Found_Entities.Add(Faction_Name); }
@@ -2799,7 +2799,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         try
                         {   // Be aware Queried_Attribute is a variable that decides the outcome!
                             string Current_Name = (string)Instance.Attribute(Queried_Attribute);
-                            if (Match_Without_Emptyspace(Queried_Attribute, "First Attribute")) { Current_Name = (string)Instance.FirstAttribute; }
+                            if (Match_Without_Emptyspace(Queried_Attribute, "First_Attribute")) { Current_Name = (string)Instance.FirstAttribute; }
 
                             if (Return_Tag_Content) { Current_Name = (string)Instance.Descendants(Tag_Name).Last().Value; }
 
@@ -3555,7 +3555,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
             // Toggeling Buttons for this mode
             Button_Start_MouseLeave(null, null);         
-            Button_Scripts_MouseLeave(null, null);
+            // Button_Scripts_MouseLeave(null, null);
+            Button_Attribute_MouseLeave(null, null);
+            Button_Search_MouseLeave(null, null);
             Button_Operator_MouseLeave(null, null);
         }
 
@@ -3622,8 +3624,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 {
                     Backup_Mode = false;
                     At_Top_Level = true;
-                    Button_Backup_MouseLeave(null, null);
-                    Button_Scripts.Visible = false;
+                    Button_Backup_MouseLeave(null, null);                   
+                    // Button_Scripts.Visible = false;
+                    Button_Attribute.Visible = false;
                     Button_Operator.Visible = false;
 
                     List_View_Selection.Items.Clear();
@@ -3708,7 +3711,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 {   // ===================== Opening Xml File =====================                            
                     XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
 
-                    if (Match_Without_Emptyspace(Queried_Attribute, "First Attribute"))
+                    if (Match_Without_Emptyspace(Queried_Attribute, "First_Attribute"))
                     {  Instances =
                           from All_Tags in Xml_File.Root.Descendants()
                           where (string)All_Tags.FirstAttribute == Entity_Name                 
@@ -3734,7 +3737,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 {   try
                     {   XDocument Xml_File = XDocument.Load(Xml, LoadOptions.PreserveWhitespace);
 
-                        if (Match_Without_Emptyspace(Queried_Attribute, "First Attribute"))
+                        if (Match_Without_Emptyspace(Queried_Attribute, "First_Attribute"))
                         {   Instances =
                                from All_Tags in Xml_File.Root.Descendants()
                                where Is_Match((string)All_Tags.FirstAttribute, Entity_Name)
@@ -3777,11 +3780,72 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Button_Attribute_Click(object sender, EventArgs e)
         {
-            if (Ying_Dominates)
+            if (Backup_Mode)
+            {
+                Toggle_Undo_Button(Enable_Undo);
+
+                if (At_Top_Level) { return; } // Leave this as it is.
+
+                string Selected_Backup = Select_List_View_First(List_View_Selection);
+                string Working_Directory = Backup_Path + Backup_Folder + @"\Current";
+                // string Directory_Name = "";
+
+            
+                bool Move_Backwards = false;
+
+                foreach (ListViewItem Item in List_View_Selection.Items)
+                {
+                    if (Item.Text == Selected_Backup) { break; }
+
+                    // Find out whether Current_Backup comes before Selected_Backup
+                    else if (Item.Text == Current_Backup) { Move_Backwards = true; break; }                                         
+                }
+
+
+                if (Selected_Backup == null) { iConsole(400, 100, "\nPlease select any of the backups to restore it."); }
+
+                else if (Current_Backup == Selected_Backup) { iConsole(400, 100, "\nThis should already be the current version."); }
+
+                else if (Current_Backup != "")
+                {                  
+                    //if (!Move_Backwards) // Changed my mind about this
+                    //{
+                    iDialogue(580, 240, "Restore All", "Cancel", "Only Inside", "false", "\nDo you wish to restore to the backup " +
+                       Selected_Backup + "?\n\nFor all changed files between this backup and the \ncurrent state, or only for the files inside of this backup?"
+                        // + Xml_Directory.Replace(Mod_Directory, "") + "?"
+                       );
+                    /*
+                    }
+                    else
+                    {
+                        iDialogue(540, 200, "Restore", "Cancel", "false", "false", 
+                            "\nDo you wish to restore to the backup \n" + Selected_Backup + "?");
+                    }
+                    */
+
+                    if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; } // User Abbort
+
+                    // Create_New_Backup(true); // Check for AutoStash changes
+
+
+                    // Moving backwards in the history means we better not change the newest version of files that are not inside of the target patch
+                    // We also ignore all files outside of this patch if the user decided "else" while moving forward  | Move_Backwards)
+                    if (Caution_Window.Passed_Value_A.Text_Data == "else") { Restore(Current_Backup + User_Name, Selected_Backup, Move_Backwards, false); }
+
+                    else { Restore(Current_Backup + User_Name, Selected_Backup, Move_Backwards, true); } // Current_Backup is allowed to be remaining "" here.
+
+                    Current_Backup = Selected_Backup; //Update
+                }
+            }
+
+
+            else if (Ying_Dominates)
             {
                 Ying_Dominates = false; // toggling
 
-                Label_Entity_Name.Text = Combo_Box_Entity_Name.Text;
+                if (Combo_Box_Entity_Name.Text == "First_Attribute") { Label_Entity_Name.Text = "First Attribute"; }
+                else { Label_Entity_Name.Text = Combo_Box_Entity_Name.Text; }
+
                 Combo_Box_Entity_Name.Text = Properties.Settings.Default.Entity_Name;
 
                 Reset_Combo_Box_Entity_Name();
@@ -3790,15 +3854,17 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Combo_Box_Entity_Name.BackColor = Color.LightGray;
             }
 
-            else
+            else if (!Ying_Dominates)
             {
                 Properties.Settings.Default.Entity_Name = Combo_Box_Entity_Name.Text;
                 Properties.Settings.Default.Save();
 
                 Combo_Box_Entity_Name.Items.Clear(); // Special selection type
-                Combo_Box_Entity_Name.Items.Add("First Attribute");
+                Combo_Box_Entity_Name.Items.Add("Name");
+                Combo_Box_Entity_Name.Items.Add("First_Attribute");
 
-                Combo_Box_Entity_Name.Text = Label_Entity_Name.Text;                          
+
+                Combo_Box_Entity_Name.Text = Properties.Settings.Default.Attribute_Name;                          
                 Label_Entity_Name.Text = "";
 
 
@@ -3816,14 +3882,21 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Button_Attribute_MouseHover(object sender, EventArgs e)
         {
-            if (Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Yang_Lit); }
-            else if (!Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Ying_Lit); }
+            if (Backup_Mode) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Run_Lit); }
+            else 
+            { 
+                if (Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Yang_Lit); }
+                else if (!Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Ying_Lit); }
+            }
         }
 
         private void Button_Attribute_MouseLeave(object sender, EventArgs e)
         {
-            if (Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Yang); }
-            else if (!Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Ying); }
+            if (Backup_Mode) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Run); }
+            else
+            {   if (Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Yang); }
+                else if (!Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Ying); }
+            }
         }
 
    
@@ -3917,65 +3990,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 if (Text_Box_Description.Visible) { Disable_Description(); }
                 Toggle_Undo_Button(Enable_Undo);
             }
-
-            else if (Backup_Mode)
-            {
-                Toggle_Undo_Button(Enable_Undo);
-
-                if (At_Top_Level) { return; } // Leave this as it is.
-
-                string Selected_Backup = Select_List_View_First(List_View_Selection);
-                string Working_Directory = Backup_Path + Backup_Folder + @"\Current";
-                // string Directory_Name = "";
-
-            
-                bool Move_Backwards = false;
-
-                foreach (ListViewItem Item in List_View_Selection.Items)
-                {
-                    if (Item.Text == Selected_Backup) { break; }
-
-                    // Find out whether Current_Backup comes before Selected_Backup
-                    else if (Item.Text == Current_Backup) { Move_Backwards = true; break; }                                         
-                }
-
-
-                if (Selected_Backup == null) { iConsole(400, 100, "\nPlease select any of the backups to restore it."); }
-
-                else if (Current_Backup == Selected_Backup) { iConsole(400, 100, "\nThis should already be the current version."); }
-
-                else if (Current_Backup != "")
-                {                  
-                    //if (!Move_Backwards) // Changed my mind about this
-                    //{
-                    iDialogue(580, 240, "Restore All", "Cancel", "Only Inside", "false", "\nDo you wish to restore to the backup " +
-                       Selected_Backup + "?\n\nFor all changed files between this backup and the \ncurrent state, or only for the files inside of this backup?"
-                        // + Xml_Directory.Replace(Mod_Directory, "") + "?"
-                       );
-                    /*
-                    }
-                    else
-                    {
-                        iDialogue(540, 200, "Restore", "Cancel", "false", "false", 
-                            "\nDo you wish to restore to the backup \n" + Selected_Backup + "?");
-                    }
-                    */
-
-                    if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; } // User Abbort
-
-                    // Create_New_Backup(true); // Check for AutoStash changes
-
-
-                    // Moving backwards in the history means we better not change the newest version of files that are not inside of the target patch
-                    // We also ignore all files outside of this patch if the user decided "else" while moving forward  | Move_Backwards)
-                    if (Caution_Window.Passed_Value_A.Text_Data == "else") { Restore(Current_Backup + User_Name, Selected_Backup, Move_Backwards, false); }
-
-                    else { Restore(Current_Backup + User_Name, Selected_Backup, Move_Backwards, true); } // Current_Backup is allowed to be remaining "" here.
-
-                    Current_Backup = Selected_Backup; //Update
-                }
-            }
-
+      
             else if (Operation_Mode.Contains("Point") | Combo_Box_Tag_Name.Text == "Scale_Galaxies") // Cycle
             {
                 if (Scale_Mode == "XY") { Scale_Mode = "X"; }
@@ -4054,8 +4069,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Button_Scripts_MouseHover(object sender, EventArgs e)
         {
-            if (Backup_Mode) { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Run_Lit); }
-            else if (Operation_Mode.Contains("Point") | Combo_Box_Tag_Name.Text == "Scale_Galaxies")
+            if (Operation_Mode.Contains("Point") | Combo_Box_Tag_Name.Text == "Scale_Galaxies")
             {
                 if (Scale_Mode == "XY") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_XY_Lit); }
                 else if (Scale_Mode == "X") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_X_Lit); }
@@ -4068,10 +4082,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         {
             if (Script_Mode) { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash_Lit); }
             else
-            {
-                if (Backup_Mode) { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Run); }
-                
-                else if (Operation_Mode.Contains("Point") | Combo_Box_Tag_Name.Text == "Scale_Galaxies")
+            {             
+                if (Operation_Mode.Contains("Point") | Combo_Box_Tag_Name.Text == "Scale_Galaxies")
                 {
                     if (Scale_Mode == "XY") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_XY); }
                     else if (Scale_Mode == "X") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_X); }

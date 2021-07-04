@@ -184,7 +184,7 @@
             // Combo_Box_Type_Filter
             // 
             this.Combo_Box_Type_Filter.BackColor = System.Drawing.SystemColors.ScrollBar;
-            this.Combo_Box_Type_Filter.DropDownHeight = 244;
+            this.Combo_Box_Type_Filter.DropDownHeight = 324;
             this.Combo_Box_Type_Filter.Font = new System.Drawing.Font("Georgia", 12F);
             this.Combo_Box_Type_Filter.FormattingEnabled = true;
             this.Combo_Box_Type_Filter.IntegralHeight = false;
@@ -272,7 +272,7 @@
             this.Text_Box_Description.ForeColor = System.Drawing.SystemColors.Info;
             this.Text_Box_Description.Location = new System.Drawing.Point(12, 12);
             this.Text_Box_Description.Name = "Text_Box_Description";
-            this.Text_Box_Description.Size = new System.Drawing.Size(404, 164);
+            this.Text_Box_Description.Size = new System.Drawing.Size(394, 164);
             this.Text_Box_Description.TabIndex = 29;
             this.Text_Box_Description.Text = "";
             this.Text_Box_Description.Click += new System.EventHandler(this.Text_Box_Description_Click);
