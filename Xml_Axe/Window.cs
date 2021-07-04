@@ -124,6 +124,9 @@ namespace Xml_Axe
 
         private void Window_Load(object sender, EventArgs e)
         {
+
+            this.Size = new Size(Properties.Settings.Default.Last_Width, Properties.Settings.Default.Last_Height);
+    
                
             Drop_Zone.AllowDrop = true;
             List_View_Selection.AllowDrop = true;
@@ -4008,7 +4011,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 List_View_Selection.Visible = true;
                 Zoom_List_View(true);
                 Set_UI_Into_Script_Mode(!Script_Mode);
-                Button_Browse_Folder.Location = new Point(1, 350);
+                Button_Browse_Folder.Location = new Point(1, 430);
                 if (Text_Box_Description.Visible) { Disable_Description(); }
 
 
@@ -4653,13 +4656,14 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         private void Zoom_List_View(bool Large)
         {
             if (Large)
-            {   Drop_Zone.Visible = false; // Hiding Background              
-                List_View_Selection.Size = new Size(367, 482);
+            {
+                Drop_Zone.Visible = false; // Hiding Background 367             
+                List_View_Selection.Size = new Size(this.Size.Width - 76, 482);
                 List_View_Selection.Location = new Point(31, 29);
             } 
             else
-            {   Drop_Zone.Visible = true;
-                List_View_Selection.Size = new Size(404, 164);
+            {   Drop_Zone.Visible = true; // 404
+                List_View_Selection.Size = new Size(this.Size.Width - 40, 164);
                 List_View_Selection.Location = new Point(12, 12);               
             }
 
@@ -4675,7 +4679,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Set_UI_Into_Script_Mode(bool Mode)
         {
-            Control[] Controls = { Button_Start, Button_Run, Button_Backup, Button_Search, Button_Percentage, Button_Operator, Button_Toggle_Settings };
+            Control[] Controls = { Button_Start, Button_Run, Button_Backup, Button_Search, Button_Attribute, Button_Percentage, Button_Operator, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
         }
 
@@ -5274,6 +5278,17 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             }
         }
 
+
+
+        private void Window_ResizeEnd(object sender, EventArgs e)
+        {
+             Properties.Settings.Default.Last_Width = this.Size.Width;
+             Properties.Settings.Default.Last_Height = this.Size.Height;
+             Properties.Settings.Default.Save();
+
+             // if (this.Size.Width > Screen.FromControl(this).Bounds.Width - 200) { this.Size = new Size(444, 660); }
+             // iConsole(400, 100, Screen.FromControl(this).Bounds.Width.ToString()); 
+        }
 
 
 

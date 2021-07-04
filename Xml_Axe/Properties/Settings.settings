@@ -35,5 +35,11 @@
     <Setting Name="Attribute_Name" Type="System.String" Scope="User">
       <Value Profile="(Default)">Name</Value>
     </Setting>
+    <Setting Name="Last_Width" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">444</Value>
+    </Setting>
+    <Setting Name="Last_Height" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">660</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

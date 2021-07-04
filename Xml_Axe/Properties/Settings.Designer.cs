@@ -154,5 +154,29 @@ namespace Xml_Axe.Properties {
                 this["Attribute_Name"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("444")]
+        public int Last_Width {
+            get {
+                return ((int)(this["Last_Width"]));
+            }
+            set {
+                this["Last_Width"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("660")]
+        public int Last_Height {
+            get {
+                return ((int)(this["Last_Height"]));
+            }
+            set {
+                this["Last_Height"] = value;
+            }
+        }
     }
 }
