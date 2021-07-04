@@ -838,26 +838,31 @@ namespace Xml_Axe
             {
                 // Warn_User = false;                  
                 Related_Xmls = Slice(false); // Means don't apply any changes
-                Temporal_C = (Related_Xmls.Count() * 30) + 160;
-                if (Temporal_C > 680) { Temporal_C = 680; }
+                try
+                {
+                    Temporal_C = (Related_Xmls.Count() * 30) + 160;
+                    if (Temporal_C > 680) { Temporal_C = 680; }
+          
 
                
 
-                if (Related_Xmls.Count == 0) // the Slice function is supposed to fill this list with paths
-                {
-                    string Error_Text = "\nI'm sorry, no entries with Attribute Name \"" + Queried_Attribute
-                    + "\"\nand Attribute Value \"" + Combo_Box_Entity_Name.Text + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
-
-                    if (Array_Matches(Ignored_Attribute_Values, Combo_Box_Entity_Name.Text)) // Then the query went by filter, which is name of the Entities root tag
+                    if (Related_Xmls.Count == 0) // the Slice function is supposed to fill this list with paths
                     {
-                        Error_Text = "\nI'm sorry, no entries with Entity Parent Tag Name \"" + Combo_Box_Type_Filter.Text
-                        + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
-                    }
+                        string Error_Text = "\nI'm sorry, no entries with Attribute Name \"" + Queried_Attribute
+                        + "\"\nand Attribute Value \"" + Combo_Box_Entity_Name.Text + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
+
+                        if (Array_Matches(Ignored_Attribute_Values, Combo_Box_Entity_Name.Text)) // Then the query went by filter, which is name of the Entities root tag
+                        {
+                            Error_Text = "\nI'm sorry, no entries with Entity Parent Tag Name \"" + Combo_Box_Type_Filter.Text
+                            + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
+                        }
 
 
-                    iConsole(600, 100, Error_Text); return;
-                } // 680
-                else { iDialogue(740, Temporal_C, "Yes", "Cancel", "Ignore", "Blacklist", "(Strg + Click to select multiple.)   Are you sure you wish to apply changes to:", Related_Xmls, true); }
+                        iConsole(600, 100, Error_Text); return;
+                    } // 680
+                    else { iDialogue(740, Temporal_C, "Yes", "Cancel", "Ignore", "Blacklist", "(Strg + Click to select multiple.)   Are you sure you wish to apply changes to:", Related_Xmls, true); }
+
+                } catch { iConsole(400, 100, "Error"); }
 
 
                 if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
@@ -1021,7 +1026,10 @@ namespace Xml_Axe
                     // Selecting all non empty tags that have the Attribute "Name", null because we need all selected.
                       where All_Tags != null
                         select All_Tags;
-                
+
+
+
+                // iConsole(200, 100, string.Join("\n", Instances));
 
                 // =================== Checking Xml Instance ===================
                 foreach (XElement Instance in Instances)
@@ -1227,12 +1235,14 @@ namespace Xml_Axe
                               select All_Tags;
                         }
                     }
-                    else { Found_Instances = Get_Entities(Changed_Xmls, Xml_File, Entity_Name, Selected_Tag, Selected_Type); }
+                    else { Found_Instances = Get_Child_Entities(Xml_File, Entity_Name, Selected_Tag, Selected_Type); }
 
 
             
 
-                    if (Found_Instances.Count() == 0) { continue; } 
+                    if (Found_Instances.Count() == 0) { continue; }
+                    // iConsole(500, 500, Selected_Xml + "\n\n" + string.Join("\n", Found_Instances));
+                  
 
                     // =================== Checking Xml Instance ===================
                     foreach (XElement Instance in Found_Instances)
@@ -1322,6 +1332,9 @@ namespace Xml_Axe
 
                         }
                     }
+
+                   
+
                     
 
                     if (Apply_Changes)
@@ -1631,9 +1644,163 @@ namespace Xml_Axe
 
 
 
+        //===========================// Currently NOT used because XML always requires a Root element.
+
+        public IEnumerable<XElement> Get_Entities(XDocument Xml_File, string Entity_Name, string Selected_Tag, string Selected_Type)
+        {
+            IEnumerable<XElement> Instances = null;
+            int Query = 0;
+
+            // ===================== Opening Xml File =====================                  
+
+
+            if (Combo_Box_Type_Filter.Text == "Faction Name Filter")
+            {
+                Query = 2;
+
+                Instances =
+                   from All_Tags in Xml_File.Descendants() // Entity_Name means the Faction name here
+                   where All_Tags.Descendants("Affiliation").Any() // We need this to prevent null exceptions
+                   where All_Tags.Descendants("Affiliation").Last().Value.Contains(Entity_Name)
+                   select All_Tags; // Last() because it overwrites the first occurances ingame
+            }
+
+            else if (Combo_Box_Type_Filter.Text == "Category Mask Filter")
+            {
+                Query = 3;
+
+                Instances =
+                   from All_Tags in Xml_File.Descendants() // Entity_Name means the Faction name here
+                   where All_Tags.Descendants("CategoryMask").Any() // We need this to prevent null exceptions
+                   where All_Tags.Descendants("CategoryMask").Last().Value.Contains(Entity_Name)
+                   select All_Tags; // Last() because it overwrites the first occurances ingame
+            }
+
+            else if (!Array_Matches(Ignored_Attribute_Values, Combo_Box_Entity_Name.Text)) // Select a single Entity by Name
+            {
+                Query = 4;
+
+
+                if (Match_Without_Emptyspace(Queried_Attribute, "First_Attribute"))
+                {
+                    Instances =
+                      from All_Tags in Xml_File.Descendants()
+                      where (string)All_Tags.FirstAttribute == Entity_Name
+                      select All_Tags;
+                }
+                else
+                {
+                    Instances =
+                      from All_Tags in Xml_File.Descendants()
+                      where (string)All_Tags.Attribute(Queried_Attribute) == Entity_Name
+                      select All_Tags;
+                }
+            }
+            else if (Combo_Box_Entity_Name.Text == "Find_And_Replace")
+            {
+                Query = 5;
+
+                Instances =
+                  from All_Tags in Xml_File.Descendants()
+                  where All_Tags.Descendants().Any(x => x.Value == Combo_Box_Tag_Name.Text)
+                  select All_Tags;
+                // if (Instances.Count() > 0) { iConsole(400, 100, (string)Instances.First().FirstAttribute); }                   
+            }
+
+            // Match by Tag Value (= fake entity type)
+            else if (Selected_Type == "FighterUnit") // If Fighter Locomotor can be found we spoof the fake tagname "FighterUnit"
+            {
+                Query = 6;
+
+                Instances =
+                  from All_Tags in Xml_File.Descendants()
+                  where All_Tags.Descendants("SpaceBehavior").Any() // We need this to prevent null exceptions! And it increases speed a lot.
+                  where All_Tags.Descendants("SpaceBehavior").Last().Value.Contains("FIGHTER_LOCOMOTOR")
+                  select All_Tags;
+
+            }
+
+            else if (Selected_Type != "" & Combo_Box_Type_Filter.Text != "All Types") // By Entity Type
+            {
+                Query = 7;
+
+                Instances =
+                  from All_Tags in Xml_File.Descendants()
+                  where All_Tags.Name == Selected_Type
+                  select All_Tags;
+            }
+
+            else if (Selected_Tag == "Max_Speed")
+            {
+                Query = 8;
+
+                Instances =
+                   from All_Tags in Xml_File.Descendants()
+                   where All_Tags.Descendants(Selected_Tag).Any()
+                       // Means they are excluded, unless they are EXPLICITLY specified as Selected_Type!                      
+                   & (All_Tags.Name != "Particle" | Selected_Type == "Particle")
+                   & (All_Tags.Name != "Projectile" | Selected_Type == "Projectile")
+
+                   select All_Tags;
+            }
+
+            else if (Selected_Tag == "Scale_Factor")
+            {
+                Query = 9;
+
+                /*
+                Only this Scale_Factor_List matches to "All Types", because otherwise the change of Scale_Factor would affect all of these types:
+                Planet, Projectile, Particle
+                Prop, SpaceProp, Container, Marker, MiscObject, SpecialEffect, MOV_Cinematic,  
+                SpacePrimarySkydome, SpaceSecondarySkydome, LandPrimarySkydome, LandSecondarySkydome, 
+
+                StarBase, SpaceBuildable, SpecialStructure, SecondaryStructure, MultiplayerStructureMarker, 
+                GroundBase, GroundStructure, GroundBuildable, 
+                */
+
+                List<string> Scale_Factor_List = new List<string>() { "SpaceUnit", "UniqueUnit", "StarBase" };
+                // Scale_Factor_List.Add(Combo_Box_Type_Filter.Text); // This little gimmick because the OR operator in Linq is horrible... 
+
+
+                Instances =
+                   from All_Tags in Xml_File.Descendants()
+                   where List_Matches(Scale_Factor_List, All_Tags.Name.ToString())
+                   where All_Tags.Descendants(Selected_Tag).Any()
+
+                   select All_Tags;
+            }
+
+            else if (Selected_Tag == "Enable_Abilities" | Selected_Tag == "Enable_Passive_Abilities")
+            {
+                string Required_Tag = "Unit_Abilities_Data";
+                if (Selected_Tag == "Enable_Passive_Abilities") { Required_Tag = "Abilities"; }
+
+                Query = 10;
+
+                Instances =
+                  from All_Tags in Xml_File.Descendants()
+                  where All_Tags.Descendants(Required_Tag).Any()
+                  select All_Tags;
+            }
+            else // Target all entities in the whole Mod!
+            {
+                Query = 11;
+
+                Instances =
+                  from All_Tags in Xml_File.Descendants()
+                  // Selecting all non empty tags that have the Queried_Attribute "Name", null because we need all selected.
+                  where All_Tags != null
+                  select All_Tags;
+            }
+
+            return Instances;
+        }
+
+
+
         //===========================//
 
-        public IEnumerable<XElement> Get_Entities(List<string> Changed_Xmls, XDocument Xml_File, string Entity_Name, string Selected_Tag, string Selected_Type)
+        public IEnumerable<XElement> Get_Child_Entities(XDocument Xml_File, string Entity_Name, string Selected_Tag, string Selected_Type)
         {
             IEnumerable<XElement> Instances = null;
             int Query = 0;
@@ -1782,7 +1949,6 @@ namespace Xml_Axe
 
             return Instances;
         }
-
 
 
         //===========================//
@@ -3630,7 +3796,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
-        {  
+        {
+
+
             // iConsole(400, 100, Current_Backup); return;
             // iConsole(500, 500, string.Join("\n", dd)); return;
             // iConsole(400, 100, Get_Setting_Value("Custom_Start_Parameters")); return;
