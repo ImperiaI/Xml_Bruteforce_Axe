@@ -805,13 +805,20 @@ namespace Xml_Axe
         //===========================// 
 
         private void Button_Run_Click(object sender, EventArgs e)
-        {
+        {   
+            string Parent_Name = Combo_Box_Type_Filter.Text;
+            string Parent_Attribute_Value = Combo_Box_Entity_Name.Text;
+
+            string Child_Name = Combo_Box_Tag_Name.Text;
+            string Child_Value = Combo_Box_Tag_Value.Text;
+        
+
            
             // iConsole(600, 400, Check_for_Steam_Version()); // Debug
-            if (Combo_Box_Tag_Name.Text == "") { return; }
+            if (Child_Name == "") { return; }
 
 
-            if (Operation_Mode == "Percent" && Combo_Box_Tag_Value.Text == "-100%")
+            if (Operation_Mode == "Percent" && Child_Value == "-100%")
             {   iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nRemoving -100% means set the value to 0 \nare you sure about that?");
                 if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
             }
@@ -832,22 +839,21 @@ namespace Xml_Axe
 
 
             // Storing last search
-            if (Array_Matches(Ignored_Attribute_Values, Combo_Box_Entity_Name.Text)) 
+            if (Array_Matches(Ignored_Attribute_Values, Parent_Attribute_Value)) 
             { Properties.Settings.Default.Entity_Name = ""; }
-            else { Properties.Settings.Default.Entity_Name = Wash_String(Combo_Box_Entity_Name.Text); }
+            else { Properties.Settings.Default.Entity_Name = Wash_String(Parent_Attribute_Value); }
 
 
-            if (Combo_Box_Tag_Name.Text != "Rebalance_Everything" & Combo_Box_Type_Filter.Text != "Faction Name Filter" 
-                & Combo_Box_Type_Filter.Text != "Category Mask Filter") // We don't want the user to accidently re-apply such a powerfull setting
+            if (Child_Name != "Rebalance_Everything" & Parent_Name != "Faction Name Filter"
+                & Parent_Name != "Category Mask Filter") // We don't want the user to accidently re-apply such a powerfull setting
             {
-                Properties.Settings.Default.Type_Filter = Combo_Box_Type_Filter.Text;
+                Properties.Settings.Default.Type_Filter = Parent_Name;
 
                 // Would otherwise end up in loading a broken selection, because the selection was stored in the ListView of the last session:
-                if (Combo_Box_Entity_Name.Text != "Multi")
-                { Properties.Settings.Default.Tag_Name = Combo_Box_Tag_Name.Text; }
+                if (Parent_Attribute_Value != "Multi") { Properties.Settings.Default.Tag_Name = Child_Name; }
 
-                if (Combo_Box_Tag_Value.Text.Contains("%")) { Properties.Settings.Default.Tag_Value = ""; } // Preventing Errors
-                else { Properties.Settings.Default.Tag_Value = Combo_Box_Tag_Value.Text; }
+                if (Child_Value.Contains("%")) { Properties.Settings.Default.Tag_Value = ""; } // Preventing Errors
+                else { Properties.Settings.Default.Tag_Value = Child_Value; }
             }
 
             Properties.Settings.Default.Trackbar_Value = Track_Bar_Tag_Value.Value;
@@ -866,7 +872,7 @@ namespace Xml_Axe
 
 
             // if (The_Settings.Contains("Show_Files_That_Would_Change = true") | The_Settings.Contains("Request_Approval=true"))
-            if (Match_Setting("Request_File_Approval") & !In_Selected_Xml(Combo_Box_Entity_Name.Text))
+            if (Match_Setting("Request_File_Approval") & !In_Selected_Xml(Parent_Attribute_Value))
             {
                 // Warn_User = false;                  
                 Related_Xmls = Slice(false); // Means don't apply any changes
@@ -881,12 +887,12 @@ namespace Xml_Axe
                     if (Related_Xmls.Count == 0) // the Slice function is supposed to fill this list with paths
                     {
                         string Error_Text = "\nI'm sorry, no entries with Attribute Name \"" + Queried_Attribute
-                        + "\"\nand Attribute Value \"" + Combo_Box_Entity_Name.Text + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
+                        + "\"\nand Attribute Value \"" + Parent_Attribute_Value + "\" were found \nto contain the child name \"" + Child_Name + "\"";
 
-                        if (Array_Matches(Ignored_Attribute_Values, Combo_Box_Entity_Name.Text)) // Then the query went by filter, which is name of the Entities root tag
+                        if (Array_Matches(Ignored_Attribute_Values, Parent_Attribute_Value)) // Then the query went by filter, which is name of the Entities root tag
                         {
-                            Error_Text = "\nI'm sorry, no entries with Entity Parent Tag Name \"" + Combo_Box_Type_Filter.Text
-                            + "\" were found \nto contain the child name \"" + Combo_Box_Tag_Name.Text + "\"";
+                            Error_Text = "\nI'm sorry, no entries with Entity Parent Tag Name \"" + Parent_Name
+                            + "\" were found \nto contain the child name \"" + Child_Name + "\"";
                         }
 
 
@@ -931,13 +937,30 @@ namespace Xml_Axe
                 // if (Verify_Setting("Backups_Per_Directory")) { // Disabled Feature
                 // Using Mod_Name instead of Backup_Folder here, because that's the current working directory!
                 string Path_And_Backup = Backup_Path + Mod_Name + @"\" + This_Backup;
-    
 
+
+
+
+                // ======== Formating Action Report Information: ========
+                string Change_Info = "Stored before applying following changes: \n";
+                string[] Tag_Values = new string[] { "Parent Name = ", "\nAttribute ", "\nChild Name = ", "\nChild Value = " };
+                if (EAW_Mode) { Tag_Values = new string[] { "Type = ", "\nUnit ", "\nTag Name = ", "\nTag Value = " }; } // Use other names
+
+
+
+                if (Parent_Name != "" && Parent_Name != "All Types") { Change_Info += Tag_Values[0] + Parent_Name; }
+                if (Parent_Attribute_Value != "" && Parent_Attribute_Value != "None") 
+                { Change_Info += Tag_Values[1] + Queried_Attribute + " = \"" + Parent_Attribute_Value + "\""; }
+
+                if (Child_Name != "") { Change_Info += Tag_Values[2] + Child_Name; }
+                if (Child_Value != "") { Change_Info += Tag_Values[3] + Child_Value; }
+
+           
 
                 // Update the Backup Version and AUTOMATICALLY CREATE BACKUP from the list of Related_Xmls
                 // It happens to fail to Collapse when the User has the last backup in the stack loaded.
                 if (!File.Exists(Path_And_Backup + Backup_Info))
-                { Create_Backup_Info(Mod_Name, This_Backup, "", string.Join("\n", Related_Xmls), false, true); }
+                { Create_Backup_Info(Mod_Name, This_Backup, Change_Info, string.Join("\n", Related_Xmls), false, true); }
                
                 else
                 {   // iConsole(400, 100, Path_And_Backup); 
@@ -5055,12 +5078,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
          //=====================//
 
-        public void Write_Into_Segment(string Source_Backup, string Segment_Name, List<string> Content, string Target_Backup = "Same")
-        { Write_Into_Segment(Source_Backup, Segment_Name, string.Join("\n", Content), Target_Backup); }
+        public void Write_Into_Segment(string Source_Backup, string Segment_Name, List<string> Content, string Target_Backup = "Same", bool Prepend_To_Segment = true)
+        { Write_Into_Segment(Source_Backup, Segment_Name, string.Join("\n", Content), Target_Backup, Prepend_To_Segment); }
 
 
 
-        public void Write_Into_Segment(string Source_Backup, string Segment_Name, string Content, string Target_Backup = "Same")
+        public void Write_Into_Segment(string Source_Backup, string Segment_Name, string Content, string Target_Backup = "Same", bool Prepend_To_Segment = true)
         {
           
             foreach (string Backup in Get_All_Directories(Backup_Path + Mod_Name, true))
@@ -5070,31 +5093,66 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 // iConsole(600, 200, Backup + "  \n" + Content);
 
+       
 
                 string Segment = 
                     "//============================================================\\\\" +
                     "\n" + Segment_Name +
                     "\n//============================================================\\\\";
-
-
+                      
+                
                 string The_File = File.ReadAllText(Backup + Backup_Info);
-                The_File = The_File.Replace(Segment, Segment + "\n" + Content + "\n");
+
+
+
+                if (Prepend_To_Segment) { The_File = The_File.Replace(Segment, Segment + "\n" + Content + "\n"); }
+                else // Replace it
+                {   string Old_Segment = string.Join("\n", Get_Segment_Info(Source_Backup, Segment_Name));
+                    The_File = The_File.Replace(Old_Segment, Content);
+
+
+                    // iConsole(500, 500, "\nReplacing: \n\"" + Old_Segment + "\" \n\nwith \n\n\"" + Content + "\"");                                
+                    // iConsole(500, 500, "\nReplacing: \n\"" + Segment + "\n" + Old_Segment + "\" \n\nwith \n\n\"" + Segment + "\n" + Content + "\"");                 
+                } 
+                
 
             
 
                 // Use the Input File to write into itself
-                if (Target_Backup == "Same") { File.WriteAllText(Backup + Backup_Info, The_File); }
+                if (Target_Backup == "Same") 
+                {   File.WriteAllText(Backup + Backup_Info, The_File);
+                    // iConsole(500, 200, "\nWriting into \n" + Backup + Backup_Info);
+                }
+
                 else 
                 {   string New_Backup = Path.GetDirectoryName(Backup) + @"\" + Target_Backup;
                     if (!Directory.Exists(New_Backup)) { Directory.CreateDirectory(New_Backup); }
 
                     File.WriteAllText(New_Backup + Backup_Info, The_File);
+                    // iConsole(500, 200, "\nWriting into \n" + New_Backup + Backup_Info);
                 }
 
 
                 // Quit because we already edited the Backup we need
                 if (Source_Backup != "Any" && Path.GetFileName(Backup) == Source_Backup) { return; } 
             }
+        }
+
+
+
+
+        //=====================//
+
+        public void Visualize_Characters(string Text_1, string Text_2 = "")
+        {
+            Text_1 = Text_1.Replace("\t", "TAB").Replace("\r", "CARRIAGE").Replace(" ", "_");
+
+            if (Text_2 != "") 
+            { 
+                Text_2 = Text_2.Replace("\t", "TAB").Replace("\r", "CARRIAGE").Replace(" ", "_");
+                iConsole(500, 500, Text_1 + "\n\n//======================\n\n" + Text_2);
+            }
+            else { iConsole(500, 500, Text_1); }            
         }
 
 
@@ -5125,7 +5183,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     } 
 
                     else if (!Started) { continue; }
-                    else if (Line.StartsWith("//") || Line.StartsWith("#") || Line == "\n" || Line == "") { continue; }
+                    else if (Line.StartsWith("//") || Line.StartsWith("#")) { continue; } //|| Line == "\n" || Line == "") { continue; }
 
 
                     else if (Is_Full_Path)
@@ -5135,7 +5193,16 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                             else if (!Return_Filename && !List_Matches_Filename(Segment_Info, Line, true)) { Segment_Info.Add(Line); }// Preventing double entries 
                         }
                         catch { }
-                    } else if (!Is_Full_Path && !Segment_Info.Contains(Line)) { Segment_Info.Add(Line); }
+                    }
+
+                    else // if (!Is_Full_Path)
+                    {
+                        // Visualize_Characters(Line);
+                        
+                        // Exception for "\n" and "" characters: We need those to preserve formatting!
+                        if (Line == "\n" || Line == "\n\n" || Line == "\n\n\n" || Line == "") { Segment_Info.Add(Line); }
+                        else if (!Segment_Info.Contains(Line)) { Segment_Info.Add(Line); }
+                    }
                 }
                 
 
@@ -5396,8 +5463,21 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 if (Last_Backup_Selection != "" && Selection != Last_Backup_Selection) 
                 {
+                    if (Last_Backup_Comment != "" && Text_Box_Description.Text != Last_Backup_Comment) // Has anything changed meanwhile?
+                    {                    
+                        //if (Old_Segment == Last_Backup_Comment) { iConsole(600, 400, "Yeah"); }
+                        //else { iConsole(600, 400, "Nope"); }
 
-                    iConsole(600, 400, "Updating " + Last_Backup_Selection + "  with\n\n" + Last_Backup_Comment);
+
+                        string New_Text = Text_Box_Description.Text; // Making sure there is proper formatting
+                        if (!New_Text.EndsWith("\n")) { New_Text += "\n"; }
+                        if (!New_Text.EndsWith("\n\n")) { New_Text += "\n"; }
+                        if (!New_Text.EndsWith("\n\n\n")) { New_Text += "\n"; }
+
+
+                        // iConsole(600, 400, "Updating " + Last_Backup_Selection + "  with\n\n" + Text_Box_Description.Text);
+                        Write_Into_Segment(Last_Backup_Selection, "Comments", New_Text, "Same", false);
+                    }
 
                     Text_Box_Description.Text = ""; 
                     Last_Backup_Selection = Selection;
@@ -5406,13 +5486,27 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                   
 
-                if (Comment.Count() == 0) { Text_Box_Description.Text = ""; } // Clear
 
+                if (Comment.Count() == 0 && Text_Box_Description.Text == "") { Last_Backup_Comment = ""; } // Clear
                 else 
                 {
-                    Last_Backup_Comment = string.Join("\n", Comment);
+                    //Temporal_E.Clear();
+                    //Temporal_E = Get_Segment_Info(Selection, "Changed_Files");
 
+
+                    Last_Backup_Comment = string.Join("\n", Comment);
                     Text_Box_Description.Text = Last_Backup_Comment;
+                  
+
+                    //if (Temporal_E.Count() > 0)
+                    //{
+                    //    Text_Box_Description.Text += "\n\n//======= Changed Files: =======\\\\ \n\n"
+                    //        + string.Join("\n", Get_Segment_Info(Selection, "Changed_Files"));
+                    //}
+                        
+
+
+                   
 
                     // if (Backup_Comment != Last_Backup_Comment) { }
                     // Last_Backup_Comment = Backup_Comment;
