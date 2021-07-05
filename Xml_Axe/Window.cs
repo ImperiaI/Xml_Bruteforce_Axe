@@ -313,7 +313,9 @@ namespace Xml_Axe
                     
                     Refresh_Backup_Stack();
                     // Needs to run AFTER Refresh_Backup_Stack() because it loads Root_Backup_Info  
-                    Sync_Path = Get_Backup_Info(Root_Backup_Path)[0] + @"\";
+                    Sync_Path = Get_Backup_Info(Root_Backup_Path)[0];
+                    if (!Sync_Path.EndsWith(@"\")) { Sync_Path += @"\"; }
+
                     if (Sync_Path == @"None\") { Sync_Path = Xml_Directory; } // Failsafe, if there are no backups to read
 
                     Button_Search_MouseLeave(null, null);
@@ -489,27 +491,49 @@ namespace Xml_Axe
                     else //Until we got to the Xml directory
                     {                      
                         Xml_Directory = Temporal_A; // Updating 
-                        if (!Xml_Directory.EndsWith(@"\")) { Xml_Directory += @"\"; }
+
+
+                        for (int d = 0; d < 8; d++)
+                        {
+                            try {
+                                if (Xml_Directory.ToLower().EndsWith(@"xml")) { Xml_Directory += @"\"; break; }
+                                else
+                                {
+                                    Xml_Directory = Path.GetDirectoryName(Xml_Directory); // Repeat until matched or empty
+                                    // iConsole(400, 100, Xml_Directory);
+                                } 
+
+                            } catch { Xml_Directory = Temporal_A; break; } // Something went wrong!
+                        }
+
+
+
+
+                        // if (!Xml_Directory.EndsWith(@"\")) { Xml_Directory += @"\"; }
 
                         Properties.Settings.Default.Xml_Directory = Xml_Directory;
 
 
+                    
+                        Temporal_B = Path.GetDirectoryName(Path.GetDirectoryName(Xml_Directory));
+
                         // Leaping back by 2 directoies, to get the name of the Modpath
-                        Properties.Settings.Default.Mod_Directory = Path.GetDirectoryName(Path.GetDirectoryName(Temporal_A)); ;
+                        if (Temporal_B.ToLower().EndsWith("data")) { Properties.Settings.Default.Mod_Directory = Path.GetDirectoryName(Temporal_B); }
+                        else { Properties.Settings.Default.Mod_Directory = Temporal_B; } // Hoping this is the right one
+
                         Mod_Directory = Properties.Settings.Default.Mod_Directory;
                         Mod_Name = Path.GetFileName(Mod_Directory);
 
-                        // iConsole(600, 100, Path.GetDirectoryName(Path.GetDirectoryName(Temporal_A)));
+                        // iConsole(600, 100, Path.GetDirectoryName(Path.GetDirectoryName(Xml_Directory)));
                         break;
                     }
                 }
             }
 
-            else // If not Refresh_Dir, we trust that the selected file is a xml
-            {   Load_Xml_Content(The_Path, true);
-                List_View_Selection.Visible = true;                             
-            }
+            else { List_View_Selection.Visible = true; } // If not Refresh_Dir, we trust that the selected file is a xml
+            
 
+            Load_Xml_Content(The_Path, true);
 
             Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit);
             Set_Checker(List_View_Selection, Theme_Color);
@@ -833,7 +857,9 @@ namespace Xml_Axe
             Root_Backup_Path = Backup_Path + Backup_Folder + Backup_Info;
 
             Current_Backup = Get_Backup_Info(Root_Backup_Path)[1];
-            Sync_Path = Get_Backup_Info(Root_Backup_Path)[0] + @"\"; 
+            Sync_Path = Get_Backup_Info(Root_Backup_Path)[0];
+
+            if (!Sync_Path.EndsWith(@"\")) { Sync_Path += @"\"; }
             if (Sync_Path == @"None\") { Sync_Path = Xml_Directory; } // Failsafe
 
 
