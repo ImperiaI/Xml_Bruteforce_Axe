@@ -290,7 +290,7 @@
             this.Text_Box_Description.ForeColor = System.Drawing.SystemColors.Info;
             this.Text_Box_Description.Location = new System.Drawing.Point(12, 12);
             this.Text_Box_Description.Name = "Text_Box_Description";
-            this.Text_Box_Description.Size = new System.Drawing.Size(368, 164);
+            this.Text_Box_Description.Size = new System.Drawing.Size(404, 164);
             this.Text_Box_Description.TabIndex = 29;
             this.Text_Box_Description.Text = "";
             this.Text_Box_Description.Click += new System.EventHandler(this.Text_Box_Description_Click);
@@ -329,6 +329,7 @@
             this.List_View_Selection.DragEnter += new System.Windows.Forms.DragEventHandler(this.List_View_Selection_DragEnter);
             this.List_View_Selection.DragOver += new System.Windows.Forms.DragEventHandler(this.List_View_Selection_DragOver);
             this.List_View_Selection.DoubleClick += new System.EventHandler(this.List_View_Selection_DoubleClick);
+            this.List_View_Selection.MouseUp += new System.Windows.Forms.MouseEventHandler(this.List_View_Selection_MouseUp);
             // 
             // Entries
             // 

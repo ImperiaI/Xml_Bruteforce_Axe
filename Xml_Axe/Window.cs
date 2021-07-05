@@ -88,7 +88,7 @@ namespace Xml_Axe
         bool Backup_Mode = false;
         bool At_Top_Level = true;
         bool Enable_Undo = false;
-        string Last_Backup_Time, Time_Stamp, Current_Hour = "";
+        string Last_Backup_Selection, Last_Backup_Comment, Last_Backup_Time, Time_Stamp, Current_Hour = "";
         public int Last_Backup_Minute, Current_Minute = 0;
         public int Fetch_Intervall_Minutes = 1;
        
@@ -279,7 +279,9 @@ namespace Xml_Axe
 
 
         private void Text_Box_Description_Click(object sender, EventArgs e)
-        { Disable_Description(); }
+        {
+            if (!Backup_Mode) { Disable_Description(); }
+        }
 
         private void Disable_Description()
         {
@@ -318,7 +320,7 @@ namespace Xml_Axe
 
                     if (Sync_Path == @"None\") { Sync_Path = Xml_Directory; } // Failsafe, if there are no backups to read
 
-                    Button_Search_MouseLeave(null, null);
+                    Button_Search_MouseLeave(null, null);                            
                 }                                                                  
             }
 
@@ -935,7 +937,7 @@ namespace Xml_Axe
                 // Update the Backup Version and AUTOMATICALLY CREATE BACKUP from the list of Related_Xmls
                 // It happens to fail to Collapse when the User has the last backup in the stack loaded.
                 if (!File.Exists(Path_And_Backup + Backup_Info))
-                { Create_Backup_Info(Mod_Name, This_Backup, string.Join("\n", Related_Xmls), false, true); }
+                { Create_Backup_Info(Mod_Name, This_Backup, "", string.Join("\n", Related_Xmls), false, true); }
                
                 else
                 {   // iConsole(400, 100, Path_And_Backup); 
@@ -1153,12 +1155,16 @@ namespace Xml_Axe
             string Backup_Count = Get_Setting_Value("Backups_Per_Directory");        
 
             if (Verify_Setting("Backups_Per_Directory"))
-            {   int Maximal_Backups = Int32.Parse(Backup_Count);
+            {               
+                int Maximal_Backups = Int32.Parse(Backup_Count);
                 int Found_Backups = Get_All_Directories(Backup_Path + Backup_Folder, true).Count();
-               
+
+
+                // iConsole(400, 100, Backup_Path + Backup_Folder);
+                // iConsole(400, 100, "Set to " + Maximal_Backups);
                 if (Found_Backups > Maximal_Backups) // If reached max count, we need to delete the last one!
                 {
-                    // iConsole(400, 100, "They are " + Found_Backups + " Backups from maximal " + Maximal_Backups);
+                    // iConsole(400, 100, "Found " + Found_Backups + " from " + Maximal_Backups);
                     if (Collapse_Backup_Stack(Certain_Backup)) { return true; }
                     // Outdated: if (Temporal_E.First() != Current_Backup) { Deleting(Temporal_E.First()); return true; }// Trash ONLY the last one
                 }
@@ -1217,7 +1223,7 @@ namespace Xml_Axe
 
 
                     // Base version to true, otherwise it will complain about a missmatched path
-                    Create_Backup_Info(Mod_Name, Package_Name + @"_Base", Temporal_B);
+                    Create_Backup_Info(Mod_Name, Package_Name + @"_Base", "", Temporal_B);
                     Refresh_Backup_Stack();
                     At_Top_Level = false; // Correcting
 
@@ -3592,7 +3598,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 Button_Operator.Location = new Point(1, 510); // Back to its original location
                 Toggle_Undo_Button(Enable_Undo);
-             
+
+                Disable_Description();
                 //Set_Label_Entity_Name_Text();
                 //Label_Entity_Name.Location = new Point(31, 238);
             }            
@@ -3673,8 +3680,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-
-
+ 
             // iConsole(400, 100, Current_Backup); return;
             // iConsole(500, 500, string.Join("\n", dd)); return;
             // iConsole(400, 100, Get_Setting_Value("Custom_Start_Parameters")); return;
@@ -4162,14 +4168,14 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
         public bool Collapse_Backup_Stack(string Certain_Backup = "")
-        {                                    
+        {                             
             try
             {   bool Selected_First = false;
                 bool Detected_Selection_Gap = false;
                 List<string> Backup_Files = new List<string>();
                 List<string> Found_Backups = new List<string>();
                 string Working_Directory = Backup_Path + Backup_Folder + @"\Current\";
-
+              
 
                 if (Certain_Backup != "")
                 {
@@ -4198,6 +4204,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         else if (Entry.EndsWith("Base")) { Backup_Files.Add(Entry); } // Grab the bottom most Base
                         else if (!Entry.EndsWith("Base")) { Backup_Files.Add(Entry); break; } // Bottom most Backup                    
                     }
+
+                    // iConsole(400, 100, string.Join("\n", Backup_Files));
                 }
 
                 else // This part is always called within the Backup (management) mode:
@@ -4626,7 +4634,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
         // Use "Time_Stamp" as argument for Target_Backup_Name
-        private void Create_Backup_Info(string Directory_Name, string Target_Backup_Name, string Changed_Files = "", bool Load_Backup = true, bool Create_Branches = false, string Added_Files = "", string Removed_Files = "")
+        private void Create_Backup_Info(string Directory_Name, string Target_Backup_Name, string Comments = "", string Changed_Files = "", bool Load_Backup = true, bool Create_Branches = false, string Added_Files = "", string Removed_Files = "")
         {  
             // Package_Name variable is updated by Button_Run_Click() or Create_New_Backup()        
             string This_Backup_Path = Backup_Path + Directory_Name + @"\" + Target_Backup_Name;
@@ -4645,6 +4653,16 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Info_File =
                 @"Directory_Name = " + Sync_Path.Remove(Sync_Path.Length - 1) +
                 "\nVersion = " + Target_Backup_Name + "\n\n\n";
+
+
+                if (Comments != "")
+                {
+                    Info_File +=
+                        "//============================================================\\\\" +
+                        "\nComments" +
+                        "\n//============================================================\\\\" +
+                        "\n" + Comments + "\n\n\n"; // Append_File_Info can be a joined List<string> of file names here.                 
+                }   
 
                 if (Changed_Files != "")
                 {
@@ -4720,14 +4738,20 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         {
             if (Large)
             {
-                Drop_Zone.Visible = false; // Hiding Background 367             
-                List_View_Selection.Size = new Size(this.Size.Width - 76, 482);
-                List_View_Selection.Location = new Point(31, 29);
+                Drop_Zone.Visible = false; // Hiding Background              
+                //List_View_Selection.Size = new Size(this.Size.Width - 76, 482);
+                //List_View_Selection.Location = new Point(31, 29);
+
+                List_View_Selection.Size = new Size(this.Size.Width - 76, 398);
+                List_View_Selection.Location = new Point(31, 194);
+
+                Text_Box_Description.Text = "Test";
+                Text_Box_Description.Visible = true;
             } 
             else
-            {   Drop_Zone.Visible = true; // 404
+            {   Drop_Zone.Visible = true; 
                 List_View_Selection.Size = new Size(this.Size.Width - 40, 164);
-                List_View_Selection.Location = new Point(12, 12);               
+                List_View_Selection.Location = new Point(12, 12);              
             }
 
             List_View_Selection.Columns[0].Width = List_View_Selection.Size.Width - 8;
@@ -4893,7 +4917,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
                 // Base version to true, otherwise it will complain about a missmatched path
-                Create_Backup_Info(Backup_Folder, Package_Name + @"_Base", Temporal_B, true, true);
+                Create_Backup_Info(Backup_Folder, Package_Name + @"_Base", Temporal_B, "", true, true);
                 Refresh_Backup_Stack(); 
                 
                 Temporal_B = "";
@@ -5003,7 +5027,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             bool Has_Collapsed = Collapse_Oldest_Backup("Last");
 
 
-            Create_Backup_Info(Backup_Folder, Package_Name, // "Created a backup, based on different file sizes from:\n\n\n" +
+            Create_Backup_Info(Backup_Folder, Package_Name, "", // "Created a backup, based on different file sizes from:\n\n\n" +
                 string.Join("\n", Changed_Files), true, true,
                 string.Join("\n", Added_Files), string.Join("\n", Missing_Files)); // "Load_Backup" was Has_Collapsed
 
@@ -5254,7 +5278,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                         foreach (ListViewItem Item in List_View_Selection.Items)
                         {
-                            if (!Item.Text.EndsWith("Auto_Stash") && !Item.Text.EndsWith("Auto")) { Temporal_B = Item.Text; break; } // Just get the first that is no Auto_Stash
+                            if (!Item.Text.EndsWith("Auto_Stash") && !Item.Text.EndsWith("Auto")) 
+                            { Temporal_B = Item.Text; break; } // Just get the first that is no Auto_Stash
                         }
 
                  
@@ -5351,6 +5376,48 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
              // if (this.Size.Width > Screen.FromControl(this).Bounds.Width - 200) { this.Size = new Size(444, 660); }
              // iConsole(400, 100, Screen.FromControl(this).Bounds.Width.ToString()); 
+        }
+
+
+
+        // Mouse Up because this event runs the right timing to grab the newest selected item.
+        private void List_View_Selection_MouseUp(object sender, MouseEventArgs e) 
+        {
+            if (Backup_Mode && !At_Top_Level)
+            {
+                string Selection = Select_List_View_First(List_View_Selection);
+                // iConsole(400, 100, Selection);
+
+                List<string> Comment = new List<string>();
+                Comment = Get_Segment_Info(Selection, "Comments");
+
+
+
+
+                if (Last_Backup_Selection != "" && Selection != Last_Backup_Selection) 
+                {
+
+                    iConsole(600, 400, "Updating " + Last_Backup_Selection + "  with\n\n" + Last_Backup_Comment);
+
+                    Text_Box_Description.Text = ""; 
+                    Last_Backup_Selection = Selection;
+                }
+
+
+                  
+
+                if (Comment.Count() == 0) { Text_Box_Description.Text = ""; } // Clear
+
+                else 
+                {
+                    Last_Backup_Comment = string.Join("\n", Comment);
+
+                    Text_Box_Description.Text = Last_Backup_Comment;
+
+                    // if (Backup_Comment != Last_Backup_Comment) { }
+                    // Last_Backup_Comment = Backup_Comment;
+                }               
+            }
         }
 
 
