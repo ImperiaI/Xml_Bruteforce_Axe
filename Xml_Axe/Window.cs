@@ -60,13 +60,13 @@ namespace Xml_Axe
 
         string Tag_List = "";
         bool User_Input = false;
-        bool Search_Mode = false;
 
+
+        string UI_Mode = "Normal"; // Settings, Backup, Script, Search
         string Operation_Mode = "Int";
         string Scale_Mode = "XY";
 
         bool EAW_Mode = true;
-        bool Script_Mode = false;
         bool Silent_Mode = false;
         bool Debug_Mode = true;
         bool Ying_Dominates = false;
@@ -86,7 +86,6 @@ namespace Xml_Axe
         string New_Sync_Dir, Sync_Path, Root_Backup_Path, Backup_Path, Backup_Folder, User_Name, Current_Backup, Package_Name = ""; 
         string Backup_Info = @"\Axe_Info.txt";
  
-        bool Backup_Mode = false;
         bool At_Top_Level = true;
         bool Enable_Undo = false;
         string Last_Backup_Selection, Last_Backup_Comment, Last_Backup_Time, Time_Stamp, Current_Hour = "";
@@ -285,7 +284,7 @@ namespace Xml_Axe
 
         private void Text_Box_Description_Click(object sender, EventArgs e)
         {
-            if (!Backup_Mode) { Disable_Description(); }
+            if (UI_Mode != "Backup") { Disable_Description(); }
         }
 
         private void Disable_Description()
@@ -297,7 +296,7 @@ namespace Xml_Axe
         //===========================// 
         private void List_View_Selection_DoubleClick(object sender, EventArgs e)
         {
-            if (!Backup_Mode && List_View_Selection.Items.Count > 0)
+            if (UI_Mode != "Backup" && List_View_Selection.Items.Count > 0)
             {
                 for (int i = List_View_Selection.Items.Count - 1; i >= 0; --i)
                 { List_View_Selection.Items[i].Selected = true; }
@@ -306,9 +305,9 @@ namespace Xml_Axe
 
         private void List_View_Selection_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (Script_Mode) { Run_Script(); } // Script Mode override
+            if (UI_Mode == "Script") { Run_Script(); } // Script Mode override
 
-            else if (Backup_Mode) // Just move into the Xml Directory that is currently selected 
+            else if (UI_Mode == "Backup") // Just move into the Xml Directory that is currently selected 
             {   if (At_Top_Level) // Leave this below here!
                 {   Button_Operator_MouseLeave(null, null);
                     // Button_Scripts.Visible = true;
@@ -413,7 +412,7 @@ namespace Xml_Axe
                 // "Current" here means the Current directory in .\Backup, this program assembles new patches inside of it.
                 if (Folder_Name != "" && Folder_Name != "Current" && Folder_Name != Backup_Folder && !List_View_Matches(List_View_Selection, Folder_Name))
                 {
-                    if (Backup_Mode) { List_View_Selection.Items.Add(Folder_Name); }
+                    if (UI_Mode == "Backup") { List_View_Selection.Items.Add(Folder_Name); }
                     else { Found_Directories.Add(Folder_Name); }  
                 }
             }
@@ -433,7 +432,7 @@ namespace Xml_Axe
                     // string Image_Name = Path.GetFileName(File_Names[0]);                    
                     try // Just to be on the safe side
                     {
-                        if (Backup_Mode && At_Top_Level)
+                        if (UI_Mode == "Backup" && At_Top_Level)
                         {
                             Temporal_B = Path.GetFileName(File_Names[0]);
                             if (!Directory.Exists(Backup_Path + Temporal_B)) { Directory.CreateDirectory(Backup_Path + Temporal_B); Refresh_Backup_Directory(); }
@@ -665,10 +664,10 @@ namespace Xml_Axe
         //===========================//
 
         private void Button_Browse_Folder_MouseUp(object sender, MouseEventArgs Mouse)
-        {         
-            if (Script_Mode) { Execute(Script_Directory); }
+        {
+            if (UI_Mode == "Script") { Execute(Script_Directory); }
 
-            else if (Backup_Mode) 
+            else if (UI_Mode == "Backup") 
             {
                 if (At_Top_Level) { Execute(Backup_Path); } 
                 else 
@@ -722,12 +721,12 @@ namespace Xml_Axe
         }
 
         private void Button_Browse_Folder_MouseHover(object sender, EventArgs e)
-        {   if (Script_Mode) { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Red_Lit); }
+        {   if (UI_Mode == "Script") { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Red_Lit); }
             else { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Green_Lit); }
         }
 
         private void Button_Browse_Folder_MouseLeave(object sender, EventArgs e)
-        {   if (Script_Mode) { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Red); }
+        {   if (UI_Mode == "Script") { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Red); }
             else { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Green); }
         }
 
@@ -735,9 +734,8 @@ namespace Xml_Axe
         //===========================//
         private void Button_Start_Click(object sender, EventArgs e)
         {
-            if (Backup_Mode) // Deletion Function
+            if (UI_Mode == "Backup") // Deletion Function
             {
-
                 Temporal_E = Select_List_View_Items(List_View_Selection);
                 if (Temporal_E.Count() == 0) { iConsole(400, 100, "\nPlease select any of the backups."); return; }
 
@@ -798,7 +796,7 @@ namespace Xml_Axe
             {   if (List_View_Selection.Visible) 
                 {   List_View_Selection.Visible = false; Zoom_List_View(1);
 
-                    if (Search_Mode) { Set_UI_Into_Search_Mode(false); } // toggle
+                    if (UI_Mode == "Search") { Set_UI_Into_Search_Mode(false); } // toggle
                 }
                 else
                 {   Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible 
@@ -811,13 +809,13 @@ namespace Xml_Axe
 
         private void Button_Start_MouseHover(object sender, EventArgs e)
         {
-            if (Backup_Mode) { Set_Resource_Button(Button_Start, Properties.Resources.Button_Delete_Lit); }
+            if (UI_Mode == "Backup") { Set_Resource_Button(Button_Start, Properties.Resources.Button_Delete_Lit); }
             else { Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit); }
         }
 
         private void Button_Start_MouseLeave(object sender, EventArgs e)
         {
-            if (Backup_Mode) { Set_Resource_Button(Button_Start, Properties.Resources.Button_Delete); }
+            if (UI_Mode == "Backup") { Set_Resource_Button(Button_Start, Properties.Resources.Button_Delete); }
             else
             {   if (List_View_Selection.Visible) // Use its visability as bool toggle ;)
                 { Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit); }
@@ -3645,10 +3643,14 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         //=====================//
         private void Button_Backup_Click(object sender, EventArgs e)
-        {          
-            if (Backup_Mode) 
-            {               
-                Backup_Mode = false; At_Top_Level = true;
+        {
+            if (UI_Mode == "Backup") 
+            {
+                UI_Mode = "Normal";
+                Zoom_List_View(1);
+                Set_UI_Into_Backup_Mode(false);
+
+                At_Top_Level = true;
                 Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible  
 
                 Button_Operator.Location = new Point(1, 510); // Back to its original location
@@ -3659,7 +3661,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 //Label_Entity_Name.Location = new Point(31, 238);
             }            
             else
-            {   Backup_Mode = true;
+            {
+                UI_Mode = "Backup";
+                Zoom_List_View(3);
+                Set_UI_Into_Backup_Mode(true);
+
                 New_Sync_Dir = ""; // Clear
                 List_View_Selection.Items.Clear();
                 List_View_Selection.Visible = true;
@@ -3676,12 +3682,6 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 // Otherwise let the user choose              
             }
 
-            int List_Size = 1;
-            if (Backup_Mode) { List_Size = 3; }
-
-            Zoom_List_View(List_Size);
-
-            Set_UI_Into_Backup_Mode(Backup_Mode);
 
             // Toggeling Buttons for this mode
             Button_Start_MouseLeave(null, null);         
@@ -3695,7 +3695,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         { Set_Resource_Button(Button_Backup, Properties.Resources.Button_Clock_Lit); }
 
         private void Button_Backup_MouseLeave(object sender, EventArgs e)
-        {   if (Backup_Mode) { Set_Resource_Button(Button_Backup, Properties.Resources.Button_Clock_Lit); }
+        {   if (UI_Mode == "Backup") { Set_Resource_Button(Button_Backup, Properties.Resources.Button_Clock_Lit); }
             else { Set_Resource_Button(Button_Backup, Properties.Resources.Button_Clock); }
         }
 
@@ -3746,12 +3746,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             // return;
 
 
-            if (Backup_Mode) // Just show the last results
+            if (UI_Mode == "Backup") // Just show the last results
             { 
                 // Toggle older searches
                 if (At_Top_Level)
                 {
-                    Backup_Mode = false;
+                    UI_Mode = "Normal";
                     At_Top_Level = true;
                     Button_Backup_MouseLeave(null, null);                   
                     // Button_Scripts.Visible = false;
@@ -3815,9 +3815,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         if (!List_View_Matches(List_View_Selection, Parent_Tag_Name))
                         { List_View_Selection.Items.Add(Parent_Tag_Name); }
                     }
-
-                    Search_Mode = true;
-                    Set_UI_Into_Search_Mode(Search_Mode);
+              
+                    UI_Mode = "Search";
+                    Set_UI_Into_Search_Mode(true);
                     List_View_Selection.Visible = true;
                     Zoom_List_View(3);
 
@@ -3840,11 +3840,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
             // Matched in selected XML, so just show that one
-            if (!Search_Mode & Found_In_Xml(Entity_Name)) { return; }
+            if (UI_Mode != "Search" & Found_In_Xml(Entity_Name)) { return; }
 
 
-            Search_Mode = false; // Otherwise we set it for the next time
-            Set_UI_Into_Search_Mode(Search_Mode);
+            UI_Mode = "Normal"; // Otherwise we set it for the next time
+            Set_UI_Into_Search_Mode(false);
 
             if (List_View_Selection.Size.Height > 482) { List_View_Selection.Items.Clear(); }
 
@@ -3911,12 +3911,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
         private void Button_Search_MouseHover(object sender, EventArgs e)
-        {   if (Backup_Mode && !At_Top_Level) { Set_Resource_Button(Button_Search, Properties.Resources.Button_Stack_Lit); }
+        {   if (UI_Mode == "Backup" && !At_Top_Level) { Set_Resource_Button(Button_Search, Properties.Resources.Button_Stack_Lit); }
             else { Set_Resource_Button(Button_Search, Properties.Resources.Button_Search_Lit); }
         }
 
         private void Button_Search_MouseLeave(object sender, EventArgs e)
-        {   if (Backup_Mode && !At_Top_Level) { Set_Resource_Button(Button_Search, Properties.Resources.Button_Stack); }
+        {   if (UI_Mode == "Backup" && !At_Top_Level) { Set_Resource_Button(Button_Search, Properties.Resources.Button_Stack); }
             else { Set_Resource_Button(Button_Search, Properties.Resources.Button_Search); }
         }
 
@@ -3928,7 +3928,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Button_Attribute_Click(object sender, EventArgs e)
         {
-            if (Backup_Mode)
+            if (UI_Mode == "Backup")
             {
                 Toggle_Undo_Button(Enable_Undo);
 
@@ -4035,7 +4035,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Button_Attribute_MouseHover(object sender, EventArgs e)
         {
-            if (Backup_Mode) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Run_Lit); }
+            if (UI_Mode == "Backup") { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Run_Lit); }
             else 
             { 
                 if (Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Yang_Lit); }
@@ -4045,7 +4045,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Button_Attribute_MouseLeave(object sender, EventArgs e)
         {
-            if (Backup_Mode) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Run); }
+            if (UI_Mode == "Backup") { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Run); }
             else
             {   if (Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Yang); }
                 else if (!Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Ying); }
@@ -4127,13 +4127,16 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
         private void Button_Scripts_Click(object sender, EventArgs e)
-        {          
-            if (Script_Mode) // Toggle between Script Mode
-            {              
-                Script_Mode = false;
+        {
+            if (UI_Mode == "Script") // Toggle between Script Mode
+            {                           
+                UI_Mode = "Normal";
+                Set_UI_Into_Script_Mode(false);
+
                 Drop_Zone.Visible = true;
-                Zoom_List_View(1);    
-                Set_UI_Into_Script_Mode(Script_Mode);
+                Zoom_List_View(1);
+              
+
                 Button_Browse_Folder.Location = new Point(1, 193);
 
                 // Loading the Xml instead of the available scripts in script mode
@@ -4154,13 +4157,14 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
             else
             {
-                Script_Mode = true;
+                UI_Mode = "Script";
+                Set_UI_Into_Script_Mode(true);
+
                 Drop_Zone.Visible = false;
                 Toggle_Undo_Button(false);
-
                 List_View_Selection.Visible = true;
                 Zoom_List_View(3);
-                Set_UI_Into_Script_Mode(Script_Mode);
+               
                 Button_Browse_Folder.Location = new Point(1, 430);
                 if (Text_Box_Description.Visible) { Disable_Description(); }
 
@@ -4233,7 +4237,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Button_Scripts_MouseLeave(object sender, EventArgs e)
         {
-            if (Script_Mode) { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash_Lit); }
+            if (UI_Mode == "Script") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash_Lit); }
             else
             {             
                 if (Operation_Mode.Contains("Point") | Combo_Box_Tag_Name.Text == "Scale_Galaxies")
@@ -4314,9 +4318,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 if (Certain_Backup != "")
                 {
-                    if (Backup_Mode) 
+                    if (UI_Mode == "Backup") 
                     {   Found_Backups = Get_All_List_View_Items(List_View_Selection);
-                        Found_Backups.Reverse(); // Because the for loop below expects the reversed format from List_View_Selection in Backup_Mode                   
+                        Found_Backups.Reverse(); // Because the for loop below expects the reversed format from List_View_Selection in Backup Mode                   
                     }
                     else { Found_Backups = Get_Backup_Dirs(); }
                  
@@ -4900,32 +4904,66 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
 
+        //=====================// 
+
+        private void Clear_Last_Mode()
+        {   
+            switch (UI_Mode)
+            {
+                case "Settings":
+                    Set_UI_Into_Settings_Mode(false);
+                break;
+
+                case "Backup":
+                    Set_UI_Into_Backup_Mode(false);
+                break;     
+           
+                case "Script":
+                    Set_UI_Into_Script_Mode(false);
+                break;
+
+                case "Search":
+                    Set_UI_Into_Search_Mode(false);
+                break; 
+
+                // default: 
+                // break;
+            }
+        }
+
+
+        //=====================// 
+
         private void Set_UI_Into_Settings_Mode(bool Mode)
         {
+            if (Mode == false) { Clear_Last_Mode(); }
             Control[] Controls = { Button_Search, Button_Run, Button_Backup, Button_Attribute, Button_Percentage, Button_Scripts, Button_Operator, Label_Type_Filter };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = !Mode; } // Hide or show all        
         }
 
         private void Set_UI_Into_Backup_Mode(bool Mode)
         {
+            if (Mode == false) { Clear_Last_Mode(); }
             Control[] Controls = { Button_Run, Button_Attribute, Button_Scripts, Button_Percentage, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = !Mode; } // Hide or show all        
         }
 
         private void Set_UI_Into_Script_Mode(bool Mode)
         {
+            if (Mode == false) { Clear_Last_Mode(); }
             Control[] Controls = { Button_Start, Button_Run, Button_Backup, Button_Search, Button_Attribute, Button_Percentage, Button_Operator, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = !Mode; } // Hide or show all        
         }
 
         private void Set_UI_Into_Search_Mode(bool Mode)
         {
+            if (Mode == false) { Clear_Last_Mode(); }
             Control[] Controls = { Button_Browse_Folder, Button_Run, Button_Attribute, Button_Scripts, Button_Percentage, Button_Operator, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = !Mode; } // Hide or show all        
         }
 
-     
 
+        //=====================// 
 
         private void Run_Script()
         {
@@ -5207,8 +5245,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         // Mouse Up because this event runs the right timing to grab the newest selected item.
         private void List_View_Selection_MouseUp(object sender, MouseEventArgs e)
-        { 
-            if (!Backup_Mode || At_Top_Level) { return; }
+        {
+            if (UI_Mode != "Backup" || At_Top_Level) { return; }
 
             string Selection = Select_List_View_First(List_View_Selection);
             // iConsole(400, 100, Selection);
@@ -5567,8 +5605,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         //=====================// 
 
         private void Button_Operator_Click(object sender, EventArgs e)
-        {   
-            if(Backup_Mode) // MANUALLY CREATE A NEW BACKUP OF THE FULL XML DIR
+        {
+            if (UI_Mode == "Backup") // MANUALLY CREATE A NEW BACKUP OF THE FULL XML DIR
             {
                 if (At_Top_Level) // && !Directory.Exists(Backup_Path + Mod_Name))
                 {   
@@ -5667,7 +5705,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
      
         private void Button_Operator_MouseHover(object sender, EventArgs e)
         {
-            if (Backup_Mode) { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Plus_Lit); }
+            if (UI_Mode == "Backup") { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Plus_Lit); }
 
             else if (Operation_Mode == "Bool")
             {   if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "Yes"))
@@ -5683,7 +5721,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Button_Operator_MouseLeave(object sender, EventArgs e)
         {
-            if (Backup_Mode) { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Plus); }
+            if (UI_Mode == "Backup") { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Plus); }
 
             else if (Operation_Mode == "Bool")
             {   if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "Yes")) 
