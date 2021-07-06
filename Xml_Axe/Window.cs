@@ -77,6 +77,7 @@ namespace Xml_Axe
         string Selected_Xml = "";
         string Queried_Attribute = "Name"; // Preseting
         string Text_Format_Delimiter = ";";
+        string Program_Directory = "";
         string Script_Directory = "";
         string Last_Combo_Box_Tag_Name = "";
         string Last_Combo_Box_Entity_Name = "";
@@ -182,23 +183,27 @@ namespace Xml_Axe
 
 
             // ================== INSTALLATION ==================
-            Script_Directory = Get_Scripts_Dir();
+            Program_Directory = Get_Program_Dir();
+            // Backup_Time(); // Setting a time stamp, running this allows to continue the 5 min timeout from the last session
+            Backup_Path = Program_Directory + @"Backup\";
+            Script_Directory = Program_Directory + @"Scripts\";
+
+
             if (!Directory.Exists(Script_Directory))
             {
-                string Parent_Dir = Path.GetDirectoryName(Script_Directory);
-                // iConsole(200, 100, Scripts_Directory);
+                // iConsole(200, 100, Program_Directory);
 
                 byte[] Archive = Properties.Resources.Scripts;
-                File.WriteAllBytes(Parent_Dir + @"\Delete_Me.zip", Archive);
+                File.WriteAllBytes(Program_Directory + "Delete_Me.zip", Archive);
 
-                System.IO.Compression.ZipFile.ExtractToDirectory(Parent_Dir + @"\Delete_Me.zip", Parent_Dir);
+                System.IO.Compression.ZipFile.ExtractToDirectory(Program_Directory + @"Delete_Me.zip", Path.GetDirectoryName(Program_Directory));
 
                 // Trashing after extraction, named the archive "Delete_Me" for the case that its autodeletion fails
-                Deleting(Parent_Dir + @"\Delete_Me.zip");
+                Deleting(Program_Directory + "Delete_Me.zip");
             }
 
-            // Backup_Time(); // Setting a time stamp, running this allows to continue the 5 min timeout from the last session
-            Backup_Path = Path.GetDirectoryName(Script_Directory) + @"\Backup\";
+
+   
 
 
 
@@ -1917,14 +1922,27 @@ namespace Xml_Axe
                     if (Text_Format_Delimiter == "\\t" | Text_Format_Delimiter == "t") { Text_Format_Delimiter = "\"\t\""; } // Correction Override
 
 
-                    string New_Script_Dir = Get_Scripts_Dir(true);
+                    string New_Program_Dir = Get_Program_Dir(true);
 
-                    if (Script_Directory != New_Script_Dir)
-                    {                       
-                        Moving(Script_Directory, Path.GetDirectoryName(New_Script_Dir));
-                        Script_Directory = New_Script_Dir;
+                    if (Program_Directory != New_Program_Dir)
+                    {  
+                        Program_Directory = New_Program_Dir; // Update                     
+                        New_Program_Dir = Path.GetDirectoryName(Program_Directory);
+
+                        try
+                        {   // iConsole(400, 200, "Moving " + Script_Directory + "\n to  " + New_Program_Dir);
+                            if (!Directory.Exists(New_Program_Dir)) { Directory.CreateDirectory(New_Program_Dir); }
+
+                            Moving(Path.GetDirectoryName(Backup_Path), New_Program_Dir);
+                            Moving(Path.GetDirectoryName(Script_Directory), New_Program_Dir);
+
+                            Backup_Path = Program_Directory + @"Backup\";
+                            Script_Directory = Program_Directory + @"Scripts\"; // Needs to run AFTER old Script_Directory was moved
+                        
+                        } catch { iConsole(500, 200, "\nFailed to move " + Script_Directory + "\n to  " + New_Program_Dir); }
                     }
-                }                       
+                }    
+                   
                 Reset_Tag_Box();
                 Reset_Root_Tag_Box();
 
@@ -2415,7 +2433,7 @@ namespace Xml_Axe
 # Custom_Start_Parameters = 
 # User_Name = false
 # Backups_Per_Directory = 10
-# Script_Directory = %AppData%\Local\Xml_Axe\Scripts
+# Program_Directory = %AppData%\Local\Xml_Axe\
 # Disable_EAW_Mode = false
 # Text_Format_Delimiter = ;
 
@@ -3720,11 +3738,13 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
+
             //Temporal_E = Select_List_View_Items(List_View_Selection);
 
-            //iConsole(400, 100, "its " + Temporal_E.Count()); return;
+            // iConsole(400, 100, New_Program_Dir); return;
+                    
             // iConsole(500, 500, string.Join("\n", dd)); return;
-            // iConsole(400, 100, Get_Setting_Value("Custom_Start_Parameters")); return;
+            // iConsole(400, 100, Get_Setting_Value("Program_Directory")); return;
 
             // return;
 
@@ -4947,43 +4967,30 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         }
 
 
-        private string Get_Scripts_Dir(bool check_string = false)
+        private string Get_Program_Dir(bool check_string = false)
         {
-            string Script_Directory = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Xml_Axe\Scripts";
-            string New_Script_Directory = Script_Directory;
+            string New_Program_Dir = Get_Setting_Value("Program_Directory");
+            string App_Data = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 
-            // Overwride by User Setting
-            if (!Match_Without_Emptyspace_2(Properties.Settings.Default.Tags, @"Script_Directory = %AppData%\Local\Xml_Axe\Scripts"))
+            if (check_string)
             {
-                foreach (string Line in Properties.Settings.Default.Tags.Split('\n'))
-                { if (Line != "" & Line.Contains("Script_Directory")) { Script_Directory = Line.Split('=')[1]; break; } }
+                Properties.Settings.Default.Tags = Properties.Settings.Default.Tags.Replace(Program_Directory, New_Program_Dir);
+                Properties.Settings.Default.Save();
+
+                Tag_List = Properties.Settings.Default.Tags;
+                Text_Box_Tags.Text = Tag_List;
+            }   
 
 
-                if (Script_Directory == "") // Then the original path in Environment will be chosen
-                { return Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Xml_Axe\Scripts"; }
 
-                else 
-                {   // Removing empty space
-                    if (Script_Directory[0] == ' ') { Script_Directory = Remove_Emptyspace_Prefix(Script_Directory); }
+            if (New_Program_Dir == "") { New_Program_Dir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) + @"\Xml_Axe\"; }
+            else if (New_Program_Dir.Contains(@"%AppData%\Local")) { New_Program_Dir = New_Program_Dir.Replace(@"%AppData%\Local", App_Data); }         
+            else if (New_Program_Dir.Contains("%AppData%")) { New_Program_Dir = New_Program_Dir.Replace("%AppData%", App_Data); }
 
-                    // Pretty stupid but this helps preventing errors lol
-
-                    if (!Script_Directory.EndsWith("Scripts")) { New_Script_Directory = Script_Directory + "\\Scripts"; }
-                    else { New_Script_Directory = Script_Directory; }
-                }
-
-                if (check_string)
-                {   Properties.Settings.Default.Tags = Properties.Settings.Default.Tags.Replace(Script_Directory, New_Script_Directory);
-                    Properties.Settings.Default.Save();
-
-                    Tag_List = Properties.Settings.Default.Tags;
-                    Text_Box_Tags.Text = Tag_List;
-                }              
-
-                // iConsole(600, 200, "\"" + Script_Directory + "\""); return;
-            }
-
-            return New_Script_Directory;
+            if (New_Program_Dir[0] == ' ') { New_Program_Dir = Remove_Emptyspace_Prefix(New_Program_Dir); } // Removing empty space
+            if (!New_Program_Dir.EndsWith("\\")) { New_Program_Dir += "\\"; }
+                   
+            return New_Program_Dir;
         }
 
 
