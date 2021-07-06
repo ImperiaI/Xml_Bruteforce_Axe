@@ -798,7 +798,7 @@ namespace Xml_Axe
             {   if (List_View_Selection.Visible) 
                 {   List_View_Selection.Visible = false; Zoom_List_View(1);
 
-                    if (Search_Mode) { Set_UI_Into_Search_Mode(true); }
+                    if (Search_Mode) { Set_UI_Into_Search_Mode(false); } // toggle
                 }
                 else
                 {   Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible 
@@ -1912,7 +1912,7 @@ namespace Xml_Axe
                 if (Combo_Box_Type_Filter.Text != "Faction Name Filter" && Combo_Box_Type_Filter.Text != "Category Mask Filter") 
                 { Button_Search.Visible = true; }
                 Text_Box_Tags.Visible = false;
-                Set_UI_Into_Settings_Mode(true);    
+                Set_UI_Into_Settings_Mode(false);    
                 Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller);
           
     
@@ -1992,7 +1992,7 @@ namespace Xml_Axe
             else if (List_View_Selection.Size.Height < 200) 
             {
                 Text_Box_Tags.Visible = true;
-                Set_UI_Into_Settings_Mode(false);                                     
+                Set_UI_Into_Settings_Mode(true);                                     
                 Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Refresh);
                 Label_Entity_Name.Text = "List of Tags";            
                 Text_Box_Tags.Focus(); // So the user can scroll
@@ -3681,7 +3681,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
             Zoom_List_View(List_Size);
 
-            Set_UI_Into_Backup_Mode(!Backup_Mode);
+            Set_UI_Into_Backup_Mode(Backup_Mode);
 
             // Toggeling Buttons for this mode
             Button_Start_MouseLeave(null, null);         
@@ -3817,6 +3817,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     }
 
                     Search_Mode = true;
+                    Set_UI_Into_Search_Mode(Search_Mode);
                     List_View_Selection.Visible = true;
                     Zoom_List_View(3);
 
@@ -3825,8 +3826,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     if (List_View_Selection.Items.Count > 0) { List_View_Selection.Items[0].Selected = true; }
                     List_View_Selection.Focus();
 
-                    Set_UI_Into_Search_Mode(false);
-
+                    
                     Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit);
                     Set_Checker(List_View_Selection, Color.Black);
                 }
@@ -3844,7 +3844,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
             Search_Mode = false; // Otherwise we set it for the next time
-            Set_UI_Into_Search_Mode(true);
+            Set_UI_Into_Search_Mode(Search_Mode);
 
             if (List_View_Selection.Size.Height > 482) { List_View_Selection.Items.Clear(); }
 
@@ -4133,7 +4133,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Script_Mode = false;
                 Drop_Zone.Visible = true;
                 Zoom_List_View(1);    
-                Set_UI_Into_Script_Mode(!Script_Mode);
+                Set_UI_Into_Script_Mode(Script_Mode);
                 Button_Browse_Folder.Location = new Point(1, 193);
 
                 // Loading the Xml instead of the available scripts in script mode
@@ -4159,8 +4159,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Toggle_Undo_Button(false);
 
                 List_View_Selection.Visible = true;
-                Zoom_List_View(2);
-                Set_UI_Into_Script_Mode(!Script_Mode);
+                Zoom_List_View(3);
+                Set_UI_Into_Script_Mode(Script_Mode);
                 Button_Browse_Folder.Location = new Point(1, 430);
                 if (Text_Box_Description.Visible) { Disable_Description(); }
 
@@ -4903,25 +4903,25 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         private void Set_UI_Into_Settings_Mode(bool Mode)
         {
             Control[] Controls = { Button_Search, Button_Run, Button_Backup, Button_Attribute, Button_Percentage, Button_Scripts, Button_Operator, Label_Type_Filter };
-            foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
+            foreach (Control Selectrion in Controls) { Selectrion.Visible = !Mode; } // Hide or show all        
         }
 
         private void Set_UI_Into_Backup_Mode(bool Mode)
         {
             Control[] Controls = { Button_Run, Button_Attribute, Button_Scripts, Button_Percentage, Button_Toggle_Settings };
-            foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
+            foreach (Control Selectrion in Controls) { Selectrion.Visible = !Mode; } // Hide or show all        
         }
 
         private void Set_UI_Into_Script_Mode(bool Mode)
         {
             Control[] Controls = { Button_Start, Button_Run, Button_Backup, Button_Search, Button_Attribute, Button_Percentage, Button_Operator, Button_Toggle_Settings };
-            foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
+            foreach (Control Selectrion in Controls) { Selectrion.Visible = !Mode; } // Hide or show all        
         }
 
         private void Set_UI_Into_Search_Mode(bool Mode)
         {
             Control[] Controls = { Button_Browse_Folder, Button_Run, Button_Attribute, Button_Scripts, Button_Percentage, Button_Operator, Button_Toggle_Settings };
-            foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
+            foreach (Control Selectrion in Controls) { Selectrion.Visible = !Mode; } // Hide or show all        
         }
 
      
