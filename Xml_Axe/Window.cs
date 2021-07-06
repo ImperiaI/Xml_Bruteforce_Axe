@@ -311,7 +311,8 @@ namespace Xml_Axe
 
                     Backup_Folder = Select_List_View_First(List_View_Selection); // This defines which Backup dir is targeted!!
 
-                    // Grabbing the Path we're going to use to sync at                 
+                    // Grabbing the Path we're going to use to sync at
+                    
                     Refresh_Backup_Stack();
                     // Needs to run AFTER Refresh_Backup_Stack() because it loads Root_Backup_Info  
                     Sync_Path = Get_Backup_Info(Root_Backup_Path)[0];
@@ -366,29 +367,7 @@ namespace Xml_Axe
                 List_View_Selection.Items.Clear();               
                 Get_Backup_Dirs(); 
                 At_Top_Level = false;
-
-
-
-
-
-                Set_Checker(List_View_Selection, Theme_Color);
-                string Selection = Select_List_View_First(List_View_Selection);
-
-                List<string> Current_Branch = new List<string>();
-                foreach (string Backup in Get_Segment_Info(Selection, "Branches"))
-                {
-                    if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); } // Preventing Duplicates
-                }
-
-                // iConsole(400, 200, string.Join("\n", Current_Branch));
-
-
-                foreach (ListViewItem Item in List_View_Selection.Items)
-                {
-                    if (Item.Text == Selection) { Item.BackColor = Color.DodgerBlue; } // Color.AliceBlue; }
-                    else if (Current_Branch.Contains(Item.Text)) { Item.BackColor = Color.DeepSkyBlue; }
-                    else if (Item.Text == Current_Backup) { Item.BackColor = Color.Orange; } // break; } // Highlighting Selection                  
-                }
+ 
 
             } catch {}  
         }
@@ -5107,6 +5086,28 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Comment = Get_Segment_Info(Selection, "Comments");
                 string New_Text = Text_Box_Description.Text;
 
+
+
+
+                Set_Checker(List_View_Selection, Theme_Color);
+
+
+                // Backup_Folder is set to: Select_List_View_First(List_View_Selection);
+                List<string> Current_Branch = new List<string>();
+                foreach (string Backup in Get_Segment_Info(Selection, "Branches"))
+                {
+                    if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); } // Preventing Duplicates
+                }
+
+                // iConsole(400, 200, string.Join("\n", Current_Branch));
+
+
+                foreach (ListViewItem Item in List_View_Selection.Items)
+                {
+                    if (Item.Text == Selection) { Item.BackColor = Color.DodgerBlue; } // Color.AliceBlue; }
+                    else if (Current_Branch.Contains(Item.Text)) { Item.BackColor = Color.DeepSkyBlue; }
+                    else if (Item.Text == Current_Backup) { Item.BackColor = Color.Orange; } // break; } // Highlighting Selection                  
+                }
 
 
 
