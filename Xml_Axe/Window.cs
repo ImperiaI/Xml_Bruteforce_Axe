@@ -82,7 +82,7 @@ namespace Xml_Axe
         string Last_Combo_Box_Entity_Name = "";
 
 
-        string Sync_Path, Root_Backup_Path, Backup_Path, Backup_Folder, User_Name, Current_Backup, Package_Name = ""; 
+        string New_Sync_Dir, Sync_Path, Root_Backup_Path, Backup_Path, Backup_Folder, User_Name, Current_Backup, Package_Name = ""; 
         string Backup_Info = @"\Axe_Info.txt";
  
         bool Backup_Mode = false;
@@ -292,7 +292,7 @@ namespace Xml_Axe
         //===========================// 
         private void List_View_Selection_DoubleClick(object sender, EventArgs e)
         {
-            if (List_View_Selection.Items.Count > 0)
+            if (!Backup_Mode && List_View_Selection.Items.Count > 0)
             {
                 for (int i = List_View_Selection.Items.Count - 1; i >= 0; --i)
                 { List_View_Selection.Items[i].Selected = true; }
@@ -316,10 +316,15 @@ namespace Xml_Axe
                     Refresh_Backup_Stack();
                     // Needs to run AFTER Refresh_Backup_Stack() because it loads Root_Backup_Info  
                     Sync_Path = Get_Backup_Info(Root_Backup_Path)[0];
+                 
+
+                    if (Sync_Path == @"None\") // Failsafe, if there are no backups to read
+                    {   Sync_Path = New_Sync_Dir;
+                        
+                        // Used to be: Sync_Path = Xml_Directory; 
+                    }
+
                     if (!Sync_Path.EndsWith(@"\")) { Sync_Path += @"\"; }
-
-                    if (Sync_Path == @"None\") { Sync_Path = Xml_Directory; } // Failsafe, if there are no backups to read
-
                     Button_Search_MouseLeave(null, null);                            
                 }                                                                  
             }
@@ -367,7 +372,26 @@ namespace Xml_Axe
                 List_View_Selection.Items.Clear();               
                 Get_Backup_Dirs(); 
                 At_Top_Level = false;
- 
+
+
+                Set_Checker(List_View_Selection, Theme_Color);
+
+
+                // Backup_Folder is set to: Select_List_View_First(List_View_Selection);
+                List<string> Current_Branch = new List<string>();
+                foreach (string Backup in Get_Segment_Info(Backup_Folder, "Branches"))
+                {
+                    if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); } // Preventing Duplicates
+                }
+          
+
+                foreach (ListViewItem Item in List_View_Selection.Items)
+                {
+                    if (Item.Text == Backup_Folder) { Item.BackColor = Color.DodgerBlue; } // Color.AliceBlue; }
+                    else if (Current_Branch.Contains(Item.Text)) { Item.BackColor = Color.DeepSkyBlue; }
+                    else if (Item.Text == Current_Backup) { Item.BackColor = Color.Orange; } // break; } // Highlighting Selection                  
+                }
+
 
             } catch {}  
         }
@@ -3621,7 +3645,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 //Label_Entity_Name.Location = new Point(31, 238);
             }            
             else
-            {   Backup_Mode = true;           
+            {   Backup_Mode = true;
+                New_Sync_Dir = ""; // Clear
                 List_View_Selection.Items.Clear();
                 List_View_Selection.Visible = true;
 
@@ -5077,94 +5102,93 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         // Mouse Up because this event runs the right timing to grab the newest selected item.
         private void List_View_Selection_MouseUp(object sender, MouseEventArgs e)
         {
-            if (Backup_Mode && !At_Top_Level)
+            if (!Backup_Mode || At_Top_Level) { return; }
+
+            string Selection = Select_List_View_First(List_View_Selection);
+            // iConsole(400, 100, Selection);
+
+            List<string> Comment = new List<string>();
+            Comment = Get_Segment_Info(Selection, "Comments");
+            string New_Text = Text_Box_Description.Text;
+
+
+
+
+            Set_Checker(List_View_Selection, Theme_Color);
+
+
+            // Backup_Folder is set to: Select_List_View_First(List_View_Selection);
+            List<string> Current_Branch = new List<string>();
+            foreach (string Backup in Get_Segment_Info(Selection, "Branches"))
             {
-                string Selection = Select_List_View_First(List_View_Selection);
-                // iConsole(400, 100, Selection);
-        
-                List<string> Comment = new List<string>();
-                Comment = Get_Segment_Info(Selection, "Comments");
-                string New_Text = Text_Box_Description.Text;
+                if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); } // Preventing Duplicates
+            }
+
+            // iConsole(400, 200, string.Join("\n", Current_Branch));
+
+
+            foreach (ListViewItem Item in List_View_Selection.Items)
+            {
+                if (Item.Text == Selection) { Item.BackColor = Color.DodgerBlue; } // Color.AliceBlue; }
+                else if (Current_Branch.Contains(Item.Text)) { Item.BackColor = Color.DeepSkyBlue; }
+                else if (Item.Text == Current_Backup) { Item.BackColor = Color.Orange; } // break; } // Highlighting Selection                  
+            }
 
 
 
 
-                Set_Checker(List_View_Selection, Theme_Color);
-
-
-                // Backup_Folder is set to: Select_List_View_First(List_View_Selection);
-                List<string> Current_Branch = new List<string>();
-                foreach (string Backup in Get_Segment_Info(Selection, "Branches"))
+            if (Last_Backup_Selection != "" && Selection != Last_Backup_Selection)
+            {
+                if (Last_Backup_Comment != "" && New_Text != Last_Backup_Comment) // Has anything changed meanwhile?
                 {
-                    if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); } // Preventing Duplicates
-                }
+                    // iConsole(600, 400, "Triggered");
 
-                // iConsole(400, 200, string.Join("\n", Current_Branch));
-
-
-                foreach (ListViewItem Item in List_View_Selection.Items)
-                {
-                    if (Item.Text == Selection) { Item.BackColor = Color.DodgerBlue; } // Color.AliceBlue; }
-                    else if (Current_Branch.Contains(Item.Text)) { Item.BackColor = Color.DeepSkyBlue; }
-                    else if (Item.Text == Current_Backup) { Item.BackColor = Color.Orange; } // break; } // Highlighting Selection                  
-                }
-
-
-
-
-                if (Last_Backup_Selection != "" && Selection != Last_Backup_Selection)
-                {
-                    if (Last_Backup_Comment != "" && New_Text != Last_Backup_Comment) // Has anything changed meanwhile?
+                    // Making sure there is proper formatting
+                    if (New_Text != "") // Don't move this up
                     {
-                        // iConsole(600, 400, "Triggered");
-
-                        // Making sure there is proper formatting
-                        if (New_Text != "") // Don't move this up
-                        {
-                            if (!New_Text.EndsWith("\n")) { New_Text += "\n"; }
-                            if (!New_Text.EndsWith("\n\n")) { New_Text += "\n"; }
-                            if (!New_Text.EndsWith("\n\n\n")) { New_Text += "\n"; }
-                        }
-
-                        // iConsole(600, 400, "Updating " + Last_Backup_Selection + "  with\n\n" + New_Text);
-                        Write_Into_Segment(Last_Backup_Selection, "Comments", New_Text, "Same", false);
+                        if (!New_Text.EndsWith("\n")) { New_Text += "\n"; }
+                        if (!New_Text.EndsWith("\n\n")) { New_Text += "\n"; }
+                        if (!New_Text.EndsWith("\n\n\n")) { New_Text += "\n"; }
                     }
 
-                    Text_Box_Description.Text = "";
-                    Last_Backup_Selection = Selection;
+                    // iConsole(600, 400, "Updating " + Last_Backup_Selection + "  with\n\n" + New_Text);
+                    Write_Into_Segment(Last_Backup_Selection, "Comments", New_Text, "Same", false);
                 }
 
+                Text_Box_Description.Text = "";
+                Last_Backup_Selection = Selection;
+            }
 
 
 
-                // DON'T replace Text_Box_Description.Text here with New_Text!!!  Because it causes issues.
-                if (Comment.Count() == 0)
+
+            // DON'T replace Text_Box_Description.Text here with New_Text!!!  Because it causes issues.
+            if (Comment.Count() == 0)
+            {
+                if (Last_Backup_Selection != "" && Text_Box_Description.Text != "" && Text_Box_Description.Text != "\n")
                 {
-                    if (Last_Backup_Selection != "" && Text_Box_Description.Text != "" && Text_Box_Description.Text != "\n")
-                    {
-                        iConsole(600, 400, "Updating " + Last_Backup_Selection + "  with\n\n" + Text_Box_Description.Text);
-                       
-                        Write_Into_Segment(Last_Backup_Selection, "Comments", Text_Box_Description.Text, "Same", false);
-                        Last_Backup_Comment = Text_Box_Description.Text;
-                    }
-                }
+                    iConsole(600, 400, "Updating " + Last_Backup_Selection + "  with\n\n" + Text_Box_Description.Text);
 
-                else
-                {   // Disabled, because we can't destinguish the "Changed_Files" from the Comment..
-                    //Temporal_E.Clear(); 
-                    //Temporal_E = Get_Segment_Info(Selection, "Changed_Files");
-
-                    Last_Backup_Comment = string.Join("\n", Comment);
-                    Text_Box_Description.Text = Last_Backup_Comment;
-
-
-                    //if (Temporal_E.Count() > 0)
-                    //{
-                    //    Text_Box_Description.Text += "\n\n//======= Changed Files: =======\\\\ \n\n"
-                    //        + string.Join("\n", Get_Segment_Info(Selection, "Changed_Files"));
-                    //}
+                    Write_Into_Segment(Last_Backup_Selection, "Comments", Text_Box_Description.Text, "Same", false);
+                    Last_Backup_Comment = Text_Box_Description.Text;
                 }
             }
+
+            else
+            {   // Disabled, because we can't destinguish the "Changed_Files" from the Comment..
+                //Temporal_E.Clear(); 
+                //Temporal_E = Get_Segment_Info(Selection, "Changed_Files");
+
+                Last_Backup_Comment = string.Join("\n", Comment);
+                Text_Box_Description.Text = Last_Backup_Comment;
+
+
+                //if (Temporal_E.Count() > 0)
+                //{
+                //    Text_Box_Description.Text += "\n\n//======= Changed Files: =======\\\\ \n\n"
+                //        + string.Join("\n", Get_Segment_Info(Selection, "Changed_Files"));
+                //}
+            }                        
         }
 
 
@@ -5432,11 +5456,32 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             if(Backup_Mode) // MANUALLY CREATE A NEW BACKUP OF THE FULL XML DIR
             {
                 if (At_Top_Level && !Directory.Exists(Backup_Path + Mod_Name))
-                {   Directory.CreateDirectory(Backup_Path + Mod_Name); // Creating Mod Dir
+                {   
+                    Directory.CreateDirectory(Backup_Path + Mod_Name); // Creating Mod Dir
+
+                    /*
+                    using (var Folder_Browser_Dialog_1 = new FolderBrowserDialog())
+                    {
+                        if (Folder_Browser_Dialog_1.ShowDialog() == DialogResult.OK)
+                        {   // Creating Mod Dir
+                            Temporal_A = Backup_Path + Path.GetFileName(Folder_Browser_Dialog_1.SelectedPath);
+                           
+                            if (!Directory.Exists(Temporal_A)) 
+                            {
+                                New_Sync_Dir = Temporal_A;
+                                Directory.CreateDirectory(New_Sync_Dir);
+                            }
+                            // iConsole(600, 100, Temporal_A);         
+                        }      
+                    }
+                    */
+
                     Refresh_Backup_Directory();                   
                 }
-                else
-                {   /*  // 540, 240  This check is quite annoying, disabled.
+
+                else // Means create new Backup
+                {  
+                    /*  // 540, 240  This check is quite annoying, disabled.
                     iDialogue(540, 210, "Do It", "Cancel", "false", "false", "\nDo you wish to create a new backup of the\n"
                     + Path.GetFileName(Sync_Path.Remove(Sync_Path.Length - 1)) + " directory?\n\n"
                         // + "This will also delete backups older then the " + Int32.Parse(Get_Setting_Value("Backups_Per_Directory")) + "th slot."
