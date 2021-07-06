@@ -316,14 +316,17 @@ namespace Xml_Axe
                     Refresh_Backup_Stack();
                     // Needs to run AFTER Refresh_Backup_Stack() because it loads Root_Backup_Info  
                     Sync_Path = Get_Backup_Info(Root_Backup_Path)[0];
-                 
+
+
+                    if (!Sync_Path.EndsWith(@"\")) { Sync_Path += @"\"; } // Needs to run BEFORE Sync_Path setting, \ would only break the path
+
                     if (Sync_Path == @"None\") // Failsafe, if there are no backups to read
-                    {   Sync_Path = New_Sync_Dir;
+                    {   // Sync_Path = New_Sync_Dir;
                         
-                        // Used to be: Sync_Path = Xml_Directory; 
+                        // Used to be: 
+                        Sync_Path = Xml_Directory; 
                     }
 
-                    if (!Sync_Path.EndsWith(@"\")) { Sync_Path += @"\"; }
                     Button_Search_MouseLeave(null, null);                            
                 }                                                                  
             }
