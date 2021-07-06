@@ -377,13 +377,9 @@ namespace Xml_Axe
 
 
                 // Backup_Folder is set to: Select_List_View_First(List_View_Selection);
-                List<string> Current_Branch = new List<string>();
-                foreach (string Backup in Get_Segment_Info(Backup_Folder, "Branches"))
-                {
-                    if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); } // Preventing Duplicates
-                }
+                List<string> Current_Branch = Get_Backup_Parents(Backup_Folder);
+               
           
-
                 foreach (ListViewItem Item in List_View_Selection.Items)
                 {
                     if (Item.Text == Backup_Folder) { Item.BackColor = Color.DodgerBlue; } // Color.AliceBlue; }
@@ -3721,8 +3717,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
- 
-            // iConsole(400, 100, Current_Backup); return;
+            //Temporal_E = Select_List_View_Items(List_View_Selection);
+
+            //iConsole(400, 100, "its " + Temporal_E.Count()); return;
             // iConsole(500, 500, string.Join("\n", dd)); return;
             // iConsole(400, 100, Get_Setting_Value("Custom_Start_Parameters")); return;
 
@@ -3750,15 +3747,20 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }
 
                 else // Collapse the stack of selected Backups into the Base version.
-                {                   
+                {                            
                     Temporal_E = Select_List_View_Items(List_View_Selection);
                     Temporal_D = Temporal_E.Count();
 
                     if (Temporal_E == null | Temporal_D == 0)
                     {   iConsole(400, 200, "\nPlease select 1 or more backups that follow \neach other by Strg + Click, \n" +
                         "In order to merge them into the Base backup. \nYou can either double click the list to select all."); 
-                    }            
-                    else 
+                    }
+
+                    // Collapsing the whole History of the selected Backup:
+                    else if (Temporal_D == 1) { Collapse_Backup_History(Select_List_View_First(List_View_Selection)); }
+            
+
+                    else // Collapsing a stack of multiple selected Backups:
                     {   iDialogue(540, 200, "Merge", "Cancel", "false", "false", "\nDo you wish to merge the " + Temporal_D + " selected backups \ninto the Base backup?");                      
                       
                         if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; } // User Abbort 
@@ -4207,6 +4209,30 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         }
 
 
+        //=====================//
+
+        public bool Collapse_Backup_History(string Selected_Backup = "")
+        {
+            // List<string> Current_Branch = Get_Backup_Parents(Selected_Backup);
+
+
+            List<string> Current_Branch = new List<string>();
+            Current_Branch.Add(Selected_Backup); // To prevent it from not being executed below
+
+            foreach (string Backup in Get_Segment_Info(Selected_Backup, "Branches"))
+            {
+                if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); }
+            }
+
+
+            iConsole(500, 400, string.Join("\n", Current_Branch));
+
+            return false;      
+        }
+
+
+
+        //=====================//
 
         public bool Collapse_Backup_Stack(string Certain_Backup = "")
         {                             
@@ -4250,7 +4276,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }
 
                 else // This part is always called within the Backup (management) mode:
-                {   foreach (ListViewItem Item in List_View_Selection.Items)
+                {                  
+                    foreach (ListViewItem Item in List_View_Selection.Items)
                     {   if (Item.Text != "Current" && Item.Selected | Item.Text.EndsWith("Base"))
                         {
                             if (Detected_Selection_Gap) { iConsole(400, 100, "\nYou need to select all targeted collumns in a row \notherwise that would break the right sync order."); return false; }
@@ -5114,15 +5141,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
             Set_Checker(List_View_Selection, Theme_Color);
-
-
-            // Backup_Folder is set to: Select_List_View_First(List_View_Selection);
-            List<string> Current_Branch = new List<string>();
-            foreach (string Backup in Get_Segment_Info(Selection, "Branches"))
-            {
-                if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); } // Preventing Duplicates
-            }
-
+            List<string> Current_Branch = Get_Backup_Parents(Selection);
             // iConsole(400, 200, string.Join("\n", Current_Branch));
 
 
@@ -5190,6 +5209,20 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             }                        
         }
 
+
+
+        //=====================//
+
+        public List<string> Get_Backup_Parents(string Backup_Name)
+        {
+            List<string> Current_Branch = new List<string>();
+            foreach (string Backup in Get_Segment_Info(Backup_Name, "Branches"))
+            {
+                if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); } // Preventing Duplicates
+            }
+
+            return Current_Branch;
+        }
 
         //=====================//
 
