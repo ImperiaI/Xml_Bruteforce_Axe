@@ -60,7 +60,7 @@ namespace Xml_Axe
 
         string Tag_List = "";
         bool User_Input = false;
-        bool Xml_List_Mode = true;
+        bool Search_Mode = false;
 
         string Operation_Mode = "Int";
         string Scale_Mode = "XY";
@@ -316,6 +316,7 @@ namespace Xml_Axe
 
                     Backup_Folder = Select_List_View_First(List_View_Selection); // This defines which Backup dir is targeted!!
 
+                    Zoom_List_View(2); 
                     // Grabbing the Path we're going to use to sync at
                     
                     Refresh_Backup_Stack();
@@ -382,7 +383,6 @@ namespace Xml_Axe
 
 
                 Set_Checker(List_View_Selection, Theme_Color);
-
 
                 // Backup_Folder is set to: Select_List_View_First(List_View_Selection);
                 List<string> Current_Branch = Get_Backup_Parents(Backup_Folder);
@@ -795,7 +795,11 @@ namespace Xml_Axe
             }
             
             else
-            {   if (List_View_Selection.Visible) { List_View_Selection.Visible = false; Zoom_List_View(false); }
+            {   if (List_View_Selection.Visible) 
+                {   List_View_Selection.Visible = false; Zoom_List_View(1);
+
+                    if (Search_Mode) { Set_UI_Into_Search_Mode(true); }
+                }
                 else
                 {   Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible 
 
@@ -2010,13 +2014,7 @@ namespace Xml_Axe
             }
         }
 
-        private void Set_UI_Into_Settings_Mode(bool Mode)
-        {
-            Control[] Controls = { Button_Search, Button_Run, Button_Backup, Button_Attribute, Button_Percentage, Button_Scripts, Button_Operator, Label_Type_Filter };
-            foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
-        }
-        
-
+  
         private void Button_Toggle_Settings_MouseHover(object sender, EventArgs e)
         { Set_Resource_Button(Button_Toggle_Settings, Properties.Resources.Button_Settings_Lit); }
 
@@ -3678,9 +3676,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 // Otherwise let the user choose              
             }
 
+            int List_Size = 1;
+            if (Backup_Mode) { List_Size = 3; }
 
-            Zoom_List_View(Backup_Mode);
-            Set_UI_Backup_Mode(!Backup_Mode);
+            Zoom_List_View(List_Size);
+
+            Set_UI_Into_Backup_Mode(!Backup_Mode);
 
             // Toggeling Buttons for this mode
             Button_Start_MouseLeave(null, null);         
@@ -3739,15 +3740,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         private void Button_Search_Click(object sender, EventArgs e)
         {
 
-            //Temporal_E = Select_List_View_Items(List_View_Selection);
-
-            // iConsole(400, 100, New_Program_Dir); return;
-                    
+            // iConsole(400, 100, New_Program_Dir); return;                   
             // iConsole(500, 500, string.Join("\n", dd)); return;
-            // iConsole(400, 100, Get_Setting_Value("Program_Directory")); return;
-
+   
             // return;
-
 
 
             if (Backup_Mode) // Just show the last results
@@ -3763,6 +3759,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     Button_Operator.Visible = false;
 
                     List_View_Selection.Items.Clear();
+
+                    // Making sure icon is right, as "At_Top_Level" means we move to Search Mode
+                    Button_Start_MouseLeave(null, null); 
+
 
                     foreach (string Entry in Found_Entities)
                     { List_View_Selection.Items.Add(Entry); }
@@ -3794,8 +3794,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 return;
             }
 
-            else if (Combo_Box_Type_Filter.Focused) 
+            else if (Combo_Box_Type_Filter.Focused) // Search by Parent Node Name.
             {
+              
                 if (Combo_Box_Type_Filter.Text == "") { return; }
                 else if (Combo_Box_Type_Filter.Text == "FighterUnit") { Query_For_Tag("SpaceBehavior", "FIGHTER_LOCOMOTOR"); }
                 else
@@ -3815,9 +3816,16 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         { List_View_Selection.Items.Add(Parent_Tag_Name); }
                     }
 
-                    Xml_List_Mode = false;
+                    Search_Mode = true;
                     List_View_Selection.Visible = true;
-                    Zoom_List_View(true);
+                    Zoom_List_View(3);
+
+                   
+
+                    if (List_View_Selection.Items.Count > 0) { List_View_Selection.Items[0].Selected = true; }
+                    List_View_Selection.Focus();
+
+                    Set_UI_Into_Search_Mode(false);
 
                     Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit);
                     Set_Checker(List_View_Selection, Color.Black);
@@ -3827,15 +3835,16 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
 
-
             string Entity_Name = Wash_String(Combo_Box_Entity_Name.Text);
             if (Array_Matches(Ignored_Attribute_Values, Combo_Box_Entity_Name.Text)) { return; }
 
 
             // Matched in selected XML, so just show that one
-            if (Xml_List_Mode & Found_In_Xml(Entity_Name)) { return; }
+            if (!Search_Mode & Found_In_Xml(Entity_Name)) { return; }
 
-            Xml_List_Mode = true; // Otherwise we set it for the next time
+
+            Search_Mode = false; // Otherwise we set it for the next time
+            Set_UI_Into_Search_Mode(true);
 
             if (List_View_Selection.Size.Height > 482) { List_View_Selection.Items.Clear(); }
 
@@ -3895,9 +3904,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             }
 
         
-            Zoom_List_View(false); // Minimizing again
+            Zoom_List_View(1); // Minimizing again
             Found_In_Xml(Entity_Name); // Just to select the found entity
         }
+
 
 
         private void Button_Search_MouseHover(object sender, EventArgs e)
@@ -4122,7 +4132,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             {              
                 Script_Mode = false;
                 Drop_Zone.Visible = true;
-                Zoom_List_View(false);    
+                Zoom_List_View(1);    
                 Set_UI_Into_Script_Mode(!Script_Mode);
                 Button_Browse_Folder.Location = new Point(1, 193);
 
@@ -4149,7 +4159,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Toggle_Undo_Button(false);
 
                 List_View_Selection.Visible = true;
-                Zoom_List_View(true);
+                Zoom_List_View(2);
                 Set_UI_Into_Script_Mode(!Script_Mode);
                 Button_Browse_Folder.Location = new Point(1, 430);
                 if (Text_Box_Description.Visible) { Disable_Description(); }
@@ -4861,31 +4871,42 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
 
-        private void Zoom_List_View(bool Large)
+        private void Zoom_List_View(int List_Size)
         {
-            if (Large)
+            if (List_Size == 1)
             {
-                Drop_Zone.Visible = false; // Hiding Background              
-                //List_View_Selection.Size = new Size(this.Size.Width - 76, 482);
-                //List_View_Selection.Location = new Point(31, 29);
-
+                Drop_Zone.Visible = true;
+                List_View_Selection.Size = new Size(this.Size.Width - 40, 164);
+                List_View_Selection.Location = new Point(12, 12);
+            }
+            else if (List_Size == 2)
+            {
+                Drop_Zone.Visible = false; // Hiding Background                          
                 List_View_Selection.Size = new Size(this.Size.Width - 76, 398);
                 List_View_Selection.Location = new Point(31, 194);
 
                 Text_Box_Description.Text = ""; // Clear
                 Text_Box_Description.Visible = true;
-            } 
-            else
-            {   Drop_Zone.Visible = true; 
-                List_View_Selection.Size = new Size(this.Size.Width - 40, 164);
-                List_View_Selection.Location = new Point(12, 12);              
+            }
+            else if (List_Size == 3)
+            {
+                Drop_Zone.Visible = false;
+                List_View_Selection.Size = new Size(this.Size.Width - 76, 562);
+                List_View_Selection.Location = new Point(31, 29);
             }
 
             List_View_Selection.Columns[0].Width = List_View_Selection.Size.Width - 8;
         }
 
 
-        private void Set_UI_Backup_Mode(bool Mode)
+
+        private void Set_UI_Into_Settings_Mode(bool Mode)
+        {
+            Control[] Controls = { Button_Search, Button_Run, Button_Backup, Button_Attribute, Button_Percentage, Button_Scripts, Button_Operator, Label_Type_Filter };
+            foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
+        }
+
+        private void Set_UI_Into_Backup_Mode(bool Mode)
         {
             Control[] Controls = { Button_Run, Button_Attribute, Button_Scripts, Button_Percentage, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
@@ -4894,6 +4915,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         private void Set_UI_Into_Script_Mode(bool Mode)
         {
             Control[] Controls = { Button_Start, Button_Run, Button_Backup, Button_Search, Button_Attribute, Button_Percentage, Button_Operator, Button_Toggle_Settings };
+            foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
+        }
+
+        private void Set_UI_Into_Search_Mode(bool Mode)
+        {
+            Control[] Controls = { Button_Browse_Folder, Button_Run, Button_Attribute, Button_Scripts, Button_Percentage, Button_Operator, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = Mode; } // Hide or show all        
         }
 
@@ -5180,7 +5207,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         // Mouse Up because this event runs the right timing to grab the newest selected item.
         private void List_View_Selection_MouseUp(object sender, MouseEventArgs e)
-        {
+        { 
             if (!Backup_Mode || At_Top_Level) { return; }
 
             string Selection = Select_List_View_First(List_View_Selection);
