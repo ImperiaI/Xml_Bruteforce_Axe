@@ -3946,20 +3946,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 else if (Current_Backup != "")
                 {                  
-                    //if (!Move_Backwards) // Changed my mind about this
-                    //{
+                    /* // Changed my mind about this option to only check out the files inside of that Backup.
                     iDialogue(580, 240, "Restore All", "Cancel", "Only Inside", "false", "\nDo you wish to restore to the backup " +
                        Selected_Backup + "?\n\nFor all changed files between this backup and the \ncurrent state, or only for the files inside of this backup?"
                         // + Xml_Directory.Replace(Mod_Directory, "") + "?"
                        );
-                    /*
-                    }
-                    else
-                    {
-                        iDialogue(540, 200, "Restore", "Cancel", "false", "false", 
-                            "\nDo you wish to restore to the backup \n" + Selected_Backup + "?");
-                    }
-                    */
+
 
                     if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; } // User Abbort
 
@@ -3970,9 +3962,22 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     // We also ignore all files outside of this patch if the user decided "else" while moving forward  | Move_Backwards)
                     if (Caution_Window.Passed_Value_A.Text_Data == "else") { Restore(Current_Backup + User_Name, Selected_Backup, Move_Backwards, false); }
 
-                    else { Restore(Current_Backup + User_Name, Selected_Backup, Move_Backwards, true); } // Current_Backup is allowed to be remaining "" here.
+                    else { */
 
-                    Current_Backup = Selected_Backup; //Update
+
+
+                    iDialogue(580, 240, "Overwrite", "Cancel", "Auto Stash", "false", "\nDo you wish to Auto Stash new changes (slow)\n" +
+                        "or to Overwrite the working directory (fast) with:\n" +
+                       Selected_Backup + "?\n\n"              
+                    );
+
+                    if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; } // User Abbort
+                    else if (Caution_Window.Passed_Value_A.Text_Data == "else") { Create_New_Backup(true, Move_Backwards); }// Check for AutoStash changes
+
+
+                    Restore(Current_Backup + User_Name, Selected_Backup, Move_Backwards, true); // Current_Backup is allowed to be remaining "" here.                             
+                    Current_Backup = Selected_Backup; // Updating Values and button
+                    // Button_Attribute_MouseLeave(null, null); 
                 }
             }
 
@@ -4999,19 +5004,26 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         // Check files in the Main_Directory for changes that are not contained in any of the Backups:
         // ============================================= 
 
-        private void Create_New_Backup(bool Is_Auto_Stash = false)
+        private void Create_New_Backup(bool Is_Auto_Stash = false, bool Move_Backwards = false)
         {
             if (Is_Time_To_Backup()) { Backup_Time(); }
 
          
             Package_Name = Time_Stamp + User_Name;
-            if (Is_Auto_Stash) { Package_Name += "_Auto_Stash" ; }
+         
 
 
             List<string> The_Backup_Folders = Get_All_Directories(Backup_Path + Backup_Folder, true);
-            // Reversing "Backup_Folders" controlls whether we check all Backup dirs from top to bottom or from bottom to top,
+            // Reversing "The_Backup_Folders" controlls whether we check all Backup dirs from top to bottom or from bottom to top,
             // The order they are feeded into Check_Files() below allows to remove old filesize missmatches in Difference_List() to be nullified by newer matches.
-            // Backup_Folders.Reverse(); // And also in order to stay synchronous with the UI view.
+            // And also in order to stay synchronous with the UI view.
+            if (Is_Auto_Stash)
+            {   Package_Name += "_Auto_Stash";
+
+                // Move order is VERY important for Auto Stash (whether or not Move_Backwards);
+                // To prevent confusion of changes from the past with new changes, we stack the Backups in inverted order! 
+                if (!Move_Backwards) { The_Backup_Folders.Reverse(); }
+            }
 
 
             if (The_Backup_Folders.Count() == 0)
