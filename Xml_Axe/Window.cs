@@ -317,7 +317,6 @@ namespace Xml_Axe
                     // Needs to run AFTER Refresh_Backup_Stack() because it loads Root_Backup_Info  
                     Sync_Path = Get_Backup_Info(Root_Backup_Path)[0];
                  
-
                     if (Sync_Path == @"None\") // Failsafe, if there are no backups to read
                     {   Sync_Path = New_Sync_Dir;
                         
@@ -5455,11 +5454,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         {   
             if(Backup_Mode) // MANUALLY CREATE A NEW BACKUP OF THE FULL XML DIR
             {
-                if (At_Top_Level && !Directory.Exists(Backup_Path + Mod_Name))
+                if (At_Top_Level) // && !Directory.Exists(Backup_Path + Mod_Name))
                 {   
-                    Directory.CreateDirectory(Backup_Path + Mod_Name); // Creating Mod Dir
+                    // Directory.CreateDirectory(Backup_Path + Mod_Name); // Creating Mod Dir
 
-                    /*
                     using (var Folder_Browser_Dialog_1 = new FolderBrowserDialog())
                     {
                         if (Folder_Browser_Dialog_1.ShowDialog() == DialogResult.OK)
@@ -5474,7 +5472,6 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                             // iConsole(600, 100, Temporal_A);         
                         }      
                     }
-                    */
 
                     Refresh_Backup_Directory();                   
                 }
