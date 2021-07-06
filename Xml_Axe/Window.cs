@@ -304,15 +304,14 @@ namespace Xml_Axe
             if (Script_Mode) { Run_Script(); } // Script Mode override
 
             else if (Backup_Mode) // Just move into the Xml Directory that is currently selected 
-            {   if (At_Top_Level) // Leave this below here
+            {   if (At_Top_Level) // Leave this below here!
                 {   Button_Operator_MouseLeave(null, null);
                     // Button_Scripts.Visible = true;
                     Button_Attribute.Visible = true;
 
                     Backup_Folder = Select_List_View_First(List_View_Selection); // This defines which Backup dir is targeted!!
 
-                    // Grabbing the Path we're going to use to sync at
-                    
+                    // Grabbing the Path we're going to use to sync at                 
                     Refresh_Backup_Stack();
                     // Needs to run AFTER Refresh_Backup_Stack() because it loads Root_Backup_Info  
                     Sync_Path = Get_Backup_Info(Root_Backup_Path)[0];
@@ -349,7 +348,7 @@ namespace Xml_Axe
                 if (Folder_Name != "" && !List_View_Matches(List_View_Selection, Folder_Name))
                 { List_View_Selection.Items.Add(Folder_Name); }
             }
-
+ 
             Set_Checker(List_View_Selection, Theme_Color);
             return Temporal_E;
         }
@@ -368,11 +367,27 @@ namespace Xml_Axe
                 Get_Backup_Dirs(); 
                 At_Top_Level = false;
 
+
+
+
+
                 Set_Checker(List_View_Selection, Theme_Color);
+                string Selection = Select_List_View_First(List_View_Selection);
+
+                List<string> Current_Branch = new List<string>();
+                foreach (string Backup in Get_Segment_Info(Selection, "Branches"))
+                {
+                    if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); } // Preventing Duplicates
+                }
+
+                // iConsole(400, 200, string.Join("\n", Current_Branch));
+
 
                 foreach (ListViewItem Item in List_View_Selection.Items)
                 {
-                    if (Item.Text == Current_Backup) { Item.BackColor = Color.Orange; break; } // Highlighting Selection
+                    if (Item.Text == Selection) { Item.BackColor = Color.DodgerBlue; } // Color.AliceBlue; }
+                    else if (Current_Branch.Contains(Item.Text)) { Item.BackColor = Color.DeepSkyBlue; }
+                    else if (Item.Text == Current_Backup) { Item.BackColor = Color.Orange; } // break; } // Highlighting Selection                  
                 }
 
             } catch {}  
@@ -651,8 +666,7 @@ namespace Xml_Axe
             {
                 if (At_Top_Level) { Execute(Backup_Path); } 
                 else 
-                {   string Selection = Select_List_View_First(List_View_Selection);
-                    if (Selection == null) { Execute(Backup_Path); return; } // Failsafe
+                {   if (Backup_Folder == null) { Execute(Backup_Path); return; } // Failsafe
 
                     Temporal_E = Get_All_Directories(Backup_Path + Backup_Folder, true);
                     Temporal_E.Reverse();
@@ -662,7 +676,7 @@ namespace Xml_Axe
                     {
                         string Folder_Name = Found_Dir.Replace(Backup_Path + Backup_Folder + @"\", "");
 
-                        if (Folder_Name != "" && Folder_Name == Selection)
+                        if (Folder_Name != "" && Folder_Name == Backup_Folder)
                         { Execute(Found_Dir); return; }
                     }
                 }            
@@ -5088,10 +5102,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             {
                 string Selection = Select_List_View_First(List_View_Selection);
                 // iConsole(400, 100, Selection);
-
+        
                 List<string> Comment = new List<string>();
                 Comment = Get_Segment_Info(Selection, "Comments");
                 string New_Text = Text_Box_Description.Text;
+
+
 
 
 
