@@ -670,19 +670,24 @@ namespace Xml_Axe
             else if (UI_Mode == "Backup") 
             {
                 if (At_Top_Level) { Execute(Backup_Path); } 
-                else 
-                {   if (Backup_Folder == null) { Execute(Backup_Path); return; } // Failsafe
+                else
+                {
+                    string Selection = Select_List_View_First(List_View_Selection);
+
+                    if (Selection == "") { Execute(Backup_Path); return; } // Failsafe fallback to parent directory
 
                     Temporal_E = Get_All_Directories(Backup_Path + Backup_Folder, true);
                     Temporal_E.Reverse();
-
+                    // iConsole(400, 100, string.Join("\n", Temporal_E));
 
                     foreach (string Found_Dir in Temporal_E)
                     {
-                        string Folder_Name = Found_Dir.Replace(Backup_Path + Backup_Folder + @"\", "");
+                        string Folder_Name = Found_Dir.Replace(Backup_Path + Backup_Folder + @"\", "");                
 
-                        if (Folder_Name != "" && Folder_Name == Backup_Folder)
-                        { Execute(Found_Dir); return; }
+                        if (Folder_Name != "" && Folder_Name == Selection)
+                        {   // iConsole(400, 100, Folder_Name + " == " + Selection);
+                            Execute(Found_Dir); return;
+                        }
                     }
                 }            
             }
@@ -3464,7 +3469,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             if (List_View.SelectedItems.Count > 0)
             { if (List_View.SelectedItems[0].Text != "") { return List_View.SelectedItems[0].Text; } }
 
-            return null;
+            return "";
         }
 
 
@@ -3950,7 +3955,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }
 
 
-                if (Selected_Backup == null) { iConsole(400, 100, "\nPlease select any of the backups to restore it."); }
+                if (Selected_Backup == null || Selected_Backup == "") { iConsole(400, 100, "\nPlease select any of the backups to restore it."); }
 
                 else if (Current_Backup == Selected_Backup) { iConsole(400, 100, "\nThis should already be the current version."); }
 
@@ -3974,7 +3979,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                     else { */
 
-
+  
 
                     iDialogue(580, 240, "Overwrite", "Cancel", "Auto Stash", "false", "\nDo you wish to Auto Stash new changes (slow)\n" +
                         "or to Overwrite the working directory (fast) with:\n" +
@@ -4786,6 +4791,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             string Info_File = "";
             
 
+
             try
             {   // Make sure there is a backup dir      
                 if (!Directory.Exists(This_Backup_Path)) { Directory.CreateDirectory(This_Backup_Path); }
@@ -5213,8 +5219,15 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             bool Has_Collapsed = Collapse_Oldest_Backup("Last");
 
 
-            Create_Backup_Info(Backup_Folder, Package_Name, "", // "Created a backup, based on different file sizes from:\n\n\n" +
-                string.Join("\n", Changed_Files), true, true,
+            Temporal_A = "";
+            string Changes = string.Join("\n", Changed_Files);
+
+            if (Is_Auto_Stash) { Temporal_A = Changes; } // Auto Stash has Changes as copy in the Coment
+
+
+
+
+            Create_Backup_Info(Backup_Folder, Package_Name, Temporal_A, Changes, true, true,  // "Created a backup, based on different file sizes from:\n\n\n" +                
                 string.Join("\n", Added_Files), string.Join("\n", Missing_Files)); // "Load_Backup" was Has_Collapsed
 
             // Use "\n\n" for additional new lines between the entries.
@@ -5249,6 +5262,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             if (UI_Mode != "Backup" || At_Top_Level) { return; }
 
             string Selection = Select_List_View_First(List_View_Selection);
+            if (Selection == "") { return; }
+
             // iConsole(400, 100, Selection);
 
             List<string> Comment = new List<string>();
@@ -5257,7 +5272,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
 
-
+            // ========================================================
+            // Visualizing user interaction on the UI
+            // ========================================================
             Set_Checker(List_View_Selection, Theme_Color);
             List<string> Current_Branch = Get_Backup_Parents(Selection);
             // iConsole(400, 200, string.Join("\n", Current_Branch));
@@ -5272,6 +5289,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
 
+            // ========================================================
+            // Save eventual changes to Comment Section
+            // ========================================================
 
             if (Last_Backup_Selection != "" && Selection != Last_Backup_Selection)
             {
@@ -5297,10 +5317,13 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
 
+            // ========================================================
+            // Append Comment to the Axe_Info.txt
+            // ========================================================
 
-            // DON'T replace Text_Box_Description.Text here with New_Text!!!  Because it causes issues.
+            // DON'T replace Text_Box_Description.Text here with "New_Text"!!!  Because it causes issues.
             if (Comment.Count() == 0)
-            {
+            {                          
                 if (Last_Backup_Selection != "" && Text_Box_Description.Text != "" && Text_Box_Description.Text != "\n")
                 {
                     iConsole(600, 400, "Updating " + Last_Backup_Selection + "  with\n\n" + Text_Box_Description.Text);
@@ -5308,6 +5331,13 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     Write_Into_Segment(Last_Backup_Selection, "Comments", Text_Box_Description.Text, "Same", false);
                     Last_Backup_Comment = Text_Box_Description.Text;
                 }
+
+
+                //if (Selection.EndsWith("Auto_Stash"))
+                //{
+                //    Last_Backup_Comment = string.Join("\n", Get_Segment_Info(Selection, "Changed_Files"));
+                //    Text_Box_Description.Text = Last_Backup_Comment;
+                //}
             }
 
             else
