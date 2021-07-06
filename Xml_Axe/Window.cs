@@ -1238,15 +1238,16 @@ namespace Xml_Axe
                     // Just copy all files as innitial backup, we are going to need them later on to compare filesizes against this backup!
                     Copy_Now(Sync_Path, Backup_Path + Mod_Name + @"\" + Package_Name + @"_Base\");
 
-                    Temporal_B = "\nCreated a backup of the whole directory into\n" +
-                        Backup_Path + "\n" + Mod_Name + @"\" + Package_Name + @"_Base" +
-                        "\n\nWe are going to need it as \"Base\" later on, to \ncompare filesizes against this innitial backup.\n";
-
+                    Temporal_B = "\nCreated a backup of the whole directory into  \n" +
+                      Backup_Path + "\n" + Backup_Folder + @"\" + Package_Name + @"_Base" +
+                        "\n\n  We are going to need it as \"Base\" later on, to \ncompare filesizes against this innitial backup.\n";
+                
+                
                     iConsole(400, 260, Temporal_B); // Tell it to the user.
 
 
                     // Base version to true, otherwise it will complain about a missmatched path
-                    Create_Backup_Info(Mod_Name, Package_Name + @"_Base", "", Temporal_B);
+                    Create_Backup_Info(Mod_Name, Package_Name + @"_Base", "", "\n" + Temporal_B.Replace("\n", ""));
                     Refresh_Backup_Stack();
                     At_Top_Level = false; // Correcting
 
@@ -4768,7 +4769,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 List_View_Selection.Size = new Size(this.Size.Width - 76, 398);
                 List_View_Selection.Location = new Point(31, 194);
 
-                Text_Box_Description.Text = "Test";
+                Text_Box_Description.Text = ""; // Clear
                 Text_Box_Description.Visible = true;
             } 
             else
@@ -4932,15 +4933,15 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             {   // Just copy all files as innitial backup, we are going to need them later on to compare filesizes against this backup!
                 Copy_Now(Sync_Path, Backup_Path + Backup_Folder + @"\" + Package_Name + @"_Base\");
 
-                Temporal_B = "\nCreated a backup of the whole directory into\n" +
+                Temporal_B = "\nCreated a backup of the whole directory into  \n" +
                     Backup_Path + "\n" + Backup_Folder + @"\" + Package_Name + @"_Base" +
-                    "\n\nWe are going to need it as \"Base\" later on, to \ncompare filesizes against this innitial backup.\n";
+                    "\n\n  We are going to need it as \"Base\" later on, to \ncompare filesizes against this innitial backup.\n";
                 
                 iConsole(400, 260, Temporal_B); // Tell it to the user.
 
 
                 // Base version to true, otherwise it will complain about a missmatched path
-                Create_Backup_Info(Backup_Folder, Package_Name + @"_Base", Temporal_B, "", true, true);
+                Create_Backup_Info(Backup_Folder, Package_Name + @"_Base", "\n" + Temporal_B.Replace("\n", ""), "", true, true);
                 Refresh_Backup_Stack(); 
                 
                 Temporal_B = "";
@@ -5076,7 +5077,81 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         }
 
 
-         //=====================//
+
+
+        //=====================//
+
+        // Mouse Up because this event runs the right timing to grab the newest selected item.
+        private void List_View_Selection_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (Backup_Mode && !At_Top_Level)
+            {
+                string Selection = Select_List_View_First(List_View_Selection);
+                // iConsole(400, 100, Selection);
+
+                List<string> Comment = new List<string>();
+                Comment = Get_Segment_Info(Selection, "Comments");
+                string New_Text = Text_Box_Description.Text;
+
+
+
+                if (Last_Backup_Selection != "" && Selection != Last_Backup_Selection)
+                {
+                    if (Last_Backup_Comment != "" && New_Text != Last_Backup_Comment) // Has anything changed meanwhile?
+                    {
+                        // iConsole(600, 400, "Triggered");
+
+                        // Making sure there is proper formatting
+                        if (New_Text != "") // Don't move this up
+                        {
+                            if (!New_Text.EndsWith("\n")) { New_Text += "\n"; }
+                            if (!New_Text.EndsWith("\n\n")) { New_Text += "\n"; }
+                            if (!New_Text.EndsWith("\n\n\n")) { New_Text += "\n"; }
+                        }
+
+                        // iConsole(600, 400, "Updating " + Last_Backup_Selection + "  with\n\n" + New_Text);
+                        Write_Into_Segment(Last_Backup_Selection, "Comments", New_Text, "Same", false);
+                    }
+
+                    Text_Box_Description.Text = "";
+                    Last_Backup_Selection = Selection;
+                }
+
+
+
+
+                // DON'T replace Text_Box_Description.Text here with New_Text!!!  Because it causes issues.
+                if (Comment.Count() == 0)
+                {
+                    if (Last_Backup_Selection != "" && Text_Box_Description.Text != "" && Text_Box_Description.Text != "\n")
+                    {
+                        iConsole(600, 400, "Updating " + Last_Backup_Selection + "  with\n\n" + Text_Box_Description.Text);
+                       
+                        Write_Into_Segment(Last_Backup_Selection, "Comments", Text_Box_Description.Text, "Same", false);
+                        Last_Backup_Comment = Text_Box_Description.Text;
+                    }
+                }
+
+                else
+                {   // Disabled, because we can't destinguish the "Changed_Files" from the Comment..
+                    //Temporal_E.Clear(); 
+                    //Temporal_E = Get_Segment_Info(Selection, "Changed_Files");
+
+                    Last_Backup_Comment = string.Join("\n", Comment);
+                    Text_Box_Description.Text = Last_Backup_Comment;
+
+
+                    //if (Temporal_E.Count() > 0)
+                    //{
+                    //    Text_Box_Description.Text += "\n\n//======= Changed Files: =======\\\\ \n\n"
+                    //        + string.Join("\n", Get_Segment_Info(Selection, "Changed_Files"));
+                    //}
+                }
+            }
+        }
+
+
+        //=====================//
 
         public void Write_Into_Segment(string Source_Backup, string Segment_Name, List<string> Content, string Target_Backup = "Same", bool Prepend_To_Segment = true)
         { Write_Into_Segment(Source_Backup, Segment_Name, string.Join("\n", Content), Target_Backup, Prepend_To_Segment); }
@@ -5084,7 +5159,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
         public void Write_Into_Segment(string Source_Backup, string Segment_Name, string Content, string Target_Backup = "Same", bool Prepend_To_Segment = true)
-        {
+        {          
           
             foreach (string Backup in Get_All_Directories(Backup_Path + Mod_Name, true))
             {
@@ -5098,22 +5173,35 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 string Segment = 
                     "//============================================================\\\\" +
                     "\n" + Segment_Name +
-                    "\n//============================================================\\\\";
+                    "\n//============================================================\\\\\n";
                       
                 
                 string The_File = File.ReadAllText(Backup + Backup_Info);
 
 
 
-                if (Prepend_To_Segment) { The_File = The_File.Replace(Segment, Segment + "\n" + Content + "\n"); }
-                else // Replace it
-                {   string Old_Segment = string.Join("\n", Get_Segment_Info(Source_Backup, Segment_Name));
-                    The_File = The_File.Replace(Old_Segment, Content);
+                if (!The_File.Contains(Segment_Name))
+                {
+                    if (Content == "") { return; } // We won't just add a empty segment, will we.
 
-
-                    // iConsole(500, 500, "\nReplacing: \n\"" + Old_Segment + "\" \n\nwith \n\n\"" + Content + "\"");                                
-                    // iConsole(500, 500, "\nReplacing: \n\"" + Segment + "\n" + Old_Segment + "\" \n\nwith \n\n\"" + Segment + "\n" + Content + "\"");                 
+                    The_File += "\n" + Segment + Content + "\n\n\n"; // Append 
+                    // iConsole(600, 200, "Appending \n\n\"" + Content + "\""); 
                 } 
+                else
+                {
+                    if (Prepend_To_Segment) { The_File = The_File.Replace(Segment, Segment + Content + "\n"); }
+                    else // Replace it
+                    {
+
+                        // iConsole(500, 500, "\nReplacing: \n\"" + Old_Segment + "\" \n\nwith \n\n\"" + Content + "\"");                                
+                        // iConsole(500, 500, "\nReplacing: \n\"" + Segment + "\n" + Old_Segment + "\" \n\nwith \n\n\"" + Segment + Content + "\"");                 
+
+                        string Old_Segment = string.Join("\n", Get_Segment_Info(Source_Backup, Segment_Name));
+                       
+                        try { The_File = The_File.Replace(Old_Segment, Content); }
+                        catch { iConsole(600, 100, "Failed to overwrite the existing " + Segment_Name + " segment."); }
+                    }
+                }       
                 
 
             
@@ -5443,75 +5531,6 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
              // if (this.Size.Width > Screen.FromControl(this).Bounds.Width - 200) { this.Size = new Size(444, 660); }
              // iConsole(400, 100, Screen.FromControl(this).Bounds.Width.ToString()); 
-        }
-
-
-
-        // Mouse Up because this event runs the right timing to grab the newest selected item.
-        private void List_View_Selection_MouseUp(object sender, MouseEventArgs e) 
-        {
-            if (Backup_Mode && !At_Top_Level)
-            {
-                string Selection = Select_List_View_First(List_View_Selection);
-                // iConsole(400, 100, Selection);
-
-                List<string> Comment = new List<string>();
-                Comment = Get_Segment_Info(Selection, "Comments");
-
-
-
-
-                if (Last_Backup_Selection != "" && Selection != Last_Backup_Selection) 
-                {
-                    if (Last_Backup_Comment != "" && Text_Box_Description.Text != Last_Backup_Comment) // Has anything changed meanwhile?
-                    {                    
-                        //if (Old_Segment == Last_Backup_Comment) { iConsole(600, 400, "Yeah"); }
-                        //else { iConsole(600, 400, "Nope"); }
-
-
-                        string New_Text = Text_Box_Description.Text; // Making sure there is proper formatting
-                        if (!New_Text.EndsWith("\n")) { New_Text += "\n"; }
-                        if (!New_Text.EndsWith("\n\n")) { New_Text += "\n"; }
-                        if (!New_Text.EndsWith("\n\n\n")) { New_Text += "\n"; }
-
-
-                        // iConsole(600, 400, "Updating " + Last_Backup_Selection + "  with\n\n" + Text_Box_Description.Text);
-                        Write_Into_Segment(Last_Backup_Selection, "Comments", New_Text, "Same", false);
-                    }
-
-                    Text_Box_Description.Text = ""; 
-                    Last_Backup_Selection = Selection;
-                }
-
-
-                  
-
-
-                if (Comment.Count() == 0 && Text_Box_Description.Text == "") { Last_Backup_Comment = ""; } // Clear
-                else 
-                {
-                    //Temporal_E.Clear();
-                    //Temporal_E = Get_Segment_Info(Selection, "Changed_Files");
-
-
-                    Last_Backup_Comment = string.Join("\n", Comment);
-                    Text_Box_Description.Text = Last_Backup_Comment;
-                  
-
-                    //if (Temporal_E.Count() > 0)
-                    //{
-                    //    Text_Box_Description.Text += "\n\n//======= Changed Files: =======\\\\ \n\n"
-                    //        + string.Join("\n", Get_Segment_Info(Selection, "Changed_Files"));
-                    //}
-                        
-
-
-                   
-
-                    // if (Backup_Comment != Last_Backup_Comment) { }
-                    // Last_Backup_Comment = Backup_Comment;
-                }               
-            }
         }
 
 
