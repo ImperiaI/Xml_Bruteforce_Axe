@@ -4213,21 +4213,51 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         public bool Collapse_Backup_History(string Selected_Backup = "")
         {
-            // List<string> Current_Branch = Get_Backup_Parents(Selected_Backup);
+            List<string> Current_Branch = Get_Backup_Parents(Selected_Backup, true);
+            Current_Branch.Reverse(); // Important, to paste the versions over each other in chronological order. 
+
+            iConsole(500, 400, string.Join("\n", Current_Branch)); return false;
 
 
-            List<string> Current_Branch = new List<string>();
-            Current_Branch.Add(Selected_Backup); // To prevent it from not being executed below
-
-            foreach (string Backup in Get_Segment_Info(Selected_Backup, "Branches"))
+            
+            try 
             {
-                if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); }
-            }
+                string Working_Directory = Backup_Path + Backup_Folder + @"\Current\";
 
 
-            iConsole(500, 400, string.Join("\n", Current_Branch));
+                foreach (string File_Path in Get_All_Directories(Backup_Path + Backup_Folder))
+                {
+                    foreach (string Entry in Current_Branch)
+                    {   if (Entry.EndsWith("Base") && File_Path.EndsWith(Entry)) // Ignoring the Backup, thats our target 
+                        { Working_Directory = File_Path; } // Comment out this line out to fall back into "Current" as working dir.
 
-            return false;      
+                        else if (File_Path.EndsWith(Entry))
+                        {   // iConsole(600, 100, Entry + " in " + File_Path);                      
+                            Copy_Now(File_Path, Working_Directory);                            
+                            Deleting(File_Path);
+                        }
+                    }
+                }
+
+
+                if (Selected_Backup != "Silent") // Only for auto-merge mode the notification is muted
+                {
+                    Refresh_Backup_Stack(); // Visualising changes to UI
+
+                    Current_Branch.Reverse(); // Re-reversing to show the correct order to the user.
+                    Temporal_C = (Current_Branch.Count() * 30) + 140;
+                    if (Temporal_C > 680) { Temporal_C = 680; }
+                   
+                    // Temporal_C as Line Count
+                    iConsole(600, Temporal_C, "\nMerged Backups into Base in the following order:\n\n" + string.Join("\n", Current_Branch));
+                }
+
+
+                return true;
+
+            } catch { iConsole(400, 100, "Failed to merge selected Backup branch into Base."); }
+
+            return false;
         }
 
 
@@ -4530,6 +4560,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 int Cycles = 0;
                 List<string> Stack_History = new List<string>();
+               
                 List<string> Current_Branch = new List<string>();
 
                 Current_Branch.Add(Current_Version); // To prevent it from not being executed below
@@ -5213,9 +5244,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         //=====================//
 
-        public List<string> Get_Backup_Parents(string Backup_Name)
+        public List<string> Get_Backup_Parents(string Backup_Name, bool Include_Selection = false)
         {
             List<string> Current_Branch = new List<string>();
+            if (Include_Selection) { Current_Branch.Add(Backup_Name); }
+
+
             foreach (string Backup in Get_Segment_Info(Backup_Name, "Branches"))
             {
                 if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); } // Preventing Duplicates
