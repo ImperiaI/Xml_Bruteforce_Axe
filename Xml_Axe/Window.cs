@@ -334,7 +334,16 @@ namespace Xml_Axe
 
                     Button_Search_MouseLeave(null, null);
                     Button_Attribute_MouseLeave(null, null);           
-                }                                                                  
+                }
+
+                else // if (!At_Top_Level)
+                {
+                    // De-select Parent Backups of the selected one
+                    if (User_Input && Select_List_View_First(List_View_Selection).Count() == 0) { Set_Backup_Checker(); }
+
+                    // Switch between Red and Green Color
+                    Button_Browse_Folder_MouseLeave(null, null);           
+                }                                                             
             }
 
             else // Normal Mode
@@ -381,20 +390,7 @@ namespace Xml_Axe
                 Get_Backup_Dirs(); 
                 At_Top_Level = false;
 
-
-                Set_Checker(List_View_Selection, Theme_Color);
-
-                // Backup_Folder is set to: Select_List_View_First(List_View_Selection);
-                List<string> Current_Branch = Get_Backup_Parents(Backup_Folder);
-               
-          
-                foreach (ListViewItem Item in List_View_Selection.Items)
-                {
-                    if (Item.Text == Backup_Folder) { Item.BackColor = Color.DodgerBlue; } // Color.AliceBlue; }
-                    else if (Current_Branch.Contains(Item.Text)) { Item.BackColor = Color.DeepSkyBlue; }
-                    else if (Item.Text == Current_Backup) { Item.BackColor = Color.Orange; } // break; } // Highlighting Selection                  
-                }
-
+                Set_Backup_Checker();             
 
             } catch {}  
         }
@@ -727,12 +723,14 @@ namespace Xml_Axe
         }
 
         private void Button_Browse_Folder_MouseHover(object sender, EventArgs e)
-        {   if (UI_Mode == "Script") { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Red_Lit); }
+        {   if (UI_Mode == "Script" || UI_Mode == "Backup" && Select_List_View_Items(List_View_Selection).Count > 0)
+            { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Red_Lit); }         
             else { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Green_Lit); }
         }
 
         private void Button_Browse_Folder_MouseLeave(object sender, EventArgs e)
-        {   if (UI_Mode == "Script") { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Red); }
+        {   if (UI_Mode == "Script" || UI_Mode == "Backup" && Select_List_View_Items(List_View_Selection).Count > 0)
+            { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Red); }
             else { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Green); }
         }
 
@@ -3505,6 +3503,34 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         }
 
 
+        // ========================================================
+        // Visualizing user interaction on the UI
+        // ========================================================
+        public void Set_Backup_Checker(string Certain_Backup = "")
+        {
+            Set_Checker(List_View_Selection, Theme_Color);
+
+
+            if (Certain_Backup != "") // Highlight Parents of his.
+            {
+                List<string> Current_Branch = Get_Backup_Parents(Certain_Backup);
+                // iConsole(400, 200, string.Join("\n", Current_Branch));
+
+
+                foreach (ListViewItem Item in List_View_Selection.Items)
+                {
+                    if (Item.Text == Certain_Backup) { Item.BackColor = Color.DodgerBlue; } // Color.AliceBlue; }
+                    else if (Current_Branch.Contains(Item.Text)) { Item.BackColor = Color.DeepSkyBlue; }
+                    else if (Item.Text == Current_Backup) { Item.BackColor = Color.Orange; } // break; } // Highlighting Selection                  
+                }
+            }
+            else // Simple Selection
+            {
+                foreach (ListViewItem Item in List_View_Selection.Items)
+                { if (Item.Text == Current_Backup) { Item.BackColor = Color.Orange; } break; }
+            }
+        }
+
         //===========================//
 
         // Move_Unused_Files("models"); Move_Unused_Files("textures"); or just Move_Unused_Files(); to move all of them
@@ -4763,6 +4789,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     catch { Create_Backup_Info(Backup_Folder, Target_Backup); } // If failed to find it, we just create a new one.
                 }
 
+                User_Input = false;
                
                 // Label_Entity_Name.Text = Target_Backup; // Updating UI Info (outdated)
                 Set_Checker(List_View_Selection, Theme_Color); // Erasing last selection
@@ -4784,6 +4811,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     Deleting(Working_Directory);             
                 }
 
+
+                User_Input = true;
 
              } catch { iConsole(400, 100, "\nRestore function has crashed."); }         
         }
@@ -5272,29 +5301,15 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             string Selection = Select_List_View_First(List_View_Selection);
             if (Selection == "") { return; }
 
+
             // iConsole(400, 100, Selection);
 
             List<string> Comment = new List<string>();
             Comment = Get_Segment_Info(Selection, "Comments");
             string New_Text = Text_Box_Description.Text;
+            Set_Backup_Checker(Selection);
 
-
-
-            // ========================================================
-            // Visualizing user interaction on the UI
-            // ========================================================
-            Set_Checker(List_View_Selection, Theme_Color);
-            List<string> Current_Branch = Get_Backup_Parents(Selection);
-            // iConsole(400, 200, string.Join("\n", Current_Branch));
-
-
-            foreach (ListViewItem Item in List_View_Selection.Items)
-            {
-                if (Item.Text == Selection) { Item.BackColor = Color.DodgerBlue; } // Color.AliceBlue; }
-                else if (Current_Branch.Contains(Item.Text)) { Item.BackColor = Color.DeepSkyBlue; }
-                else if (Item.Text == Current_Backup) { Item.BackColor = Color.Orange; } // break; } // Highlighting Selection                  
-            }
-
+   
 
 
             // ========================================================
