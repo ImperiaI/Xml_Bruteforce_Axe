@@ -70,6 +70,7 @@ namespace Xml_Axe
         bool Silent_Mode = false;
         bool Debug_Mode = true;
         bool Ying_Dominates = false;
+        bool Skipp_First_Trigger = true;
 
         string Temporal_A, Temporal_B = "";
         int Temporal_C = 0;
@@ -338,9 +339,10 @@ namespace Xml_Axe
 
                 else // if (!At_Top_Level)
                 {
-                    // De-select Parent Backups of the selected one
-                    if (User_Input && Select_List_View_First(List_View_Selection).Count() == 0) { Set_Backup_Checker(); }
-
+                    // User_Input coordinates the timing with the Restore() function.
+                    // De-select Parent Backups while no slot is selected
+                    if (User_Input) { Set_Backup_Checker(); } 
+                    
                     // Switch between Red and Green Color
                     Button_Browse_Folder_MouseLeave(null, null);           
                 }                                                             
@@ -3527,7 +3529,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             else // Simple Selection
             {
                 foreach (ListViewItem Item in List_View_Selection.Items)
-                { if (Item.Text == Current_Backup) { Item.BackColor = Color.Orange; } break; }
+                { if (Item.Text == Current_Backup) { Item.BackColor = Color.Orange; } }
             }
         }
 
@@ -3691,6 +3693,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Set_UI_Into_Backup_Mode(false); // Needs to run after Clear_Last_Mode(); 
 
                 At_Top_Level = true;
+                Skipp_First_Trigger = true;
                 Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible  
 
                 Button_Operator.Location = new Point(1, 510); // Back to its original location
@@ -4789,20 +4792,23 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     catch { Create_Backup_Info(Backup_Folder, Target_Backup); } // If failed to find it, we just create a new one.
                 }
 
-                User_Input = false;
-               
+
+
+                User_Input = false; // Disabling Set_Backup_Checker() intervention inside of List_View_Selection_SelectedIndexChanged()
+
+
                 // Label_Entity_Name.Text = Target_Backup; // Updating UI Info (outdated)
                 Set_Checker(List_View_Selection, Theme_Color); // Erasing last selection
 
                 foreach (ListViewItem Item in List_View_Selection.Items)
-                {   if (Item.Text == Target_Backup) 
-                    {   Item.BackColor = Color.Orange;
+                {
+                    if (Item.Text == Target_Backup)
+                    {
+                        Item.BackColor = Color.Orange;
                         Item.Selected = false; // So it can be seen in orange
-                        break; 
+                        break;
                     } // Highlighting Selection
                 }
-
-
          
 
                 // iConsole(600, 100, Working_Directory + "   To   " + Sync_Path + "This");
@@ -5297,6 +5303,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         private void List_View_Selection_MouseUp(object sender, MouseEventArgs e)
         {
             if (UI_Mode != "Backup" || At_Top_Level) { return; }
+            if (Skipp_First_Trigger) { Skipp_First_Trigger = false; return; }
+
 
             string Selection = Select_List_View_First(List_View_Selection);
             if (Selection == "") { return; }
@@ -5307,9 +5315,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             List<string> Comment = new List<string>();
             Comment = Get_Segment_Info(Selection, "Comments");
             string New_Text = Text_Box_Description.Text;
-            Set_Backup_Checker(Selection);
+            Set_Backup_Checker(Selection); 
 
-   
 
 
             // ========================================================
