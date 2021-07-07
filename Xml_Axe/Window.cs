@@ -5337,7 +5337,9 @@ Comments
                     if (Last_Backup_Selection == Current_Backup)
                     { 
                         // iConsole(400, 100, Get_Backup_Path(Current_Backup) + Backup_Info);
-                        File.Copy(Get_Backup_Path(Current_Backup) + Backup_Info, Root_Backup_Path, true); // Overwrite root Axe_Info.txt
+                        try
+                        {   File.Copy(Get_Backup_Path(Current_Backup) + Backup_Info, Root_Backup_Path, true); // Overwrite root Axe_Info.txt
+                        } catch {}
                     }
                 }
 
@@ -5356,7 +5358,7 @@ Comments
             {                          
                 if (Last_Backup_Selection != "" && Text_Box_Description.Text != "" && Text_Box_Description.Text != "\n")
                 {
-                    // iConsole(600, 400, "Writing new " + Last_Backup_Selection + "  with\n\n" + Text_Box_Description.Text);
+                    iConsole(600, 400, "Writing new " + Last_Backup_Selection + "  with\n\n" + Text_Box_Description.Text);
 
                     Write_Into_Segment(Last_Backup_Selection, "Comments", Text_Box_Description.Text, "Same", false);
                     Last_Backup_Comment = Text_Box_Description.Text;
@@ -5418,16 +5420,17 @@ Comments
 
 
         public void Write_Into_Segment(string Source_Backup, string Segment_Name, string Content, string Target_Backup = "Same", bool Prepend_To_Segment = true)
-        {          
-          
+        {
+            if (Regex.Replace(Content, "[\n\r\t]", "") == "") { return; } // If it consists of only \n \t \r and " " characters.
+
+
             foreach (string Backup in Get_All_Directories(Backup_Path + Mod_Name, true))
             {
                 if (Source_Backup != "Any" && Path.GetFileName(Backup) != Source_Backup) { continue; }
                 else if (!File.Exists(Backup + Backup_Info)) { continue; }
 
                 // iConsole(600, 200, Backup + "  \n" + Content);
-
-       
+             
 
                 string Segment = 
                     "//============================================================\\\\" +
@@ -5437,7 +5440,7 @@ Comments
 
                 string The_File = File.ReadAllText(Backup + Backup_Info).Replace("\r", "");
 
-
+             
 
                 if (!The_File.Contains(Segment_Name))
                 {
@@ -5454,12 +5457,40 @@ Comments
                         // iConsole(500, 500, "\nReplacing: \n\"" + Segment + "\n" + Old_Segment + "\" \n\nwith \n\n\"" + Segment + Content + "\"");                 
 
 
-                        string Old_Segment = string.Join("\n", Get_Segment_Info(Source_Backup, Segment_Name));
+                        // Segment_Body = string.Join("\n", Get_Segment_Info(Source_Backup, Segment_Name)); // Old Method
 
-                        if (Old_Segment == "") { The_File = The_File.Replace(Segment, Segment + Content + "\n"); } // Then Prepend                      
+
+                        bool Started = false;
+                        bool Ignored_First = false;
+                        Temporal_E.Clear();
+                        int Skip_First = 2;
+                        // Temporal_E.Add("//============================================================\\\\"); // Starting Line
+
+                        foreach (string Line in File.ReadAllLines(Backup + Backup_Info))
+                        {   // Skipping everything but the chapter after "Removed_Files"
+                            if (Line.StartsWith(Segment_Name)) { Started = true; }
+                            else if (Started && Line.StartsWith("//============="))
+                            {
+                                if (!Ignored_First) { Ignored_First = true; } // Ignore the first //============= that comes after the Segment Name
+                                else break; // Exit at Stop_Segment
+                            }
+                            else if (!Started) { continue; }
+                            else if (Line.StartsWith("//") || Line.StartsWith("#")) { continue; } //|| Line == "\n" || Line == "") { continue; }
+
+
+                            if (Skip_First > 0) { Skip_First--; } else { Temporal_E.Add(Line); } // This is the legit area to be replaced
+                        }
+
+                        string Segment_Body = string.Join("\n", Temporal_E).Replace("\r", "");
+
+
+
+
+
+                        if (Segment_Body == "") { The_File = The_File.Replace(Segment, Segment + Content + "\n"); } // Then Prepend                      
                         else
                         {
-                            try { The_File = The_File.Replace(Old_Segment, Content); } // Replace it
+                            try { The_File = The_File.Replace(Segment_Body, Content); } // Replace it
                             catch { iConsole(540, 100, "\nFailed to overwrite the existing " + Segment_Name + " segment."); }
                         }
                     }
