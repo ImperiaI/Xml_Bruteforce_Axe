@@ -332,7 +332,8 @@ namespace Xml_Axe
                         Sync_Path = Xml_Directory; 
                     }
 
-                    Button_Search_MouseLeave(null, null);                            
+                    Button_Search_MouseLeave(null, null);
+                    Button_Attribute_MouseLeave(null, null);           
                 }                                                                  
             }
 
@@ -3670,6 +3671,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Toggle_Undo_Button(Enable_Undo);
 
                 Disable_Description();
+                Button_Attribute_MouseLeave(null, null); // Don't move this below
                 //Set_Label_Entity_Name_Text();
                 //Label_Entity_Name.Location = new Point(31, 238);
             }            
@@ -3699,9 +3701,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
             // Toggeling Buttons for this mode
-            Button_Start_MouseLeave(null, null);         
-            // Button_Scripts_MouseLeave(null, null);
-            Button_Attribute_MouseLeave(null, null);
+            Button_Start_MouseLeave(null, null);                 
             Button_Search_MouseLeave(null, null);
             Button_Operator_MouseLeave(null, null);
         }
@@ -3754,11 +3754,26 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
+            string Segment =
+                  "//============================================================\\\\" +
+                  "\n" + "Text" +
+                  "\n//============================================================\\\\\n";
+
+
+            string Da = @"
+
+//============================================================\\
+Comments
+//============================================================\\
+
+";
+
+            Visualize_Characters(Da + "\n\n\n" + Segment);
 
             // iConsole(400, 100, Get_Backup_Path(Current_Backup)); return;                   
             // iConsole(500, 500, string.Join("\n", dd)); return;
    
-            // return;
+            return;
 
 
             if (UI_Mode == "Backup") // Just show the last results
@@ -3772,6 +3787,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     // At_Top_Level = true;
                     Button_Backup_MouseLeave(null, null);                   
                     Button_Attribute.Visible = false;
+
+                    Button_Operator.Location = new Point(1, 510);
                     Button_Operator.Visible = false;
 
                     List_View_Selection.Items.Clear();
@@ -5314,7 +5331,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         if (!New_Text.EndsWith("\n\n\n")) { New_Text += "\n"; }
                     }
 
-                    // iConsole(600, 400, "Updating " + Last_Backup_Selection + "  with\n\n" + New_Text);
+                    iConsole(600, 400, "Updating " + Last_Backup_Selection + "  with\n\n" + New_Text);
                     Write_Into_Segment(Last_Backup_Selection, "Comments", New_Text, "Same", false);
 
                     if (Last_Backup_Selection == Current_Backup)
@@ -5339,7 +5356,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             {                          
                 if (Last_Backup_Selection != "" && Text_Box_Description.Text != "" && Text_Box_Description.Text != "\n")
                 {
-                    iConsole(600, 400, "Updating " + Last_Backup_Selection + "  with\n\n" + Text_Box_Description.Text);
+                    // iConsole(600, 400, "Writing new " + Last_Backup_Selection + "  with\n\n" + Text_Box_Description.Text);
 
                     Write_Into_Segment(Last_Backup_Selection, "Comments", Text_Box_Description.Text, "Same", false);
                     Last_Backup_Comment = Text_Box_Description.Text;
@@ -5416,9 +5433,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     "//============================================================\\\\" +
                     "\n" + Segment_Name +
                     "\n//============================================================\\\\\n";
-                      
-                
-                string The_File = File.ReadAllText(Backup + Backup_Info);
+
+
+                string The_File = File.ReadAllText(Backup + Backup_Info).Replace("\r", "");
 
 
 
@@ -5432,16 +5449,19 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 else
                 {
                     if (Prepend_To_Segment) { The_File = The_File.Replace(Segment, Segment + Content + "\n"); }
-                    else // Replace it
-                    {
-
-                        // iConsole(500, 500, "\nReplacing: \n\"" + Old_Segment + "\" \n\nwith \n\n\"" + Content + "\"");                                
+                    else 
+                    {   // iConsole(500, 500, "\nReplacing: \n\"" + Old_Segment + "\" \n\nwith \n\n\"" + Content + "\"");                                
                         // iConsole(500, 500, "\nReplacing: \n\"" + Segment + "\n" + Old_Segment + "\" \n\nwith \n\n\"" + Segment + Content + "\"");                 
 
+
                         string Old_Segment = string.Join("\n", Get_Segment_Info(Source_Backup, Segment_Name));
-                       
-                        try { The_File = The_File.Replace(Old_Segment, Content); }
-                        catch { iConsole(600, 100, "Failed to overwrite the existing " + Segment_Name + " segment."); }
+
+                        if (Old_Segment == "") { The_File = The_File.Replace(Segment, Segment + Content + "\n"); } // Then Prepend                      
+                        else
+                        {
+                            try { The_File = The_File.Replace(Old_Segment, Content); } // Replace it
+                            catch { iConsole(540, 100, "\nFailed to overwrite the existing " + Segment_Name + " segment."); }
+                        }
                     }
                 }       
                 
@@ -5475,7 +5495,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         public void Visualize_Characters(string Text_1, string Text_2 = "")
         {
-            Text_1 = Text_1.Replace("\t", "TAB").Replace("\r", "CARRIAGE").Replace(" ", "_");
+            Text_1 = Text_1.Replace("\t", "TAB").Replace("\n", "\nNEW").Replace("\r", "CARRIAGE").Replace(" ", "_");
 
             if (Text_2 != "") 
             { 
