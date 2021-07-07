@@ -799,9 +799,13 @@ namespace Xml_Axe
             
             else
             {   if (List_View_Selection.Visible) 
-                {   List_View_Selection.Visible = false; Zoom_List_View(1);
+                {   List_View_Selection.Visible = false; 
+                    Zoom_List_View(1);
 
-                    if (UI_Mode == "Search") { Set_UI_Into_Search_Mode(false); } // toggle
+                    if (UI_Mode == "Search") // toggle
+                    {   Clear_Last_Mode(); 
+                        Set_UI_Into_Search_Mode(false); // Needs to run after Clear_Last_Mode(); 
+                    } 
                 }
                 else
                 {   Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible 
@@ -1915,7 +1919,10 @@ namespace Xml_Axe
                 if (Combo_Box_Type_Filter.Text != "Faction Name Filter" && Combo_Box_Type_Filter.Text != "Category Mask Filter") 
                 { Button_Search.Visible = true; }
                 Text_Box_Tags.Visible = false;
-                Set_UI_Into_Settings_Mode(false);    
+
+                Clear_Last_Mode();
+                Set_UI_Into_Settings_Mode(false); // Needs to run after Clear_Last_Mode();    
+ 
                 Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller);
           
     
@@ -2422,7 +2429,7 @@ namespace Xml_Axe
  
         public void Reset_Tag_List()
         {
-            Tag_List = @"# ====================== Settings ======================
+            Tag_List = @"# ==================== Settings ====================
 # Show_Tooltip = true
 # Store_Last_Settings = true
 # Request_File_Approval = true
@@ -2440,7 +2447,7 @@ namespace Xml_Axe
 
 
 
-# ===================== Bool Values ======================
+# ================== Bool Values ===================
 
 bool Planet_Surface_Accessible # Set to No and it will turn all GCs to space only because it sets all Planets to unaccessible. This operation is kinda reversible: it checks if a planet has a ground.ted map to determine whether it is safe to set surface back to accessible.
 
@@ -2466,7 +2473,8 @@ bool Projectile_Does_Energy_Damage # Careful, if set to yes Hitpoint damage will
 
 bool Projectile_Does_Hitpoint_Damage # Not reversible because all Projectiles in the selection get the same value.
 
-# ====================== Int Values ======================
+
+# =================== Int Values ===================
 
 Tactical_Health = 100
 
@@ -3650,10 +3658,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         private void Button_Backup_Click(object sender, EventArgs e)
         {
             if (UI_Mode == "Backup") 
-            {
-                UI_Mode = "Normal";
+            {           
                 Zoom_List_View(1);
-                Set_UI_Into_Backup_Mode(false);
+                Clear_Last_Mode(); 
+                Set_UI_Into_Backup_Mode(false); // Needs to run after Clear_Last_Mode(); 
 
                 At_Top_Level = true;
                 Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible  
@@ -3667,6 +3675,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             }            
             else
             {
+                if (UI_Mode == "Search") { Button_Browse_Folder.Visible = true; }
+
                 UI_Mode = "Backup";
                 Zoom_List_View(3);
                 Set_UI_Into_Backup_Mode(true);
@@ -3745,21 +3755,22 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         private void Button_Search_Click(object sender, EventArgs e)
         {
 
-            // iConsole(400, 100, New_Program_Dir); return;                   
+            // iConsole(400, 100, Get_Backup_Path(Current_Backup)); return;                   
             // iConsole(500, 500, string.Join("\n", dd)); return;
    
             // return;
 
 
             if (UI_Mode == "Backup") // Just show the last results
-            { 
-                // Toggle older searches
+            {         
+                // Enter Search Mode: Toggle older searches
                 if (At_Top_Level)
                 {
-                    UI_Mode = "Normal";
-                    At_Top_Level = true;
+                    UI_Mode = "Search";
+                    Button_Browse_Folder.Visible = false;
+
+                    // At_Top_Level = true;
                     Button_Backup_MouseLeave(null, null);                   
-                    // Button_Scripts.Visible = false;
                     Button_Attribute.Visible = false;
                     Button_Operator.Visible = false;
 
@@ -3848,8 +3859,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             if (UI_Mode != "Search" & Found_In_Xml(Entity_Name)) { return; }
 
 
-            UI_Mode = "Normal"; // Otherwise we set it for the next time
-            Set_UI_Into_Search_Mode(false);
+            Clear_Last_Mode(); 
+            Set_UI_Into_Search_Mode(false); // Needs to run after Clear_Last_Mode(); 
 
             if (List_View_Selection.Size.Height > 482) { List_View_Selection.Items.Clear(); }
 
@@ -4134,9 +4145,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         private void Button_Scripts_Click(object sender, EventArgs e)
         {
             if (UI_Mode == "Script") // Toggle between Script Mode
-            {                           
-                UI_Mode = "Normal";
-                Set_UI_Into_Script_Mode(false);
+            {
+                Clear_Last_Mode(); 
+                Set_UI_Into_Script_Mode(false); // Needs to run after Clear_Last_Mode(); 
 
                 Drop_Zone.Visible = true;
                 Zoom_List_View(1);
@@ -4913,7 +4924,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         //=====================// 
 
         private void Clear_Last_Mode()
-        {   
+        {
+            if (UI_Mode == "Normal") { return; }
+
             switch (UI_Mode)
             {
                 case "Settings":
@@ -4935,36 +4948,30 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 // default: 
                 // break;
             }
+
+            UI_Mode = "Normal";
         }
 
 
         //=====================// 
 
         private void Set_UI_Into_Settings_Mode(bool Mode)
-        {
-            if (Mode == false) { Clear_Last_Mode(); }
-            Control[] Controls = { Button_Search, Button_Run, Button_Backup, Button_Attribute, Button_Percentage, Button_Scripts, Button_Operator, Label_Type_Filter };
+        {   Control[] Controls = { Button_Search, Button_Run, Button_Backup, Button_Attribute, Button_Percentage, Button_Scripts, Button_Operator, Label_Type_Filter };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = !Mode; } // Hide or show all        
         }
 
         private void Set_UI_Into_Backup_Mode(bool Mode)
-        {
-            if (Mode == false) { Clear_Last_Mode(); }
-            Control[] Controls = { Button_Run, Button_Attribute, Button_Scripts, Button_Percentage, Button_Toggle_Settings };
+        {   Control[] Controls = { Button_Run, Button_Attribute, Button_Scripts, Button_Percentage, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = !Mode; } // Hide or show all        
         }
 
         private void Set_UI_Into_Script_Mode(bool Mode)
-        {
-            if (Mode == false) { Clear_Last_Mode(); }
-            Control[] Controls = { Button_Start, Button_Run, Button_Backup, Button_Search, Button_Attribute, Button_Percentage, Button_Operator, Button_Toggle_Settings };
+        {   Control[] Controls = { Button_Start, Button_Run, Button_Backup, Button_Search, Button_Attribute, Button_Percentage, Button_Operator, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = !Mode; } // Hide or show all        
         }
 
         private void Set_UI_Into_Search_Mode(bool Mode)
-        {
-            if (Mode == false) { Clear_Last_Mode(); }
-            Control[] Controls = { Button_Browse_Folder, Button_Run, Button_Attribute, Button_Scripts, Button_Percentage, Button_Operator, Button_Toggle_Settings };
+        {   Control[] Controls = { Button_Browse_Folder, Button_Run, Button_Attribute, Button_Scripts, Button_Percentage, Button_Operator, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = !Mode; } // Hide or show all        
         }
 
@@ -5309,6 +5316,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                     // iConsole(600, 400, "Updating " + Last_Backup_Selection + "  with\n\n" + New_Text);
                     Write_Into_Segment(Last_Backup_Selection, "Comments", New_Text, "Same", false);
+
+                    if (Last_Backup_Selection == Current_Backup)
+                    { 
+                        // iConsole(400, 100, Get_Backup_Path(Current_Backup) + Backup_Info);
+                        File.Copy(Get_Backup_Path(Current_Backup) + Backup_Info, Root_Backup_Path, true); // Overwrite root Axe_Info.txt
+                    }
                 }
 
                 Text_Box_Description.Text = "";
@@ -5331,13 +5344,6 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     Write_Into_Segment(Last_Backup_Selection, "Comments", Text_Box_Description.Text, "Same", false);
                     Last_Backup_Comment = Text_Box_Description.Text;
                 }
-
-
-                //if (Selection.EndsWith("Auto_Stash"))
-                //{
-                //    Last_Backup_Comment = string.Join("\n", Get_Segment_Info(Selection, "Changed_Files"));
-                //    Text_Box_Description.Text = Last_Backup_Comment;
-                //}
             }
 
             else
@@ -5358,6 +5364,18 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         }
 
 
+
+        //=====================//
+
+        public string Get_Backup_Path(string Backup_Name)
+        {
+            foreach (string Backup in Get_All_Directories(Backup_Path + Mod_Name, true))
+            {
+                if (Path.GetFileName(Backup) == Backup_Name) { return Backup; }
+            }
+
+            return "";
+        }
 
         //=====================//
 
