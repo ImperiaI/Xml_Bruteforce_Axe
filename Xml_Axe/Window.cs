@@ -84,7 +84,7 @@ namespace Xml_Axe
         string Last_Combo_Box_Entity_Name = "";
 
 
-        string New_Sync_Dir, Sync_Path, Root_Backup_Path, Backup_Path, Backup_Folder, User_Name, Current_Backup, Package_Name = ""; 
+        string Sync_Path, Root_Backup_Path, Backup_Path, Backup_Folder, User_Name, Current_Backup, Package_Name = ""; 
         string Backup_Info = @"\Axe_Info.txt";
  
         bool At_Top_Level = true;
@@ -304,6 +304,20 @@ namespace Xml_Axe
             }
         }
 
+        //===========================// 
+        private void Get_Sync_Path()
+        {
+            Sync_Path = Get_Backup_Info(Root_Backup_Path)[0];
+
+            // iConsole(400, 100, "Sync_Path is \n" + Sync_Path);
+
+            if (!Sync_Path.EndsWith(@"\")) { Sync_Path += @"\"; } // Needs to run BEFORE Sync_Path setting, \ would only break the path
+
+            // Failsafe, if there are no backups to read, fallback to Xml_Directory
+            if (Sync_Path == @"None\") { Sync_Path = Xml_Directory; }
+        }
+
+        //===========================// 
         private void List_View_Selection_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (UI_Mode == "Script") { Run_Script(); } // Script Mode override
@@ -320,18 +334,9 @@ namespace Xml_Axe
                     // Grabbing the Path we're going to use to sync at
                     
                     Refresh_Backup_Stack();
-                    // Needs to run AFTER Refresh_Backup_Stack() because it loads Root_Backup_Info  
-                    Sync_Path = Get_Backup_Info(Root_Backup_Path)[0];
-
-
-                    if (!Sync_Path.EndsWith(@"\")) { Sync_Path += @"\"; } // Needs to run BEFORE Sync_Path setting, \ would only break the path
-
-                    if (Sync_Path == @"None\") // Failsafe, if there are no backups to read
-                    {   // Sync_Path = New_Sync_Dir;
-                        
-                        // Used to be: 
-                        Sync_Path = Xml_Directory; 
-                    }
+                    // Get_Sync_Path() needs to run AFTER Refresh_Backup_Stack() because it loads Root_Backup_Info  
+                    Get_Sync_Path();
+                   
 
                     Button_Search_MouseLeave(null, null);
                     Button_Attribute_MouseLeave(null, null);           
@@ -906,10 +911,7 @@ namespace Xml_Axe
             Root_Backup_Path = Backup_Path + Backup_Folder + Backup_Info;
 
             Current_Backup = Get_Backup_Info(Root_Backup_Path)[1];
-            Sync_Path = Get_Backup_Info(Root_Backup_Path)[0];
-
-            if (!Sync_Path.EndsWith(@"\")) { Sync_Path += @"\"; }
-            if (Sync_Path == @"None\") { Sync_Path = Xml_Directory; } // Failsafe
+            Get_Sync_Path();
 
 
             // if (The_Settings.Contains("Show_Files_That_Would_Change = true") | The_Settings.Contains("Request_Approval=true"))
@@ -3721,7 +3723,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Zoom_List_View(3);
                 Set_UI_Into_Backup_Mode(true);
 
-                New_Sync_Dir = ""; // Clear
+
                 List_View_Selection.Items.Clear();
                 List_View_Selection.Visible = true;
 
@@ -3794,9 +3796,14 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-       
+
+            // List<string> The_Backup_Folders = Get_All_Directories(Backup_Path + Backup_Folder, true);
+
+            // Copy_Now(@"C:\Users\Mod\Desktop\Ted\", @"C:\Users\Mod\AppData\Local\Xml_Axe\Backup\Ted\");
+                
+
             // iConsole(400, 100, Get_Backup_Path(Current_Backup)); return;                   
-            // iConsole(500, 500, string.Join("\n", dd)); return; 
+            // iConsole(500, 500, string.Join("\n", The_Backup_Folders)); return; 
             // return;
 
 
@@ -5133,7 +5140,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         {
             if (Is_Time_To_Backup()) { Backup_Time(); }
 
-            iConsole(400, 100, "Test: Createing New Backup");
+            iConsole(400, 100, "Test: Creating New Backup");
 
             Package_Name = Time_Stamp + User_Name;
          
@@ -5154,7 +5161,13 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
             if (The_Backup_Folders.Count() == 0)
             {   // Just copy all files as innitial backup, we are going to need them later on to compare filesizes against this backup!
-                Copy_Now(Sync_Path, Backup_Path + Backup_Folder + @"\" + Package_Name + @"_Base\");
+                Temporal_A = "";
+                Temporal_A = Backup_Path + Backup_Folder + @"\" + Package_Name + @"_Base"; // Target Directory
+                if (!Directory.Exists(Temporal_A)) { Directory.CreateDirectory(Temporal_A); }
+
+
+                Copy_Now(Path.GetDirectoryName(Sync_Path), Temporal_A);
+                // iConsole(600, 400, Path.GetDirectoryName(Sync_Path) + "\n\n into \n\n" + Temporal_A);
 
                 Temporal_B = "\nCreated a backup of the whole directory into  \n" +
                     Backup_Path + "\n" + Backup_Folder + @"\" + Package_Name + @"_Base" +
@@ -5312,7 +5325,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         //=====================//
 
         // Mouse Up because this event runs the right timing to grab the newest selected item.
-        private void List_View_Selection_MouseUp(object sender, MouseEventArgs e)
+        private void List_View_Selection_MouseUp(object sender, MouseEventArgs Mouse)
         {
             if (UI_Mode != "Backup" || At_Top_Level) { return; }
             if (Skipp_First_Trigger) { Skipp_First_Trigger = false; return; }
@@ -5327,7 +5340,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             List<string> Comment = new List<string>();
             Comment = Get_Segment_Info(Selection, "Comments");
             string New_Text = Text_Box_Description.Text;
-            Set_Backup_Checker(Selection); 
+
+
+            if (Mouse.Button == MouseButtons.Right)
+            { Set_Backup_Checker(); } // Ignore Parents
+            else { Set_Backup_Checker(Selection); } 
 
 
 
@@ -5733,19 +5750,16 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             if (UI_Mode == "Backup") // MANUALLY CREATE A NEW BACKUP OF THE FULL XML DIR
             {
                 if (At_Top_Level) // && !Directory.Exists(Backup_Path + Mod_Name))
-                {   
-                    // Directory.CreateDirectory(Backup_Path + Mod_Name); // Creating Mod Dir
+                {   // Directory.CreateDirectory(Backup_Path + Mod_Name); // Creating Mod Dir
 
                     using (var Folder_Browser_Dialog_1 = new FolderBrowserDialog())
-                    {
-                        if (Folder_Browser_Dialog_1.ShowDialog() == DialogResult.OK)
+                    {   if (Folder_Browser_Dialog_1.ShowDialog() == DialogResult.OK)
                         {   // Creating Mod Dir
                             Temporal_A = Backup_Path + Path.GetFileName(Folder_Browser_Dialog_1.SelectedPath);
                            
                             if (!Directory.Exists(Temporal_A)) 
-                            {
-                                New_Sync_Dir = Temporal_A;
-                                Directory.CreateDirectory(New_Sync_Dir);
+                            {   Directory.CreateDirectory(Temporal_A);
+                                File.WriteAllText(Temporal_A + Backup_Info, @"Directory_Name = " + Folder_Browser_Dialog_1.SelectedPath);
                             }
                             // iConsole(600, 100, Temporal_A);         
                         }      
