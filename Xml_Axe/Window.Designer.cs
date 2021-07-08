@@ -274,9 +274,9 @@
             this.Text_Box_Tags.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.Text_Box_Tags.BackColor = System.Drawing.SystemColors.ScrollBar;
-            this.Text_Box_Tags.Location = new System.Drawing.Point(31, 272);
+            this.Text_Box_Tags.Location = new System.Drawing.Point(31, 227);
             this.Text_Box_Tags.Name = "Text_Box_Tags";
-            this.Text_Box_Tags.Size = new System.Drawing.Size(367, 319);
+            this.Text_Box_Tags.Size = new System.Drawing.Size(367, 364);
             this.Text_Box_Tags.TabIndex = 27;
             this.Text_Box_Tags.Text = "";
             this.Text_Box_Tags.Visible = false;
@@ -455,6 +455,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.ClientSize = new System.Drawing.Size(428, 622);
+            this.Controls.Add(this.Text_Box_Tags);
             this.Controls.Add(this.Button_Attribute);
             this.Controls.Add(this.Button_Undo);
             this.Controls.Add(this.Button_Backup);
@@ -481,7 +482,6 @@
             this.Controls.Add(this.Text_Box_Original_Path);
             this.Controls.Add(this.Drop_Zone);
             this.Controls.Add(this.Button_Browse_Folder);
-            this.Controls.Add(this.Text_Box_Tags);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximumSize = new System.Drawing.Size(2400, 2400);
             this.MinimumSize = new System.Drawing.Size(444, 660);

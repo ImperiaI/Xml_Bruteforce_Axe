@@ -674,6 +674,14 @@ namespace Xml_Axe
                     string Selection = Select_List_View_First(List_View_Selection);
 
                     if (Selection == "") { Execute(Backup_Path); return; } // Failsafe fallback to parent directory
+                    
+                    else if (Mouse.Button == MouseButtons.Right)
+                    {   Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_File_Lit);
+                        Execute(Get_Backup_Path(Selection) + Backup_Info);
+                        System.Threading.Thread.Sleep(2000);
+                        return;                      
+                    }
+                   
 
                     Temporal_E = Get_All_Directories(Backup_Path + Backup_Folder, true);
                     Temporal_E.Reverse();
@@ -725,13 +733,14 @@ namespace Xml_Axe
         }
 
         private void Button_Browse_Folder_MouseHover(object sender, EventArgs e)
-        {   if (UI_Mode == "Script" || UI_Mode == "Backup" && Select_List_View_Items(List_View_Selection).Count > 0)
+        {   if (UI_Mode == "Script" || UI_Mode == "Backup" && Select_List_View_Items(List_View_Selection).Count == 0)
             { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Red_Lit); }         
             else { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Green_Lit); }
         }
 
         private void Button_Browse_Folder_MouseLeave(object sender, EventArgs e)
-        {   if (UI_Mode == "Script" || UI_Mode == "Backup" && Select_List_View_Items(List_View_Selection).Count > 0)
+        {
+            if (UI_Mode == "Script" || UI_Mode == "Backup" && Select_List_View_Items(List_View_Selection).Count == 0)
             { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Red); }
             else { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Green); }
         }
@@ -3700,7 +3709,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Toggle_Undo_Button(Enable_Undo);
 
                 Disable_Description();
-                Button_Attribute_MouseLeave(null, null); // Don't move this below
+                Button_Attribute_MouseLeave(null, null); // Don't move this below            
                 //Set_Label_Entity_Name_Text();
                 //Label_Entity_Name.Location = new Point(31, 238);
             }            
@@ -3724,6 +3733,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 Refresh_Backup_Directory();
                 Toggle_Undo_Button(false);
+          
                 // if (Temporal_E.Count() == 1) { Refresh_Backup_Stack(); } // Then auto forward into the one backup dir
                 // Otherwise let the user choose              
             }
@@ -3733,6 +3743,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             Button_Start_MouseLeave(null, null);                 
             Button_Search_MouseLeave(null, null);
             Button_Operator_MouseLeave(null, null);
+            Button_Browse_Folder_MouseLeave(null, null);
         }
 
         private void Button_Backup_MouseHover(object sender, EventArgs e)
@@ -4022,7 +4033,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
   
 
-                    iDialogue(580, 240, "Overwrite", "Cancel", "Auto Stash", "false", "\nDo you wish to Auto Stash new changes (slow)\n" +
+                    iDialogue(580, 240, "Overwrite", "Cancel", "Stash", "false", "\nDo you wish to Stash new changes (slow)\n" +
                         "or to Overwrite the working directory (fast) with:\n" +
                        Selected_Backup + "?\n\n"              
                     );
@@ -5122,7 +5133,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         {
             if (Is_Time_To_Backup()) { Backup_Time(); }
 
-         
+            iConsole(400, 100, "Test: Createing New Backup");
+
             Package_Name = Time_Stamp + User_Name;
          
 
@@ -5132,7 +5144,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             // The order they are feeded into Check_Files() below allows to remove old filesize missmatches in Difference_List() to be nullified by newer matches.
             // And also in order to stay synchronous with the UI view.
             if (Is_Auto_Stash)
-            {   Package_Name += "_Auto_Stash";
+            {   Package_Name += "_Stash";
 
                 // Move order is VERY important for Auto Stash (whether or not Move_Backwards);
                 // To prevent confusion of changes from the past with new changes, we stack the Backups in inverted order! 
@@ -5758,8 +5770,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                         foreach (ListViewItem Item in List_View_Selection.Items)
                         {
-                            if (!Item.Text.EndsWith("Auto_Stash") && !Item.Text.EndsWith("Auto")) 
-                            { Temporal_B = Item.Text; break; } // Just get the first that is no Auto_Stash
+                            if (!Item.Text.EndsWith("Stash") && !Item.Text.EndsWith("Auto")) 
+                            { Temporal_B = Item.Text; break; } // Just get the first that is no _Stash
                         }
 
                  
