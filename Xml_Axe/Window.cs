@@ -979,7 +979,7 @@ namespace Xml_Axe
 
                 // if (Verify_Setting("Backups_Per_Directory")) { // Disabled Feature
                 // Using Mod_Name instead of Backup_Folder here, because that's the current working directory!
-                string Path_And_Backup = Backup_Path + Mod_Name + @"\" + This_Backup;
+                string Path_And_Backup = Backup_Path + Backup_Folder + @"\" + This_Backup;
 
 
 
@@ -1255,7 +1255,10 @@ namespace Xml_Axe
 
           
             string Backup_File = "";
-           
+            // Backup_Folder was set to "Mod_Name" in Button_Run_Click()
+            string Path_To_Backup = Backup_Path + Backup_Folder;
+
+
 
             // XElement Selected_Instance = null;
             IEnumerable<XElement> Found_Instances = null;
@@ -1263,23 +1266,21 @@ namespace Xml_Axe
 
                    
             if (!Directory.Exists(Xml_Directory)) { iConsole(200, 100, "\nCan't find the Xml Directory."); return null; }
-
-
+        
 
             if (Apply_Changes) // File_Collection is a global variable, feeded from the remaining filenames in the Caution_Window 
             {   
                 if (File_Collection == null | File_Collection.Count == 0) { File_Collection = Get_All_Files(Xml_Directory, "xml"); } // Failsafe
                 // iConsole(560, 600, Xml_Directory + string.Join("\n", File_Collection)); // return null; // Debug Code
-
-
+       
 
                 // Using Mod_Name instead of Backup_Folder here, because we're explicitely targeting the working directory.
-                if (!Directory.Exists(Backup_Path + Mod_Name)) { Directory.CreateDirectory(Backup_Path + Mod_Name); }
+                if (!Directory.Exists(Path_To_Backup)) { Directory.CreateDirectory(Path_To_Backup); }
 
-                if (Get_All_Directories(Backup_Path + Mod_Name, true).Count() == 0) // Then we need to create a innitial "Base" backup
+                if (Get_All_Directories(Path_To_Backup, true).Count() == 0) // Then we need to create a innitial "Base" backup
                 {
                     // Just copy all files as innitial backup, we are going to need them later on to compare filesizes against this backup!
-                    Copy_Now(Sync_Path, Backup_Path + Mod_Name + @"\" + Package_Name + @"_Base\");
+                    Copy_Now(Sync_Path, Path_To_Backup + @"\" + Package_Name + @"_Base\");
 
                     Temporal_B = "\nCreated a backup of the whole directory into  \n" +
                       Backup_Path + "\n" + Backup_Folder + @"\" + Package_Name + @"_Base" +
@@ -1442,7 +1443,7 @@ namespace Xml_Axe
 
                     if (Apply_Changes)
                     {
-                        Backup_File = Backup_Path + Mod_Name + @"\" + Package_Name + @"_Auto\" + (Selected_Xml.Replace(Sync_Path, "")); // Creating Sub-Directories:                        
+                        Backup_File = Backup_Path + Backup_Folder + @"\" + Package_Name + @"_Auto\" + (Selected_Xml.Replace(Sync_Path, "")); // Creating Sub-Directories:                        
                         if (!Directory.Exists(Path.GetDirectoryName(Backup_File))) { Directory.CreateDirectory(Path.GetDirectoryName(Backup_File)); }
 
                         File.Copy(Selected_Xml, Backup_File, true);  // Creating a Backup                           
@@ -2054,7 +2055,8 @@ namespace Xml_Axe
 
         private void Button_Undo_Click(object sender, EventArgs e)
         {
-            List<string> Found_Backups = Get_All_Directories(Backup_Path + Mod_Name, true);               
+            // Backup_Folder was set to "Mod_Name" in Button_Run_Click()
+            List<string> Found_Backups = Get_All_Directories(Backup_Path + Backup_Folder, true);               
             Found_Backups.Reverse();
      
             // iConsole(500, 500, Found_Backups[0]);  // Get the first one    
@@ -5426,7 +5428,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         public string Get_Backup_Path(string Backup_Name)
         {
-            foreach (string Backup in Get_All_Directories(Backup_Path + Mod_Name, true))
+            foreach (string Backup in Get_All_Directories(Backup_Path + Backup_Folder, true))
             {
                 if (Path.GetFileName(Backup) == Backup_Name) { return Backup; }
             }
@@ -5462,8 +5464,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             if (Wash_String(Content) == "") { Content = " "; } // If it consists of only \n \t \r and " " characters we just write a " " instead.
 
 
-
-            foreach (string Backup in Get_All_Directories(Backup_Path + Mod_Name, true))
+            // For Auto Backups, Backup_Folder was set to "Mod_Name" in Button_Run_Click()
+            foreach (string Backup in Get_All_Directories(Backup_Path + Backup_Folder, true))
             {
                 if (Source_Backup != "Any" && Path.GetFileName(Backup) != Source_Backup) { continue; }
                 else if (!File.Exists(Backup + Backup_Info)) { continue; }
@@ -5752,7 +5754,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         {
             if (UI_Mode == "Backup") // MANUALLY CREATE A NEW BACKUP OF THE FULL XML DIR
             {
-                if (At_Top_Level) // && !Directory.Exists(Backup_Path + Mod_Name))
+                if (At_Top_Level) // && !Directory.Exists(Backup_Path + Mod_Name)) // Don't use Backup_Folder instead of Mod_Name here!
                 {   // Directory.CreateDirectory(Backup_Path + Mod_Name); // Creating Mod Dir
 
                     using (var Folder_Browser_Dialog_1 = new FolderBrowserDialog())
