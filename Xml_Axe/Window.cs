@@ -5341,7 +5341,6 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             Comment = Get_Segment_Info(Selection, "Comments");
             string New_Text = Text_Box_Description.Text;
 
-
             if (Mouse.Button == MouseButtons.Right)
             { Set_Backup_Checker(); } // Ignore Parents
             else { Set_Backup_Checker(Selection); } 
@@ -5369,11 +5368,15 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     // iConsole(600, 400, "Updating " + Last_Backup_Selection + "  with\n\n" + New_Text);
                     Write_Into_Segment(Last_Backup_Selection, "Comments", New_Text);
 
-                    if (Last_Backup_Selection == Current_Backup)
-                    { 
-                        // iConsole(400, 100, Get_Backup_Path(Current_Backup) + Backup_Info);
+                    if (Current_Backup != "" && Last_Backup_Selection == Current_Backup)
+                    {
+                        Temporal_A = Backup_Path + Backup_Folder + @"\" + Current_Backup;
+                        if (Current_Backup.EndsWith(@"\")) { Temporal_A = Get_Backup_Path(Current_Backup); }
+
+                        // iConsole(600, 300, "\n" + Temporal_A + Backup_Info + "\n\ninto\n\n" + Root_Backup_Path);
                         try
-                        {   File.Copy(Get_Backup_Path(Current_Backup) + Backup_Info, Root_Backup_Path, true); // Overwrite root Axe_Info.txt
+                        {
+                            File.Copy(Temporal_A + Backup_Info, Root_Backup_Path, true); // Overwrite root Axe_Info.txt
                         } catch {}
                     }
                 }
@@ -5383,7 +5386,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             }
 
 
-
+            return;
             // ========================================================
             // Append Comment to the Axe_Info.txt
             // ========================================================
@@ -5440,7 +5443,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
             foreach (string Backup in Get_Segment_Info(Backup_Name, "Branches"))
-            {
+            {               
                 if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); } // Preventing Duplicates
             }
 
@@ -5586,7 +5589,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             List<string> Segment_Info = new List<string>();
 
 
-            foreach (string Backup in Get_All_Directories(Backup_Path + Mod_Name, true))
+            foreach (string Backup in Get_All_Directories(Backup_Path + Backup_Folder, true)) // Was Backup_Path + Mod_Name
             {
                 if (Backup_Name != "Any" && Path.GetFileName(Backup) != Backup_Name) { continue; } // We only want info from target Backup(s)
                 else if (!File.Exists(Backup + Backup_Info)) { continue; }
@@ -5757,11 +5760,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         {   // Creating Mod Dir
                             Temporal_A = Backup_Path + Path.GetFileName(Folder_Browser_Dialog_1.SelectedPath);
                            
-                            if (!Directory.Exists(Temporal_A)) 
-                            {   Directory.CreateDirectory(Temporal_A);
-                                File.WriteAllText(Temporal_A + Backup_Info, @"Directory_Name = " + Folder_Browser_Dialog_1.SelectedPath);
-                            }
-                            // iConsole(600, 100, Temporal_A);         
+                            if (!Directory.Exists(Temporal_A)) { Directory.CreateDirectory(Temporal_A); }
+                            // iConsole(600, 100, Temporal_A);   
+
+                            if (!File.Exists(Temporal_A + Backup_Info))
+                            { File.WriteAllText(Temporal_A + Backup_Info, @"Directory_Name = " + Folder_Browser_Dialog_1.SelectedPath); }                                                           
                         }      
                     }
 
