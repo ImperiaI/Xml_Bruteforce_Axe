@@ -3802,9 +3802,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             // List<string> The_Backup_Folders = Get_All_Directories(Backup_Path + Backup_Folder, true);
 
             // Copy_Now(@"C:\Users\Mod\Desktop\Ted\", @"C:\Users\Mod\AppData\Local\Xml_Axe\Backup\Ted\");
-                
 
-            // iConsole(400, 100, Get_Backup_Path(Current_Backup)); return;                   
+
+            // iConsole(400, 100, Xml_Directory); return;                   
             // iConsole(500, 500, string.Join("\n", The_Backup_Folders)); return; 
             // return;
 
@@ -5252,7 +5252,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
 
-            if (Difference_List.Count() == 0 && Missing_Files.Count() == 0) 
+            if (Difference_List.Count() == 0 && Added_File_Paths.Count() == 0 && Missing_Files.Count() == 0) 
             {
                 if (!Is_Auto_Stash) { iConsole(200, 100, "\nNo file changes detected."); }
                 return;
@@ -5335,13 +5335,13 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
             string Selection = Select_List_View_First(List_View_Selection);
             if (Selection == "") { return; }
-
-
             // iConsole(400, 100, Selection);
+
 
             List<string> Comment = new List<string>();
             Comment = Get_Segment_Info(Selection, "Comments");
             string New_Text = Text_Box_Description.Text;
+            // iConsole(600, 400, string.Join("\n", Comment));
 
             if (Mouse.Button == MouseButtons.Right)
             { Set_Backup_Checker(); } // Ignore Parents
@@ -5388,7 +5388,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             }
 
 
-            return;
+
             // ========================================================
             // Append Comment to the Axe_Info.txt
             // ========================================================
@@ -5600,6 +5600,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 bool Started = false;
                 bool Ignored_First = false;
+                // iConsole(500, 600, File.ReadAllText(Backup + Backup_Info));
+
+
 
                 foreach (string Line in File.ReadAllLines(Backup + Backup_Info))
                 {
@@ -5638,7 +5641,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 if (Backup_Name != "Any" && Path.GetFileName(Backup) == Backup_Name) { break; } 
             }
 
-
+        
             return Segment_Info;
         }
 
