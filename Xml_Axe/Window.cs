@@ -4444,16 +4444,17 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         {
                             if (Detected_Selection_Gap) { iConsole(400, 100, "\nYou need to select all targeted collumns in a row \notherwise that would break the right sync order."); return false; }
 
-
-                            if (Item.Text == Current_Backup && !Item.Text.EndsWith("Base")) // Stop, we can't Collapse the currently loaded backup
-                            { iConsole(550, 180, Temporal_A); return false; }
-
-                            // Done when we hit the first Backup with _Base extention, if anything else was "Selected_First"
-                            else if (Selected_First && Item.Text.EndsWith("Base")) { Backup_Files.Add(Item.Text); break; }
-                            else if (!Item.Text.EndsWith("Base")) { Backup_Files.Add(Item.Text); Selected_First = true; }
-
-                        }
-                        else if (Selected_First) { Detected_Selection_Gap = true; } // Ignoring all gaps until the first is selected                                
+                            if (Item.Text.EndsWith("Base")) 
+                            {   // Done when we hit the first Backup with _Base extention, if anything else was "Selected_First"
+                                if (Selected_First) { Backup_Files.Add(Item.Text); break; } // Don't place the if statement above
+                            }
+                            else // if (!Item.Text.EndsWith("Base")) 
+                            {   // Stop, we can't Collapse the currently loaded backup
+                                if (Item.Text == Current_Backup) { iConsole(550, 180, Temporal_A); return false; }
+                                Backup_Files.Add(Item.Text); Selected_First = true; 
+                            }
+                        
+                        } else if (Selected_First) { Detected_Selection_Gap = true; } // Ignoring all gaps until the first is selected                                
                     }
 
 
