@@ -4425,14 +4425,15 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         string Entry = Found_Backups[i];
 
 
-                        if (Entry == Current_Backup && !Entry.EndsWith("Base")) // Stop, we can't Collapse the currently loaded backup
+                        if (Entry.EndsWith("Base")) { Backup_Files.Add(Entry); } // Grab the bottom most Base
+                        else // if (!Entry.EndsWith("Base")) 
                         {
-                            if (Certain_Backup != "Silent") { iConsole(550, 180, Temporal_A); }  return false;
-                        }
-                        else if (Entry.EndsWith("Base")) { Backup_Files.Add(Entry); } // Grab the bottom most Base
-                        else if (!Entry.EndsWith("Base")) { Backup_Files.Add(Entry); break; } // Bottom most Backup                    
-                    }
+                            // Stop, we can't Collapse the currently loaded backup
+                            if (Entry == Current_Backup && Certain_Backup != "Silent") { iConsole(550, 180, Temporal_A); return false; }
 
+                            Backup_Files.Add(Entry); break; // Bottom most Backup                        
+                        }                                                                           
+                    }
                     // iConsole(400, 100, string.Join("\n", Backup_Files));
                 }
 
