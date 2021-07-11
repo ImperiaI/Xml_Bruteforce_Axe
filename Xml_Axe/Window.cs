@@ -4381,6 +4381,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 List<string> Found_Backups = new List<string>();
                 string Working_Directory = Backup_Path + Backup_Folder + @"\Current\";
               
+                Temporal_A = "\nThe selected Backup was marked for merging \ninto the Base backup. " +
+                             "Please load/checkout any \nother backup by the arrow button to unlock this one.";
+
 
                 if (Certain_Backup != "")
                 {
@@ -4396,15 +4399,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         string Entry = Found_Backups[i];
 
 
-
-                        if (Entry == Current_Backup) // Stop, we can't Collapse the currently loaded backup
+                        if (Entry == Current_Backup && !Entry.EndsWith("Base")) // Stop, we can't Collapse the currently loaded backup
                         {
-                            if (Certain_Backup != "Silent")
-                            {   iConsole(550, 180, "\nThe selected Backup was marked for merging \ninto the Base backup. " +
-                                   "Please load/checkout any \nother backup by the arrow button to unlock this one.");
-                            }
-
-                            return false;
+                            if (Certain_Backup != "Silent") { iConsole(550, 180, Temporal_A); }  return false;
                         }
                         else if (Entry.EndsWith("Base")) { Backup_Files.Add(Entry); } // Grab the bottom most Base
                         else if (!Entry.EndsWith("Base")) { Backup_Files.Add(Entry); break; } // Bottom most Backup                    
@@ -4421,10 +4418,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                             if (Detected_Selection_Gap) { iConsole(400, 100, "\nYou need to select all targeted collumns in a row \notherwise that would break the right sync order."); return false; }
 
 
-                            if (Item.Text == Current_Backup) // Stop, we can't Collapse the currently loaded backup
-                            {  iConsole(550, 180, "\nThe selected Backup was marked for auto merging \ninto the Base backup. " +
-                                    "Please load/checkout any \nother backup by the arrow button to unlock this one."); return false;
-                            }
+                            if (Item.Text == Current_Backup && !Item.Text.EndsWith("Base")) // Stop, we can't Collapse the currently loaded backup
+                            { iConsole(550, 180, Temporal_A); return false; }
 
                             // Done when we hit the first Backup with _Base extention, if anything else was "Selected_First"
                             else if (Selected_First && Item.Text.EndsWith("Base")) { Backup_Files.Add(Item.Text); break; }
@@ -5804,10 +5799,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                             //"Please load the newest/top most backup, because it \nallows us to continue the chain in correct order."
                             "If it doesn't write from the top most one, the \nnew backup will end up in a different branch.\n" +
                             "Do you wish to continue anyways?");
-                          
-                        }
 
-                        if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
+
+                            if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
+                        }
                     }
                
 
