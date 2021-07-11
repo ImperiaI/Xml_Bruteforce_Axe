@@ -3844,7 +3844,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     {   iConsole(400, 200, "\nPlease select 1 or more backups that follow \neach other by Strg + Click, \n" +
                         "In order to merge them into the Base backup. \nYou can either double click the list to select all."); 
                     }
-
+                        
                     // Collapsing the whole History of the selected Backup:
                     else if (Temporal_D == 1) { Collapse_Backup_History(Select_List_View_First(List_View_Selection)); }
             
@@ -4321,29 +4321,55 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         public bool Collapse_Backup_History(string Selected_Backup = "")
         {
+            string Working_Directory = Backup_Path + Backup_Folder + @"\Current\";
+            List<string> Found_Backups = new List<string>();
             List<string> Current_Branch = Get_Backup_Parents(Selected_Backup, true);
-            Current_Branch.Reverse(); // Important, to paste the versions over each other in chronological order. 
+            Temporal_D = Current_Branch.Count() -1;
 
-            iConsole(500, 400, string.Join("\n", Current_Branch)); return false;
+            Temporal_A = "\nThe selected Backup was marked for merging \ninto the Base backup. " +
+                         "Please load/checkout any \nother backup by the arrow button to unlock this one.";
+            // iConsole(600, 400, string.Join("\n", Current_Branch)); return false;
+          
 
 
-            
-            try 
+            if (Temporal_D > 4)
             {
-                string Working_Directory = Backup_Path + Backup_Folder + @"\Current\";
+                Temporal_C = (Temporal_D * 30) + 170;
+                if (Temporal_C > 680) { Temporal_C = 680; }
 
+                iDialogue(540, Temporal_C, "Do It", "Cancel", "false", "false", "\nYou are about to merge these " 
+                    + Temporal_D + " Backups.\nAre you sure you wish to proceed?\n\n" + string.Join("\n", Current_Branch));
 
-                foreach (string File_Path in Get_All_Directories(Backup_Path + Backup_Folder))
-                {
-                    foreach (string Entry in Current_Branch)
-                    {   if (Entry.EndsWith("Base") && File_Path.EndsWith(Entry)) // Ignoring the Backup, thats our target 
-                        { Working_Directory = File_Path; } // Comment out this line out to fall back into "Current" as working dir.
+                if (Caution_Window.Passed_Value_A.Text_Data == "false") { return false; }
+            }     
+         
+            Current_Branch.Reverse(); // Important, to paste the versions over each other in chronological order. 
+         
 
-                        else if (File_Path.EndsWith(Entry))
-                        {   // iConsole(600, 100, Entry + " in " + File_Path);                      
-                            Copy_Now(File_Path, Working_Directory);                            
-                            Deleting(File_Path);
-                        }
+       
+
+          
+            try 
+            {   foreach (string File_Path in Get_All_Directories(Backup_Path + Backup_Folder))
+                {   foreach (string Entry in Current_Branch)
+                    {  
+                        if (!File_Path.EndsWith(Entry)) { continue; }
+                       
+ 
+                        // Comment out this line out to fall back into "Current" as working dir.
+                        if (Entry.EndsWith("Base")) { Working_Directory = File_Path; continue; } // Ignoring the Backup, thats our target 
+
+                        else if (Entry == Current_Backup) // Stop, we can't Collapse the currently loaded backup
+                        { iConsole(550, 180, Temporal_A); return false; } // Can't be Entry.EndsWith("Base")
+
+                    
+      
+                        // iConsole(600, 100, Entry + " in " + File_Path);                      
+                        Copy_Now(File_Path, Working_Directory);
+                        Deleting(File_Path);
+
+                        if (Entry != "" && Entry != " " && !Found_Backups.Contains(Entry)) 
+                        { Found_Backups.Add(Entry); } // Match
                     }
                 }
 
@@ -4352,18 +4378,18 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 {
                     Refresh_Backup_Stack(); // Visualising changes to UI
 
-                    Current_Branch.Reverse(); // Re-reversing to show the correct order to the user.
-                    Temporal_C = (Current_Branch.Count() * 30) + 140;
+                    Found_Backups.Reverse(); // Re-reversing to show the correct order to the user.
+                    Temporal_C = (Found_Backups.Count() * 30) + 140;
                     if (Temporal_C > 680) { Temporal_C = 680; }
                    
                     // Temporal_C as Line Count
-                    iConsole(600, Temporal_C, "\nMerged Backups into Base in the following order:\n\n" + string.Join("\n", Current_Branch));
+                    iConsole(600, Temporal_C, "\nMerged Backups into Base in the following order:\n\n" + string.Join("\n", Found_Backups));
                 }
 
 
                 return true;
 
-            } catch { iConsole(400, 100, "Failed to merge selected Backup branch into Base."); }
+            } catch { iConsole(400, 100, "\nFailed to merge selected Backup branch into Base."); }
 
             return false;
         }
