@@ -2629,7 +2629,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         {
 
             if (Combo_Box_Entity_Name.Text == "Find_And_Replace") { Label_Tag_Name.Text = "Old Tag Value"; }
-            else { Label_Tag_Name.Text = "Entity Name"; }
+            else { Label_Tag_Name.Text = "Tag Name"; }
 
 
             if (Combo_Box_Entity_Name.Text == "Insert_Random_Int") 
@@ -3798,6 +3798,13 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
+            //List<string> Target_Content = new List<string>();
+            //Target_Content = Get_Segment_Info("2021.07.12_05.46", "Changed_Files");
+            //iConsole(500, 400, "Target is :\n" + string.Join("\n", Target_Content));
+
+            Fuse_Segments("2021.07.12_05.45_Base", "2021.07.12_05.46");
+
+            // Write_Into_Segment("2021.07.12_05.45_Base", "Comments", "Fuck", "Same", true);
 
             // List<string> The_Backup_Folders = Get_All_Directories(Backup_Path + Backup_Folder, true);
 
@@ -3806,7 +3813,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
             // iConsole(400, 100, Xml_Directory); return;                   
             // iConsole(500, 500, string.Join("\n", The_Backup_Folders)); return; 
-            // return;
+            return;
 
 
             if (UI_Mode == "Backup") // Just show the last results
@@ -4334,7 +4341,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
             if (Temporal_D > 4)
             {
-                Temporal_C = (Temporal_D * 30) + 170;
+                Temporal_C = (Temporal_D * 30) + 200;
                 if (Temporal_C > 680) { Temporal_C = 680; }
 
                 iDialogue(540, Temporal_C, "Do It", "Cancel", "false", "false", "\nYou are about to merge these " 
@@ -4416,11 +4423,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 List<string> Backup_Files = new List<string>();
                 List<string> Found_Backups = new List<string>();
                 string Target_Path = "";
-
                 string Working_Directory = Backup_Path + Backup_Folder + @"\Current\";
-                if (Directory.Exists(Working_Directory)) { Deleting(Working_Directory); } // Artifact from last usage
-                Directory.CreateDirectory(Working_Directory);
-
+           
               
                 Temporal_A = "\nThe selected Backup was marked for merging \ninto the Base backup. " +
                              "Please load/checkout any \nother backup by the arrow button to unlock this one.";
@@ -4478,15 +4482,19 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }
 
 
+                if (Directory.Exists(Working_Directory)) { Deleting(Working_Directory); } // Artifact from last usage
+                Directory.CreateDirectory(Working_Directory); // If it hasn't returned so far, we are going to need this
+
+
 
                 foreach (string File_Path in Get_All_Directories(Backup_Path + Backup_Folder, true))
                 {   foreach (string Entry in Backup_Files)
                     {
                         if (!File_Path.EndsWith(Entry)) { continue;}
-                        if (Entry.EndsWith("Base")) { Target_Path = File_Path + @"\"; iConsole(400, 100, Target_Path); continue; } // Ignoring the Backup, thats our target 
+                        if (Entry.EndsWith("Base")) { Target_Path = File_Path + @"\"; continue; } // Ignoring the Backup, thats our target 
 
 
-                        iConsole(600, 300, Entry + " in " + File_Path + "\n\nto\n\n" + Working_Directory);                   
+                        // iConsole(600, 300, Entry + " in " + File_Path + "\n\nto\n\n" + Working_Directory);                   
                         Copy_Now(File_Path, Working_Directory);                            
                         Deleting(File_Path);                      
                     }
@@ -5499,10 +5507,58 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         //=====================//
 
+
+        public void Collapse_Segment_Infos(List<string> Backup_List, string Segment_Name = "") // Just dump in the whole parent history of a backup here.
+        {
+            string Last_Backup = "";
+
+            foreach (string Backup in Backup_List) 
+            {
+                if (Last_Backup == "") { Last_Backup = Backup; }
+                // Keep on fusing with both their predecessor and successor, until we reach the last backup in the list :)
+                else { Fuse_Segments(Last_Backup, Backup, Segment_Name); Last_Backup = Backup; }
+            }
+        }
+
+        //=====================//
+      
+        public void Fuse_Segments(string Source_Backup, string Target_Backup, string Segment_Name = "")
+        {
+            List<string> Target_Content = new List<string>();
+            string[] Segments = new string[] { "Comments", "Changed_Files", "Added_Files", "Removed_Files", "Branches"};
+            if (Segment_Name != "") { Segments = new string[] { Segment_Name }; } // Just the specified segment instead of all
+         
+
+            foreach (string Segment in Segments)
+            {
+                Target_Content.Clear();
+                Target_Content = Get_Segment_Info(Target_Backup, Segment);
+            
+
+                foreach (string Entry in Get_Segment_Info(Source_Backup, Segment))
+                {
+                    if (Target_Content.Contains(Entry)) { Target_Content.Remove(Entry); } // Removing duplicate lines
+                }
+
+
+                if (Target_Content.Count() > 0)
+                {
+                    iConsole(500, 400, "Target is :\n" + string.Join("\n", Target_Content));
+                    Write_Into_Segment(Source_Backup, Segment, Target_Content, Target_Backup, true);
+               
+                }
+            }
+         
+                 
+        }
+
+
+        //=====================//
+
         public void Write_Into_Segment(string Source_Backup, string Segment_Name, List<string> Content, string Target_Backup = "Same", bool Prepend_To_Segment = false)
         { Write_Into_Segment(Source_Backup, Segment_Name, string.Join("\n", Content), Target_Backup, Prepend_To_Segment); }
 
-
+        //=====================//
 
         public void Write_Into_Segment(string Source_Backup, string Segment_Name, string Content, string Target_Backup = "Same", bool Prepend_To_Segment = false)
         {
