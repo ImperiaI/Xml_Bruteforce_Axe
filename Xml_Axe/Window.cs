@@ -5534,10 +5534,15 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             foreach (string Segment in Segments)
             {
                 Target_Content.Clear();
+                bool stitched = false;
 
-                if (Stitched_File == "") { Target_Content = Get_Segment_Info(Target_Backup, Segment); }
+                if (Stitched_File == "") { Target_Content = Get_Segment_Info(Target_Backup, Segment); } // iConsole(300, 100, Segment + ": Loading Original File"); }
                 // Keep on re-using the same stitched file as source
-                else { Target_Content = Get_Segment_Info(Target_Backup, Segment, false, false, Stitched_File); }
+                else 
+                {   Target_Content = Get_Segment_Info(Target_Backup, Segment, false, false, Stitched_File);
+                    stitched = true;
+                    // iConsole(300, 100, Segment + ": Loading Stitched File");
+                }
             
 
                 foreach (string Entry in Get_Segment_Info(Source_Backup, Segment))
@@ -5548,21 +5553,20 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 if (Target_Content.Count() > 0)
                 {
-                    iConsole(500, 400, "Target is :\n" + string.Join("\n", Target_Content));
+                    // iConsole(500, 400, Segment + " is :\n\n" + string.Join("\n", Target_Content));
                     Stitched_File = Write_Into_Segment(Source_Backup, Segment, Target_Content, Target_Backup, true, true);
-                    iConsole(500, 400, "The file is :\n" + Stitched_File);
-                    return;
+                    iConsole(600, 600, stitched + "\nThe file is :\n" + Stitched_File);
                 }
             }
 
-            iConsole(500, 400, "The file is :\n" + Stitched_File);
+            iConsole(600, 600, "Final file is :\n" + Stitched_File);
         }
 
 
         //=====================//
 
         public string Write_Into_Segment(string Source_Backup, string Segment_Name, List<string> Content, string Target_Backup = "Same", bool Prepend_To_Segment = false, bool No_Write = false)
-        { return Write_Into_Segment(Source_Backup, Segment_Name, string.Join("\n", Content), Target_Backup, Prepend_To_Segment); }
+        { return Write_Into_Segment(Source_Backup, Segment_Name, string.Join("\n", Content), Target_Backup, Prepend_To_Segment, No_Write); }
 
         //=====================//
 
@@ -5650,8 +5654,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }
 
 
-                iConsole(500, 200, "Its: \n" + The_File); return The_File; 
-                if (No_Write) { iConsole(500, 200, "Its: \n" + The_File); return The_File; } // Just return
+
+
+                if (No_Write) { return The_File; } // Just return
 
                 // Use the Input File to write into itself
                 else if (Target_Backup == "Same") 
@@ -5676,23 +5681,6 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         }
 
 
-
-
-        //=====================//
-
-        public void Visualize_Characters(string Text_1, string Text_2 = "")
-        {
-            Text_1 = Text_1.Replace("\t", "TAB").Replace("\n", "\nNEW").Replace("\r", "CARRIAGE").Replace(" ", "_");
-
-            if (Text_2 != "") 
-            { 
-                Text_2 = Text_2.Replace("\t", "TAB").Replace("\r", "CARRIAGE").Replace(" ", "_");
-                iConsole(500, 500, Text_1 + "\n\n//======================\n\n" + Text_2);
-            }
-            else { iConsole(500, 500, Text_1); }            
-        }
-
-
         //=====================//
 
         public List<string> Get_Segment_Info(string Backup_Name, string Segment_Name, bool Is_Full_Path = false, bool Return_Filename = false, string Passed_File = "")
@@ -5704,8 +5692,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             foreach (string Backup in Get_All_Directories(Backup_Path + Backup_Folder, true)) // Was Backup_Path + Mod_Name
             {
                 if (Backup_Name != "Any" && Path.GetFileName(Backup) != Backup_Name) { continue; } // We only want info from target Backup(s)
-                else if (!File.Exists(Backup + Backup_Info) && Passed_File == "") 
-                { iConsole(400, 100, "Continuing at  " + Path.GetFileName(Backup)); continue; }
+                else if (!File.Exists(Backup + Backup_Info)) { continue; }
 
 
 
@@ -5714,9 +5701,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 // iConsole(500, 600, File.ReadAllText(Backup + Backup_Info));
 
 
-             
+
                 if (Passed_File == "") { The_File = File.ReadAllText(Backup + Backup_Info); }
-                // Otherwise it remains the Passed_File
+                // else { iConsole(500, 600, "Reading passed file:\n\n" + The_File); }  // Otherwise it remains the Passed_File
+               
 
 
 
@@ -5760,6 +5748,24 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         
             return Segment_Info;
         }
+
+
+
+
+        //=====================//
+
+        public void Visualize_Characters(string Text_1, string Text_2 = "")
+        {
+            Text_1 = Text_1.Replace("\t", "TAB").Replace("\n", "\nNEW").Replace("\r", "CARRIAGE").Replace(" ", "_");
+
+            if (Text_2 != "")
+            {
+                Text_2 = Text_2.Replace("\t", "TAB").Replace("\r", "CARRIAGE").Replace(" ", "_");
+                iConsole(500, 500, Text_1 + "\n\n//======================\n\n" + Text_2);
+            }
+            else { iConsole(500, 500, Text_1); }
+        }
+
 
         //=====================//
 
