@@ -306,15 +306,16 @@ namespace Xml_Axe
 
         //===========================// 
         private void Get_Sync_Path()
-        {
-            Sync_Path = Get_Backup_Info(Root_Backup_Path)[0];
+        {   try
+            {   Sync_Path = Get_Backup_Info(Root_Backup_Path)[0];
 
-            // iConsole(400, 100, "Sync_Path is \n" + Sync_Path);
+                // iConsole(400, 100, "Sync_Path is \n" + Sync_Path);
 
-            if (!Sync_Path.EndsWith(@"\")) { Sync_Path += @"\"; } // Needs to run BEFORE Sync_Path setting, \ would only break the path
+                if (!Sync_Path.EndsWith(@"\")) { Sync_Path += @"\"; } // Needs to run BEFORE Sync_Path setting, \ would only break the path
 
-            // Failsafe, if there are no backups to read, fallback to Xml_Directory
-            if (Sync_Path == @"None\") { Sync_Path = Xml_Directory; }
+                // Failsafe, if there are no backups to read, fallback to Xml_Directory
+                if (Sync_Path == @"None\") { Sync_Path = Xml_Directory; }
+            } catch { iConsole(400, 100, "Faild to load Sync_Path."); }
         }
 
         //===========================// 
@@ -739,14 +740,21 @@ namespace Xml_Axe
         }
 
         private void Button_Browse_Folder_MouseHover(object sender, EventArgs e)
-        {   if (UI_Mode == "Script" || UI_Mode == "Backup" && Select_List_View_Items(List_View_Selection).Count == 0)
+        {
+            Temporal_C = 0;
+            try { Temporal_C = Select_List_View_Items(List_View_Selection).Count; } catch {}
+
+            if (UI_Mode == "Script" || UI_Mode == "Backup" && Temporal_C == 0)
             { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Red_Lit); }         
             else { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Green_Lit); }
         }
 
         private void Button_Browse_Folder_MouseLeave(object sender, EventArgs e)
         {
-            if (UI_Mode == "Script" || UI_Mode == "Backup" && Select_List_View_Items(List_View_Selection).Count == 0)
+            Temporal_C = 0;
+            try { Temporal_C = Select_List_View_Items(List_View_Selection).Count; }  catch {}
+
+            if (UI_Mode == "Script" || UI_Mode == "Backup" && Temporal_C == 0)
             { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Red); }
             else { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Green); }
         }
@@ -3648,9 +3656,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         // I almost can't believe Microsoft doesent provide a proper Copy function for Directories !! 
         public void Copy_Now(string Source_Directory, string Destination_Directory)
         {
+            if (!Directory.Exists(Source_Directory)) { return; }
+
             // substring is to remove Destination_Directory absolute path (E:\).
-            try
-            {   // Create subdirectory structure in destination    
+            try {  
+                // Create subdirectory structure in destination    
                 foreach (string dir in Directory.GetDirectories(Source_Directory, "*", System.IO.SearchOption.AllDirectories))
                 {
                     Directory.CreateDirectory(Destination_Directory + dir.Substring(Source_Directory.Length));
@@ -3659,8 +3669,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }
             } catch {}
 
-            try
-            {
+            try {
                 foreach (string file_name in Directory.GetFiles(Source_Directory, "*.*", System.IO.SearchOption.AllDirectories))
                 {
                     File.Copy(file_name, Destination_Directory + file_name.Substring(Source_Directory.Length), true);
@@ -3797,11 +3806,15 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-            //List<string> Target_Content = new List<string>();
-            //Target_Content = Get_Segment_Info("2021.07.12_05.46", "Changed_Files");
+            //List<string> Target_Content = Get_Segment_Info("2021.07.12_05.46", "Branches");
             //iConsole(500, 400, "Target is :\n" + string.Join("\n", Target_Content));
 
-            Fuse_Segments("2021.07.12_05.45_Base", "2021.07.12_05.46");
+            //Collapse_Segment_Infos(Get_Segment_Info("2021.07.12_05.46", "Branches"), "2021.07.12_05.46"); 
+
+
+
+           
+            // Fuse_Segments("2021.07.12_05.45_Base", "2021.07.12_05.46");
 
             // Write_Into_Segment("2021.07.12_05.45_Base", "Comments", "Fuck", "Same", true);
 
@@ -3812,7 +3825,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
             // iConsole(400, 100, Xml_Directory); return;                   
             // iConsole(500, 500, string.Join("\n", The_Backup_Folders)); return; 
-            return;
+            // return;
 
 
             if (UI_Mode == "Backup") // Just show the last results
@@ -4347,33 +4360,57 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     + Temporal_D + " Backups.\nAre you sure you wish to proceed?\n\n" + string.Join("\n", Current_Branch));
 
                 if (Caution_Window.Passed_Value_A.Text_Data == "false") { return false; }
-            }     
-         
+            }
+
+            // Collecting all entries from all files and moving down towards the _Base version.
+            Collapse_Segment_Infos(Current_Branch, Selected_Backup); // return false;
+
+
+
             Current_Branch.Reverse(); // Important, to paste the versions over each other in chronological order. 
 
 
-            string Working_Directory = Backup_Path + Backup_Folder + @"\Current\";
+
+
+
+            string Working_Directory = Backup_Path + Backup_Folder + @"\Current";
             if (Directory.Exists(Working_Directory)) { Deleting(Working_Directory); } // Artifact from last usage
             Directory.CreateDirectory(Working_Directory);
 
 
           
-            try 
-            {   foreach (string File_Path in Get_All_Directories(Backup_Path + Backup_Folder, true))
+            try {   
+                foreach (string File_Path in Get_All_Directories(Backup_Path + Backup_Folder, true))
                 {   foreach (string Entry in Current_Branch)
-                    {  
+                    {
                         if (!File_Path.EndsWith(Entry)) { continue; } 
+                        else if (File_Path.EndsWith("Current")) { continue; } 
                        
  
+
                         // Comment out this line out to fall back into "Current" as working dir.
-                        if (Entry.EndsWith("Base")) { Target_Path = File_Path + @"\"; continue; } // Ignoring the Backup, thats our target 
+                        if (Entry.EndsWith("Base"))
+                        {   Target_Path = File_Path + @"\";
+
+
+                            try
+                            {   // In this timing, the Axe_Info.txt of base is inside of Working_Directory
+                                // The .txt of the Base directory is already stitched together by Collapse_Segment_Infos() at the top here.
+                                File.Copy(Working_Directory + Backup_Info, Root_Backup_Path, true);
+                            }
+                            catch { Create_Backup_Info(Backup_Folder, Path.GetFileName(File_Path)); } // If failed to find it, we just create a new one.
+
+
+                            continue; // Ignoring the Base backup, thats our target 
+                        } 
+
 
                         else if (Entry == Current_Backup) // Stop, we can't Collapse the currently loaded backup
                         { iConsole(550, 180, Temporal_A); return false; } // Can't be Entry.EndsWith("Base")
 
 
 
-                        // iConsole(600, 300, Entry + " in " + File_Path + "\n\nto\n\n" + Working_Directory);
+                        // iConsole(600, 300, "\n" + Entry + " in " + File_Path + "\n\nto\n\n" + Working_Directory);
                         Copy_Now(File_Path, Working_Directory);
                         Deleting(File_Path);
 
@@ -4386,6 +4423,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     Copy_Now(Working_Directory, Target_Path);
                     Deleting(Working_Directory);
                 }
+       
 
                 // iConsole(400, 100, Target_Path); return false;
 
@@ -4904,7 +4942,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             // Package_Name variable is updated by Button_Run_Click() or Create_New_Backup()        
             string This_Backup_Path = Backup_Path + Directory_Name + @"\" + Target_Backup_Name;
 
-            string This_Backup_Info = This_Backup_Path + Backup_Info; 
+            string This_Backup_Info = This_Backup_Path + Backup_Info;
             string Root_Backup_Info = Backup_Path + Directory_Name + Backup_Info;
 
             string Info_File = "";
@@ -5422,17 +5460,20 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     // iConsole(600, 400, "Updating " + Last_Backup_Selection + "  with\n\n" + New_Text);
                     Write_Into_Segment(Last_Backup_Selection, "Comments", New_Text);
 
-                    if (Current_Backup != "" && Last_Backup_Selection == Current_Backup)
-                    {
-                        Temporal_A = Selected_Backup_Path + Current_Backup;
-                        if (Current_Backup.EndsWith(@"\")) { Temporal_A = Get_Backup_Path(Current_Backup); }
-
-                        // iConsole(600, 300, "\n" + Temporal_A + Backup_Info + "\n\ninto\n\n" + Root_Backup_Path);
-                        try
+                    try
+                    {   if (Current_Backup != "" && Last_Backup_Selection == Current_Backup)
                         {
-                            File.Copy(Temporal_A + Backup_Info, Root_Backup_Path, true); // Overwrite root Axe_Info.txt
-                        } catch {}
-                    }
+                            Temporal_A = Selected_Backup_Path + Current_Backup;
+                            if (Current_Backup.EndsWith(@"\")) { Temporal_A = Get_Backup_Path(Current_Backup); }
+
+                            // iConsole(600, 300, "\n" + Temporal_A + Backup_Info + "\n\ninto\n\n" + Root_Backup_Path);
+                            try
+                            {
+                                File.Copy(Temporal_A + Backup_Info, Root_Backup_Path, true); // Overwrite root Axe_Info.txt
+                            }
+                            catch{}
+                        }
+                    } catch{}
                 }
 
                 Text_Box_Description.Text = "";
@@ -5506,16 +5547,15 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         //=====================//
 
-
-        public void Collapse_Segment_Infos(List<string> Backup_List, string Segment_Name = "") // Just dump in the whole parent history of a backup here.
+        // Just dump in the whole parent history of a backup here. Insert the selected Backup as Last_Backup, in order to start at its Axe_Info.txt
+        // It iterates and syncs all Segment types, if you specify no certain Segment_Name
+        public void Collapse_Segment_Infos(List<string> Backup_List, string Last_Backup = "", string Segment_Name = "") 
         {
-            string Last_Backup = "";
-
             foreach (string Backup in Backup_List) 
             {
                 if (Last_Backup == "") { Last_Backup = Backup; }
                 // Keep on fusing with both their predecessor and successor, until we reach the last backup in the list :)
-                else { Fuse_Segments(Last_Backup, Backup, Segment_Name); Last_Backup = Backup; }
+                else { Fuse_Segments(Backup, Last_Backup, Segment_Name); Last_Backup = Backup; }
             }
         }
 
@@ -5527,36 +5567,39 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             string[] Segments = new string[] { "Comments", "Changed_Files", "Added_Files", "Removed_Files", "Branches"};
             if (Segment_Name != "") { Segments = new string[] { Segment_Name }; } // Just the specified segment instead of all
 
-
-            // string Stitched_File = ""; // We stitch segment by segment into this new file
-            string Stitched_File = File.ReadAllText(Selected_Backup_Path + Source_Backup + Backup_Info).Replace("\r", ""); 
-            // If "" it will run Write_Into_Segment() to just return "".
-
-
-            foreach (string Segment in Segments)
+            try
             {
-                Target_Content.Clear();
-                Target_Content = Get_Segment_Info(Target_Backup, Segment);
- 
+                // string Stitched_File = ""; // We stitch segment by segment into this new file
+                string Stitched_File = File.ReadAllText(Selected_Backup_Path + Source_Backup + Backup_Info).Replace("\r", "");
+                // If "" it will run Write_Into_Segment() to just return "".
 
-                foreach (string Entry in Get_Segment_Info(Source_Backup, Segment))
+
+                foreach (string Segment in Segments)
                 {
-                    if (Target_Content.Contains(Entry)) { Target_Content.Remove(Entry); } // Removing duplicate lines
+                    Target_Content.Clear();
+                    Target_Content = Get_Segment_Info(Target_Backup, Segment);
+
+
+                    foreach (string Entry in Get_Segment_Info(Source_Backup, Segment))
+                    {
+                        if (Target_Content.Contains(Entry)) { Target_Content.Remove(Entry); } // Removing duplicate lines
+                    }
+
+
+                    if (Target_Content.Count() > 0)
+                    {
+                        // iConsole(500, 400, Segment + " is :\n\n" + string.Join("\n", Target_Content));
+
+                        // Position of Target and Source backup are exchanged here!!!
+                        Stitched_File = Write_Into_Segment(Source_Backup, Segment, Target_Content, Target_Backup, true, Stitched_File);
+                        // iConsole(600, 600, "The file is :\n" + Stitched_File);
+                    }
                 }
 
-
-                if (Target_Content.Count() > 0)
-                {
-                    // iConsole(500, 400, Segment + " is :\n\n" + string.Join("\n", Target_Content));
-
-                    // Position of Target and Source backup are exchanged here!!!
-                    Stitched_File = Write_Into_Segment(Source_Backup, Segment, Target_Content, Target_Backup, true, Stitched_File);
-                    // iConsole(600, 600, "The file is :\n" + Stitched_File);
-                }
+                // iConsole(600, 600, "Final file is :\n" + Stitched_File);
+                File.WriteAllText(Selected_Backup_Path + Source_Backup + Backup_Info, Stitched_File);
             }
-
-            // iConsole(600, 600, "Final file is :\n" + Stitched_File);
-            File.WriteAllText(Selected_Backup_Path + Source_Backup + Backup_Info, Stitched_File);
+            catch { iConsole(500, 140, "\nFailed to stitch Axe_Info.txt files together."); }
         }
 
 
@@ -5648,7 +5691,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     }
 
                     // Don't use else if here.
-                    if (Prepend_To_Segment) { The_File = The_File.Replace(Segment, Segment + Content); }
+                    if (Prepend_To_Segment) { The_File = The_File.Replace(Segment, Segment + Content + "\n\n"); }
                 }
 
 
