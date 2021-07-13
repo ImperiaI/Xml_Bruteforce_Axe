@@ -5528,7 +5528,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             string[] Segments = new string[] { "Comments", "Changed_Files", "Added_Files", "Removed_Files", "Branches"};
             if (Segment_Name != "") { Segments = new string[] { Segment_Name }; } // Just the specified segment instead of all
 
-            string Stitched_File = ""; // We stitch segment by segment into this new file
+
+            // string Stitched_File = ""; // We stitch segment by segment into this new file
+            string Stitched_File = File.ReadAllText(Backup_Path + Backup_Folder + @"\" + Source_Backup + Backup_Info); // If "" it will run Write_Into_Segment() to just return "".
 
 
             foreach (string Segment in Segments)
@@ -5536,13 +5538,15 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Target_Content.Clear();
                 bool stitched = false;
 
+                Target_Content = Get_Segment_Info(Target_Backup, Segment);
+                /*
                 if (Stitched_File == "") { Target_Content = Get_Segment_Info(Target_Backup, Segment); } // iConsole(300, 100, Segment + ": Loading Original File"); }
                 // Keep on re-using the same stitched file as source
                 else 
                 {   Target_Content = Get_Segment_Info(Target_Backup, Segment, false, false, Stitched_File);
                     stitched = true;
                     // iConsole(300, 100, Segment + ": Loading Stitched File");
-                }
+                } */
             
 
                 foreach (string Entry in Get_Segment_Info(Source_Backup, Segment))
@@ -5553,9 +5557,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 if (Target_Content.Count() > 0)
                 {
-                    // iConsole(500, 400, Segment + " is :\n\n" + string.Join("\n", Target_Content));
-                    Stitched_File = Write_Into_Segment(Source_Backup, Segment, Target_Content, Target_Backup, true, true);
-                    iConsole(600, 600, stitched + "\nThe file is :\n" + Stitched_File);
+                    iConsole(500, 400, Segment + " is :\n\n" + string.Join("\n", Target_Content)); continue;
+
+                    // Position of Target and Source backup are exchanged here!!!
+                    Stitched_File = Write_Into_Segment(Source_Backup, Segment, Target_Content, Target_Backup, true, Stitched_File);
+                    iConsole(600, 600, stitched + " - The file is :\n" + Stitched_File);
                 }
             }
 
@@ -5565,12 +5571,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         //=====================//
 
-        public string Write_Into_Segment(string Source_Backup, string Segment_Name, List<string> Content, string Target_Backup = "Same", bool Prepend_To_Segment = false, bool No_Write = false)
-        { return Write_Into_Segment(Source_Backup, Segment_Name, string.Join("\n", Content), Target_Backup, Prepend_To_Segment, No_Write); }
+        public string Write_Into_Segment(string Source_Backup, string Segment_Name, List<string> Content, string Target_Backup = "Same", bool Prepend_To_Segment = false, string Passed_File = "")
+        { return Write_Into_Segment(Source_Backup, Segment_Name, string.Join("\n", Content), Target_Backup, Prepend_To_Segment, Passed_File); }
 
         //=====================//
 
-        public string Write_Into_Segment(string Source_Backup, string Segment_Name, string Content, string Target_Backup = "Same", bool Prepend_To_Segment = false, bool No_Write = false)
+        public string Write_Into_Segment(string Source_Backup, string Segment_Name, string Content, string Target_Backup = "Same", bool Prepend_To_Segment = false, string Passed_File = "")
         {
             if (Wash_String(Content) == "") { Content = " "; } // If it consists of only \n \t \r and " " characters we just write a " " instead.
 
@@ -5590,8 +5596,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     "\n//============================================================\\\\\n";
 
 
-                string The_File = File.ReadAllText(Backup + Backup_Info).Replace("\r", "");
-
+                string The_File = Passed_File; // .Replace("\r", "") should already be applied in Passed_File from last cycle
+                if (Passed_File == "") { The_File = File.ReadAllText(Backup + Backup_Info).Replace("\r", ""); }
+                // iConsole(600, 600, "Writing into this file: \n\n" + The_File); 
              
 
                 if (!The_File.Contains(Segment_Name))
@@ -5656,7 +5663,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
 
-                if (No_Write) { return The_File; } // Just return
+                if (Passed_File != "") { iConsole(600, 600, "Passing File\n\n" + The_File); return The_File; } // Just return
 
                 // Use the Input File to write into itself
                 else if (Target_Backup == "Same") 
