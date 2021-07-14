@@ -3672,6 +3672,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             try {
                 foreach (string file_name in Directory.GetFiles(Source_Directory, "*.*", System.IO.SearchOption.AllDirectories))
                 {
+                    if (file_name.EndsWith("Axe_Info.txt")){ continue; } // Exception
                     File.Copy(file_name, Destination_Directory + file_name.Substring(Source_Directory.Length), true);
                 }
             } catch {}              
@@ -4384,8 +4385,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 {   foreach (string Entry in Current_Branch)
                     {
                         if (!File_Path.EndsWith(Entry)) { continue; } 
-                        else if (File_Path.EndsWith("Current")) { continue; } 
-                       
+                        else if (File_Path.EndsWith("Current")) { continue; }
+
+                        if (Entry != "" && Entry != " " && !Found_Backups.Contains(Entry)) { Found_Backups.Add(Entry); } // Match
+                        else { continue; }
  
 
                         // Comment out this line out to fall back into "Current" as working dir.
@@ -4394,9 +4397,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
                             try
-                            {   // In this timing, the Axe_Info.txt of base is inside of Working_Directory
-                                // The .txt of the Base directory is already stitched together by Collapse_Segment_Infos() at the top here.
-                                File.Copy(Working_Directory + Backup_Info, Root_Backup_Path, true);
+                            {   // The .txt of the Base directory is already stitched together by Collapse_Segment_Infos() at the top here.
+                                File.Copy(File_Path + Backup_Info, Root_Backup_Path, true);
+                                // iConsole(400, 100, File_Path + Backup_Info);
                             }
                             catch { Create_Backup_Info(Backup_Folder, Path.GetFileName(File_Path)); } // If failed to find it, we just create a new one.
 
@@ -4408,13 +4411,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         else if (Entry == Current_Backup) // Stop, we can't Collapse the currently loaded backup
                         { iConsole(550, 180, Temporal_A); return false; } // Can't be Entry.EndsWith("Base")
 
-
-
+                  
                         // iConsole(600, 300, "\n" + Entry + " in " + File_Path + "\n\nto\n\n" + Working_Directory);
                         Copy_Now(File_Path, Working_Directory);
-                        Deleting(File_Path);
-
-                        if (Entry != "" && Entry != " " && !Found_Backups.Contains(Entry)) { Found_Backups.Add(Entry); } // Match
+                        Deleting(File_Path);                 
                     }
                 }
 
@@ -4423,8 +4423,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     Copy_Now(Working_Directory, Target_Path);
                     Deleting(Working_Directory);
                 }
-       
-
+              
                 // iConsole(400, 100, Target_Path); return false;
 
 
@@ -5564,7 +5563,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         public void Fuse_Segments(string Source_Backup, string Target_Backup, string Segment_Name = "")
         {
             List<string> Target_Content = new List<string>();
-            string[] Segments = new string[] { "Comments", "Changed_Files", "Added_Files", "Removed_Files", "Branches"};
+            string[] Segments = new string[] { "Comments", "Changed_Files", "Added_Files", "Removed_Files"}; // , "Branches"}; Ignore Branches
             if (Segment_Name != "") { Segments = new string[] { Segment_Name }; } // Just the specified segment instead of all
 
             try
