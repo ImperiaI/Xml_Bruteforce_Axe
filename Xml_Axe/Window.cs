@@ -5024,7 +5024,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
         
-
+            
             try
             {   // Adding a Copy into root directory for Backups, that marks this backup as the loaded one. 
                 // CAUTION, Directory_Name means the different Folders in Backup_Path!
@@ -5229,7 +5229,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Create_New_Backup(bool Is_Auto_Stash = false, bool Move_Backwards = false)
         {
-            if (Is_Time_To_Backup()) { Backup_Time(); }
+            bool Same_Minute = !Is_Time_To_Backup();
+            if (!Same_Minute) { Backup_Time(); }
 
             iConsole(400, 100, "Test: Creating New Backup");
 
@@ -5384,12 +5385,28 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             if (Is_Auto_Stash) { Temporal_A = Changes; } // Auto Stash has Changes as copy in the Coment
 
 
+            string Target_Name = Package_Name;
+            if (Same_Minute) {  Target_Name = "Current"; }
 
 
-            Create_Backup_Info(Backup_Folder, Package_Name, Temporal_A, Changes, true, true,  // "Created a backup, based on different file sizes from:\n\n\n" +                
+            // !Same_Minute because if in the same minute we load the backup below
+            Create_Backup_Info(Backup_Folder, Target_Name, Temporal_A, Changes, !Same_Minute, true,  // "Created a backup, based on different file sizes from:\n\n\n" +                
                 string.Join("\n", Added_Files), string.Join("\n", Missing_Files)); // "Load_Backup" was Has_Collapsed
+                // Use "\n\n" for additional new lines between the entries.
 
-            // Use "\n\n" for additional new lines between the entries.
+
+
+            if (Same_Minute)
+            { 
+                Fuse_Segments(Package_Name, Target_Name);
+                try
+                {  File.Copy(Backup_Path + Backup_Folder + @"\" + Package_Name + Backup_Info,
+                        Backup_Path + Backup_Folder + Backup_Info, true);
+                } catch {}
+
+                try { Deleting(Backup_Path + Backup_Folder + @"\Current"); } catch {}
+            }
+
 
             Refresh_Backup_Stack();      
         }
@@ -5690,7 +5707,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     }
 
                     // Don't use else if here.
-                    if (Prepend_To_Segment) { The_File = The_File.Replace(Segment, Segment + Content + "\n\n"); }
+                    if (Prepend_To_Segment && !The_File.Contains(Content)) { The_File = The_File.Replace(Segment, Segment + Content + "\n\n"); }
                 }
 
 
