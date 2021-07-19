@@ -133,6 +133,26 @@ namespace Xml_Axe.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Button_Commits {
+            get {
+                object obj = ResourceManager.GetObject("Button_Commits", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Commits_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_Commits_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Button_Controller {
             get {
                 object obj = ResourceManager.GetObject("Button_Controller", resourceCulture);
@@ -156,6 +176,26 @@ namespace Xml_Axe.Properties {
         internal static System.Drawing.Bitmap Button_Delete {
             get {
                 object obj = ResourceManager.GetObject("Button_Delete", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Delete_Green {
+            get {
+                object obj = ResourceManager.GetObject("Button_Delete_Green", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Delete_Green_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_Delete_Green_Lit", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -353,9 +393,9 @@ namespace Xml_Axe.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Button_Run {
+        internal static System.Drawing.Bitmap Button_Save {
             get {
-                object obj = ResourceManager.GetObject("Button_Run", resourceCulture);
+                object obj = ResourceManager.GetObject("Button_Save", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -363,9 +403,9 @@ namespace Xml_Axe.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Button_Run_Lit {
+        internal static System.Drawing.Bitmap Button_Save_Lit {
             get {
-                object obj = ResourceManager.GetObject("Button_Run_Lit", resourceCulture);
+                object obj = ResourceManager.GetObject("Button_Save_Lit", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -413,9 +453,9 @@ namespace Xml_Axe.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Button_Stack {
+        internal static System.Drawing.Bitmap Button_Stack_Green {
             get {
-                object obj = ResourceManager.GetObject("Button_Stack", resourceCulture);
+                object obj = ResourceManager.GetObject("Button_Stack_Green", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -423,9 +463,49 @@ namespace Xml_Axe.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Button_Stack_Lit {
+        internal static System.Drawing.Bitmap Button_Stack_Green_Lit {
             get {
-                object obj = ResourceManager.GetObject("Button_Stack_Lit", resourceCulture);
+                object obj = ResourceManager.GetObject("Button_Stack_Green_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Stack_Red {
+            get {
+                object obj = ResourceManager.GetObject("Button_Stack_Red", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Stack_Red_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_Stack_Red_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Undo {
+            get {
+                object obj = ResourceManager.GetObject("Button_Undo", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Undo_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_Undo_Lit", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

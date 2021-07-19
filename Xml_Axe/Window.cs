@@ -147,7 +147,7 @@ namespace Xml_Axe
             Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus);
             Set_Resource_Button(Button_Run, Properties.Resources.Button_Axe);
             Set_Resource_Button(Button_Toggle_Settings, Properties.Resources.Button_Settings);
-            Set_Resource_Button(Button_Undo, Properties.Resources.Button_Refresh);
+            Set_Resource_Button(Button_Undo, Properties.Resources.Button_Undo); 
             Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller);
 
 
@@ -388,7 +388,9 @@ namespace Xml_Axe
                     if (User_Input) { Set_Backup_Checker(); } 
                     
                     // Switch between Red and Green Color
-                    Button_Browse_Folder_MouseLeave(null, null);           
+                    Button_Start_MouseLeave(null, null);   
+                    Button_Browse_Folder_MouseLeave(null, null);
+                    Button_Search_MouseLeave(null, null);                    
                 }                                                             
             }
 
@@ -726,13 +728,26 @@ namespace Xml_Axe
             {
                 if (Mouse.Button == MouseButtons.Right)
                 {
-                    if (Properties.Settings.Default.Last_Query == "") { return; }
-                    Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_File_Lit);
-                    
+                    // if (Properties.Settings.Default.Last_Query == "") { return; }
+                    // Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_File_Lit);
 
+                    string Selection = Properties.Settings.Default.Last_Query;
+                    Open_File_Dialog.Filter = "Text file (*.txt)|*.txt|Csv file (*.csv)|*.csv";
+                    Open_File_Dialog.FileName = Selection;
+
+                    try
+                    {   // If the Open Dialog found a File
+                         if (Open_File_Dialog.ShowDialog() == DialogResult.OK)
+                         { 
+                             Selection = Open_File_Dialog.FileName; 
+                         }
+                    } catch {}
+             
+    
                     // Execute(Properties.Settings.Default.Last_Query);
-                    try 
-                    {   Found_Entities = File.ReadAllLines(Properties.Settings.Default.Last_Query).ToList(); 
+                    try
+                    {
+                        Found_Entities = File.ReadAllLines(Selection).ToList();                 
 
                         List_View_Selection.Items.Clear();
                      
@@ -741,19 +756,25 @@ namespace Xml_Axe
                         Set_Checker(List_View_Selection, Color.Black);                      
                     } catch {}          
 
-                    System.Threading.Thread.Sleep(2000);
+                    // System.Threading.Thread.Sleep(2000);
                     return;
                 }
-                   
-                
-       
-                Save_File_Dialog.Filter = "Text file (*.txt)|*.txt|Csv file (*.csv)|*.csv";
+
+
+
+                Save_File_Dialog.Filter = Open_File_Dialog.Filter;
 
                 try
                 {   // If the Open Dialog found a File
                     if (Save_File_Dialog.ShowDialog() == DialogResult.OK)
                     {   // iConsole(400, 100, Save_File_Dialog.FileName);
-                        File.WriteAllText(Save_File_Dialog.FileName, string.Join("\n", Found_Entities));
+
+                        // iConsole(400, 100, "\"" + Path.GetExtension(Save_File_Dialog.FileName).ToString() + "\""); return;
+                        //if (Save_File_Dialog.FileName.EndsWith("csv")) { File.WriteAllText(Save_File_Dialog.FileName, string.Join(";", Found_Entities)); }
+                        //else { 
+                        File.WriteAllText(Save_File_Dialog.FileName, string.Join("\n", Found_Entities)); 
+
+                        
                         Properties.Settings.Default.Last_Query = Save_File_Dialog.FileName;
                         Properties.Settings.Default.Save();
                     }
@@ -832,7 +853,9 @@ namespace Xml_Axe
             Temporal_C = 0;
             try { Temporal_C = Select_List_View_Items(List_View_Selection).Count; } catch {}
 
-            if (UI_Mode == "Script" || UI_Mode == "Backup" && Temporal_C == 0)
+
+            if (UI_Mode == "Search") { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Save_Lit); }
+            else if (UI_Mode == "Script" || UI_Mode == "Backup" && Temporal_C == 0)
             { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Red_Lit); }         
             else { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Green_Lit); }
         }
@@ -842,7 +865,9 @@ namespace Xml_Axe
             Temporal_C = 0;
             try { Temporal_C = Select_List_View_Items(List_View_Selection).Count; }  catch {}
 
-            if (UI_Mode == "Script" || UI_Mode == "Backup" && Temporal_C == 0)
+
+            if (UI_Mode == "Search") { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Save); }
+            else if (UI_Mode == "Script" || UI_Mode == "Backup" && Temporal_C == 0)
             { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Red); }
             else { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Green); }
         }
@@ -915,7 +940,7 @@ namespace Xml_Axe
                     Zoom_List_View(1);
 
                     if (UI_Mode == "Search") // toggle
-                    {   Clear_Last_Mode(); 
+                    {   Clear_Last_Mode();      
                         Set_UI_Into_Search_Mode(false); // Needs to run after Clear_Last_Mode(); 
                     } 
                 }
@@ -930,13 +955,26 @@ namespace Xml_Axe
 
         private void Button_Start_MouseHover(object sender, EventArgs e)
         {
-            if (UI_Mode == "Backup") { Set_Resource_Button(Button_Start, Properties.Resources.Button_Delete_Lit); }
+            Temporal_C = 0;
+            try { Temporal_C = Select_List_View_Items(List_View_Selection).Count; } catch {}         
+
+            if (UI_Mode == "Backup") 
+            {   if (Temporal_C != 0) { Set_Resource_Button(Button_Start, Properties.Resources.Button_Delete_Lit); }
+                else { Set_Resource_Button(Button_Start, Properties.Resources.Button_Delete_Green_Lit); }             
+            }
             else { Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit); }
         }
 
         private void Button_Start_MouseLeave(object sender, EventArgs e)
         {
-            if (UI_Mode == "Backup") { Set_Resource_Button(Button_Start, Properties.Resources.Button_Delete); }
+            Temporal_C = 0;
+            try { Temporal_C = Select_List_View_Items(List_View_Selection).Count; } catch {}         
+
+
+            if (UI_Mode == "Backup")
+            {   if (Temporal_C != 0) { Set_Resource_Button(Button_Start, Properties.Resources.Button_Delete); }
+                else { Set_Resource_Button(Button_Start, Properties.Resources.Button_Delete_Green); }    
+            }
             else
             {   if (List_View_Selection.Visible) // Use its visability as bool toggle ;)
                 { Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit); }
@@ -2172,10 +2210,10 @@ namespace Xml_Axe
         }
 
         private void Button_Undo_MouseHover(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Refresh_Lit); }
+        { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Undo_Lit); }
 
         private void Button_Undo_MouseLeave(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Refresh); }
+        { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Undo); }
 
 
 
@@ -4002,7 +4040,6 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     if (List_View_Selection.Items.Count > 0) { List_View_Selection.Items[0].Selected = true; }
                     List_View_Selection.Focus();
 
-                    
                     Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit);
                     Set_Checker(List_View_Selection, Color.Black);
                 }
@@ -4087,12 +4124,23 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
         private void Button_Search_MouseHover(object sender, EventArgs e)
-        {   if (UI_Mode == "Backup" && !At_Top_Level) { Set_Resource_Button(Button_Search, Properties.Resources.Button_Stack_Lit); }
+        {   if (UI_Mode == "Backup" && !At_Top_Level)
+            {   
+                if (List_View_Selection.SelectedItems.Count == 1)
+                { Set_Resource_Button(Button_Search, Properties.Resources.Button_Stack_Green_Lit); }
+                else { Set_Resource_Button(Button_Search, Properties.Resources.Button_Stack_Red_Lit); }          
+            }
+            
             else { Set_Resource_Button(Button_Search, Properties.Resources.Button_Search_Lit); }
         }
 
         private void Button_Search_MouseLeave(object sender, EventArgs e)
-        {   if (UI_Mode == "Backup" && !At_Top_Level) { Set_Resource_Button(Button_Search, Properties.Resources.Button_Stack); }
+        {   if (UI_Mode == "Backup" && !At_Top_Level)
+            {
+                if (List_View_Selection.SelectedItems.Count == 1)
+                { Set_Resource_Button(Button_Search, Properties.Resources.Button_Stack_Green); }
+                else { Set_Resource_Button(Button_Search, Properties.Resources.Button_Stack_Red); }
+            }
             else { Set_Resource_Button(Button_Search, Properties.Resources.Button_Search); }
         }
 
@@ -4211,7 +4259,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Button_Attribute_MouseHover(object sender, EventArgs e)
         {
-            if (UI_Mode == "Backup") { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Run_Lit); }
+            if (UI_Mode == "Backup") { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Commits_Lit); }
             else 
             { 
                 if (Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Yang_Lit); }
@@ -4221,7 +4269,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Button_Attribute_MouseLeave(object sender, EventArgs e)
         {
-            if (UI_Mode == "Backup") { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Run); }
+            if (UI_Mode == "Backup") { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Commits); }
             else
             {   if (Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Yang); }
                 else if (!Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Ying); }
@@ -5207,7 +5255,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Set_UI_Into_Search_Mode(bool Mode)
         {   Control[] Controls = { Button_Run, Button_Attribute, Button_Scripts, Button_Percentage, Button_Operator, Button_Toggle_Settings };
-            foreach (Control Selectrion in Controls) { Selectrion.Visible = !Mode; } // Hide or show all        
+            foreach (Control Selectrion in Controls) { Selectrion.Visible = !Mode; } // Hide or show all   
+
+            Button_Browse_Folder_MouseLeave(null, null);
         }
 
 

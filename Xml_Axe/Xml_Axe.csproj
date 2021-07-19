@@ -118,9 +118,6 @@
     <None Include="Resources\Button_Jutsu.ico" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\Button_Controller2.png" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\Idle_01.jpg" />
   </ItemGroup>
   <ItemGroup>
@@ -131,9 +128,21 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Axe_Icon.ico" />
+    <None Include="Resources\Button_Save.png" />
+    <None Include="Resources\Button_Save_Lit.png" />
+    <None Include="Resources\Button_Undo_Lit.png" />
+    <None Include="Resources\Button_Undo.png" />
+    <None Include="Resources\Button_Stack_Red_Lit.png" />
+    <None Include="Resources\Button_Stack_Red.png" />
+    <None Include="Resources\Button_Stack_Green_Lit.png" />
+    <None Include="Resources\Button_Stack_Green.png" />
+    <None Include="Resources\Button_Delete_Green_Lit.png" />
+    <None Include="Resources\Button_Delete_Green.png" />
+    <None Include="Resources\Button_Commits_Lit.png" />
+    <None Include="Resources\Button_Commits.png" />
+    <None Include="Resources\Button_Undu.png" />
     <None Include="Resources\Button_Stack_Lit.png" />
     <None Include="Resources\Button_Stack.png" />
-    <None Include="Resources\Button_Axe_2.png" />
     <None Include="Resources\Button_Delete.png" />
     <None Include="Resources\Button_Delete_Lit.png" />
     <None Include="Resources\Button_Ying.png" />
