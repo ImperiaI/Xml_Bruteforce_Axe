@@ -498,7 +498,7 @@ namespace Xml_Axe
             Text_Box_Original_Path.Text = The_Path;
             Properties.Settings.Default.Last_File = The_Path;
             Temporal_A = Path.GetDirectoryName(The_Path);
-
+            
 
             if (Refresh_Dir)
             {
@@ -520,7 +520,15 @@ namespace Xml_Axe
                         if (!EAW_Mode)
                         {   // Then the parent dir is always the selected Xml_Directory 
                             Xml_Directory = Temporal_A;
-                            if (!Xml_Directory.EndsWith(@"\")) { Xml_Directory += @"\"; }
+
+
+                            if (!Xml_Directory.EndsWith(@"\"))
+                            {   Properties.Settings.Default.Mod_Directory = Xml_Directory;
+                                Xml_Directory += @"\";                     
+                            }
+                            else { Properties.Settings.Default.Mod_Directory = Path.GetDirectoryName(Xml_Directory); }
+                            Mod_Directory = Properties.Settings.Default.Mod_Directory;
+                            Mod_Name = Path.GetFileName(Mod_Directory);
 
                             Properties.Settings.Default.Xml_Directory = Xml_Directory; 
                             break;
@@ -546,7 +554,7 @@ namespace Xml_Axe
                     {                      
                         Xml_Directory = Temporal_A; // Updating 
 
-
+                   
                         for (int d = 0; d < 8; d++)
                         {
                             try {
@@ -565,14 +573,18 @@ namespace Xml_Axe
 
                         // if (!Xml_Directory.EndsWith(@"\")) { Xml_Directory += @"\"; }
 
-                        Properties.Settings.Default.Xml_Directory = Xml_Directory;
-
+                        Properties.Settings.Default.Xml_Directory = Xml_Directory;                 
 
                     
                         Temporal_B = Path.GetDirectoryName(Path.GetDirectoryName(Xml_Directory));
 
                         // Leaping back by 2 directoies, to get the name of the Modpath
                         if (Temporal_B.ToLower().EndsWith("data")) { Properties.Settings.Default.Mod_Directory = Path.GetDirectoryName(Temporal_B); }
+                        else if (!EAW_Mode)
+                        {                        
+                            if (!Xml_Directory.EndsWith(@"\")) { Properties.Settings.Default.Mod_Directory = Xml_Directory; }
+                            else { Properties.Settings.Default.Mod_Directory = Path.GetDirectoryName(Xml_Directory); }                        
+                        } // Hoping this is the right one
                         else { Properties.Settings.Default.Mod_Directory = Temporal_B; } // Hoping this is the right one
 
                         Mod_Directory = Properties.Settings.Default.Mod_Directory;
@@ -1324,7 +1336,7 @@ namespace Xml_Axe
 
 
                     // Base version to true, otherwise it will complain about a missmatched path
-                    Create_Backup_Info(Mod_Name, Package_Name + @"_Base", "", "\n" + Temporal_B.Replace("\n", ""));
+                    Create_Backup_Info(Backup_Folder, Package_Name + @"_Base", "", "\n" + Temporal_B.Replace("\n", ""));
                     Refresh_Backup_Stack();
                     At_Top_Level = false; // Correcting
 
@@ -3610,7 +3622,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
 
-            foreach(string Missing_File in File.ReadAllLines(Properties.Settings.Default.Mod_Directory + @"\Data\cleanup.txt"))
+            foreach(string Missing_File in File.ReadAllLines(Mod_Directory + @"\Data\cleanup.txt"))
             {
                 if (Missing_File == "") { continue; }
 
@@ -3717,11 +3729,13 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         //=====================//
         // If exists in source path copy and OVERWRITE that to target
         public void Verify_Copy(string Source_Path_and_File, string New_Path_and_File)
-        {  
-            if (!Directory.Exists(Path.GetDirectoryName(New_Path_and_File)))
-            { Directory.CreateDirectory(Path.GetDirectoryName(New_Path_and_File)); }
+        {
+            try
+            {   if (!Directory.Exists(Path.GetDirectoryName(New_Path_and_File)))
+                { Directory.CreateDirectory(Path.GetDirectoryName(New_Path_and_File)); }
 
-            File.Copy(Source_Path_and_File, New_Path_and_File, true);                    
+                File.Copy(Source_Path_and_File, New_Path_and_File, true);
+            } catch {}
         }
 
         //=====================//
@@ -3844,7 +3858,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         private void Button_Search_Click(object sender, EventArgs e)
         {
 
-            // iConsole(400, 100, "\"" + Program_Scope + "\""); return;                   
+            // iConsole(400, 100, "\"" + Mod_Name + "\""); return;                   
             // iConsole(500, 500, string.Join("\n", The_Backup_Folders)); return; 
             // return;
 
@@ -5191,7 +5205,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                             if (Match_Without_Emptyspace_2(Selection, File_Name)) // Append the Modpath to the Cleanup Script                             
                             {
 
-                                Temporal_E = File.ReadAllLines(Properties.Settings.Default.Mod_Directory + @"\Data\cleanup.txt").ToList();
+                                Temporal_E = File.ReadAllLines(Mod_Directory + @"\Data\cleanup.txt").ToList();
                                 Temporal_C = (Temporal_E.Count() * 30) + 160;
                                 if (Temporal_C > 680) { Temporal_C = 680; }
 
