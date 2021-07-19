@@ -453,6 +453,26 @@ namespace Xml_Axe.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Button_Stack_Blue {
+            get {
+                object obj = ResourceManager.GetObject("Button_Stack_Blue", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Button_Stack_Blue_Lit {
+            get {
+                object obj = ResourceManager.GetObject("Button_Stack_Blue_Lit", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Button_Stack_Green {
             get {
                 object obj = ResourceManager.GetObject("Button_Stack_Green", resourceCulture);

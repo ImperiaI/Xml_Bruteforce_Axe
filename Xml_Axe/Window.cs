@@ -2200,10 +2200,20 @@ namespace Xml_Axe
             List<string> Found_Backups = Get_All_Directories(Backup_Path + Backup_Folder, true);               
             Found_Backups.Reverse();
      
-            // iConsole(500, 500, Found_Backups[0]);  // Get the first one    
-            Restore(Current_Backup + User_Name, Found_Backups[0], false, true, true, false);
-            Deleting(Found_Backups[0]); // Getting rid of it after Undo
 
+            // iConsole(500, 500, Found_Backups[0]);  // Get the first one  
+            int Aiming_At = -1;
+
+            for (int i = 0; i < Found_Backups.Count(); i++)
+            {
+                if (Found_Backups[i].EndsWith("Auto")) { Aiming_At = i; break; } // Making sure we grab the newest Auto backup
+            }
+
+
+            if (Aiming_At > -1)
+            {   Restore(Current_Backup + User_Name, Found_Backups[Aiming_At], false, true, true, false);
+                Deleting(Found_Backups[Aiming_At]); // Getting rid of it after Undo
+            }
 
             Enable_Undo = false; 
             Toggle_Undo_Button(false);
