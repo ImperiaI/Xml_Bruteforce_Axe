@@ -15,6 +15,7 @@ using System.Xml.Linq;
 using System.Diagnostics;
 using Microsoft.Win32;
 using Microsoft.VisualBasic.FileIO; // For the "Deleting()" function
+using System.Security.Cryptography;
 
 
 
@@ -3806,9 +3807,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
-        {
+        {    
 
-            // iConsole(400, 100, Xml_Directory); return;                   
+            // iConsole(400, 100, "false"); return;                   
             // iConsole(500, 500, string.Join("\n", The_Backup_Folders)); return; 
             // return;
 
@@ -5860,6 +5861,14 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                                     if (Length_A == Length_B) // If file sizes match 
                                     {
+                                        MD5 Md5 = MD5.Create();
+                                        // FileStream Stream = File.OpenRead(File_A); // using (FileStream stream = File.OpenRead(File_A))
+                                        byte[] Hash_A = Md5.ComputeHash(File.OpenRead(File_A));
+                                        byte[] Hash_B = Md5.ComputeHash(File.OpenRead(File_B));
+                                        if (!Hash_A.SequenceEqual(Hash_B)) { continue; }
+
+
+
                                         Size_Matched = true;
 
                                         if (Shall_Match && !Results.Contains(File_B))
