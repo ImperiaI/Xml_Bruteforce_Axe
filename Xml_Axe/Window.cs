@@ -61,6 +61,7 @@ namespace Xml_Axe
 
         string Tag_List = "";
         bool User_Input = false;
+        bool Typed_Something = false;
 
 
         string UI_Mode = "Normal"; // Settings, Backup, Script, Search
@@ -314,10 +315,15 @@ namespace Xml_Axe
 
 
 
+
         private void Text_Box_Description_Click(object sender, EventArgs e)
         {
             if (UI_Mode != "Backup") { Disable_Description(); }
         }
+
+        private void Text_Box_Description_KeyUp(object sender, KeyEventArgs e)
+        { if (!Typed_Something) { Typed_Something = true; } }
+
 
         private void Disable_Description()
         {
@@ -5538,8 +5544,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
             if (Mouse.Button == MouseButtons.Right)
             { Set_Backup_Checker(); } // Ignore Parents
-            else { Set_Backup_Checker(Selection); } 
+            else { Set_Backup_Checker(Selection); }
 
+
+            Text_Box_Description.Text = ""; // Clear last entry
+          
 
 
             // ========================================================
@@ -5548,10 +5557,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
             if (Last_Backup_Selection != "" && Selection != Last_Backup_Selection)
             {
-                if (Last_Backup_Comment != "" && New_Text != Last_Backup_Comment) // Has anything changed meanwhile?
+                if (Typed_Something && Last_Backup_Comment != "" && New_Text != Last_Backup_Comment) // Has anything changed meanwhile?
                 {
-                    // iConsole(600, 400, "Triggered");
-
                     // Making sure there is proper formatting
                     if (New_Text != "") // Don't move this up
                     {
@@ -5570,17 +5577,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                             if (Current_Backup.EndsWith(@"\")) { Temporal_A = Get_Backup_Path(Current_Backup); }
 
                             // iConsole(600, 300, "\n" + Temporal_A + Backup_Info + "\n\ninto\n\n" + Root_Backup_Path);
-                            try
-                            {
-                                File.Copy(Temporal_A + Backup_Info, Root_Backup_Path, true); // Overwrite root Axe_Info.txt
-                            }
-                            catch{}
+                            File.Copy(Temporal_A + Backup_Info, Root_Backup_Path, true); // Overwrite root Axe_Info.txt                           
                         }
-                    } catch{}
+                    } catch {}
                 }
-
-                Text_Box_Description.Text = "";
-                Last_Backup_Selection = Selection;
+            
+                Last_Backup_Selection = Selection;             
             }
 
 
@@ -5590,7 +5592,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             // ========================================================
 
             // DON'T replace Text_Box_Description.Text here with "New_Text"!!!  Because it causes issues.
-            if (Comment.Count() == 0)
+            if (Comment.Count() == 0 && Typed_Something)
             {                          
                 if (Last_Backup_Selection != "" && Text_Box_Description.Text != "" && Text_Box_Description.Text != "\n")
                 {
@@ -5601,14 +5603,14 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }
             }
 
-            else
+            else 
             {   // Disabled, because we can't destinguish the "Changed_Files" from the Comment..
                 //Temporal_E.Clear(); 
                 //Temporal_E = Get_Segment_Info(Selection, "Changed_Files");
 
+             
                 Last_Backup_Comment = string.Join("\n", Comment);
                 Text_Box_Description.Text = Last_Backup_Comment;
-
 
                 //if (Temporal_E.Count() > 0)
                 //{
@@ -6169,7 +6171,6 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
              // if (this.Size.Width > Screen.FromControl(this).Bounds.Width - 200) { this.Size = new Size(444, 660); }
              // iConsole(400, 100, Screen.FromControl(this).Bounds.Width.ToString()); 
         }
-
 
 
     

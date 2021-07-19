@@ -295,6 +295,7 @@
             this.Text_Box_Description.TabIndex = 29;
             this.Text_Box_Description.Text = "";
             this.Text_Box_Description.Click += new System.EventHandler(this.Text_Box_Description_Click);
+            this.Text_Box_Description.KeyUp += new System.Windows.Forms.KeyEventHandler(this.Text_Box_Description_KeyUp);
             // 
             // Check_Box_All_Occurances
             // 
