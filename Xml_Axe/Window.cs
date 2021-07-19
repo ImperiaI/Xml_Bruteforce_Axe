@@ -3807,22 +3807,6 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
         {
-            //List<string> Target_Content = Get_Segment_Info("2021.07.12_05.46", "Branches");
-            //iConsole(500, 400, "Target is :\n" + string.Join("\n", Target_Content));
-
-            //Collapse_Segment_Infos(Get_Segment_Info("2021.07.12_05.46", "Branches"), "2021.07.12_05.46"); 
-
-
-
-           
-            // Fuse_Segments("2021.07.12_05.45_Base", "2021.07.12_05.46");
-
-            // Write_Into_Segment("2021.07.12_05.45_Base", "Comments", "Fuck", "Same", true);
-
-            // List<string> The_Backup_Folders = Get_All_Directories(Backup_Path + Backup_Folder, true);
-
-            // Copy_Now(@"C:\Users\Mod\Desktop\Ted\", @"C:\Users\Mod\AppData\Local\Xml_Axe\Backup\Ted\");
-
 
             // iConsole(400, 100, Xml_Directory); return;                   
             // iConsole(500, 500, string.Join("\n", The_Backup_Folders)); return; 
@@ -4696,7 +4680,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
         // All_Files_Since_This means all files in other Backups then this one, that are between the Current_Version and the Target_Backup.
-        public void Restore(string Current_Version, string Target_Backup, bool Move_Backwards, bool All_Files_Since_This = true, bool Ignore_Branches = false, bool Set_Selected = true)
+        public void Restore(string Current_Version, string Target_Backup, bool Move_Backwards, bool All_Files_Since_This = true, bool Ignore_Parents = false, bool Set_Selected = true)
         {   // string Current = Select_List_View_First(List_View_Selection);
 
             if (Current_Version == Target_Backup) 
@@ -4763,8 +4747,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Current_Branch.Add(Current_Version); // To prevent it from not being executed below
              
 
-                if (Move_Backwards) 
-                {   foreach (string Backup in Get_Segment_Info(Current_Version, "Branches"))
+                if (Move_Backwards)
+                {   foreach (string Backup in Get_Segment_Info(Current_Version, "Parents"))
                     {
                         if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); }
                     }
@@ -4782,17 +4766,17 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         bool Matched_Same_Branch = false;
                         string Backup_Name = Path.GetFileName(Backups[i]);
 
-                        if (!Ignore_Branches && Move_Backwards)
+                        if (!Ignore_Parents && Move_Backwards)
                         {  // Need the shift of -1 slot because the removed files shall be re-added once we pass this Backup to the next oldest one, not instantly.                      
                             Backup_Name = Path.GetFileName(Backups[i - 1]); 
                             // Skip if not part of this branch  
                             if (!List_Matches(Current_Branch, Backup_Name)) { Stack_History.Add(Backup_Name + "   skipped (wrong branch)"); continue; }                      
                         }
-                        else if (!Ignore_Branches)
+                        else if (!Ignore_Parents)
                         {   // string Target_Backup = Path.GetFileName(Backups[Passed_Slots]); // Is already received as parameter of this function.
 
                             // If the ancestors in the branch of Target Backup matches the the Backup_Name || or if this backup is Target_Backup itself
-                            if (List_Matches(Get_Segment_Info(Target_Backup, "Branches"), Backup_Name) || Target_Backup == Backup_Name) { Matched_Same_Branch = true; }
+                            if (List_Matches(Get_Segment_Info(Target_Backup, "Parents"), Backup_Name) || Target_Backup == Backup_Name) { Matched_Same_Branch = true; }
                             if (!Matched_Same_Branch) { Stack_History.Add(Backup_Name + "   skipped (wrong branch)"); continue; }                                               
                         }
 
@@ -4883,8 +4867,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 if (Temporal_C > 680) { Temporal_C = 680; }
 
 
-                // Silent mode if Ignore_Branches
-                if (!Ignore_Branches) { iConsole(560, Temporal_C, Intruduction + string.Join("\n", Stack_History)); }
+                // Silent mode if Ignore_Parents
+                if (!Ignore_Parents) { iConsole(560, Temporal_C, Intruduction + string.Join("\n", Stack_History)); }
 
 
                 //string s = "";
@@ -4936,7 +4920,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
         // Use "Time_Stamp" as argument for Target_Backup_Name
-        private void Create_Backup_Info(string Directory_Name, string Target_Backup_Name, string Comments = "", string Changed_Files = "", bool Load_Backup = true, bool Create_Branches = false, string Added_Files = "", string Removed_Files = "")
+        private void Create_Backup_Info(string Directory_Name, string Target_Backup_Name, string Comments = "", string Changed_Files = "", bool Load_Backup = true, bool Create_Parents = false, string Added_Files = "", string Removed_Files = "")
         {  
             // Package_Name variable is updated by Button_Run_Click() or Create_New_Backup()        
             string This_Backup_Path = Backup_Path + Directory_Name + @"\" + Target_Backup_Name;
@@ -4995,19 +4979,19 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }
 
 
-                if (Create_Branches && Current_Backup != "None") try
+                if (Create_Parents && Current_Backup != "None") try
                 {
                     Info_File +=
                        "//============================================================\\\\" +
-                       "\nBranches" +
+                       "\nParents" +
                        "\n//============================================================\\\\" +
                        "\n" + Current_Backup;
 
 
                     Temporal_E.Clear();
-                    Temporal_E = Get_Segment_Info(Current_Backup, "Branches");
+                    Temporal_E = Get_Segment_Info(Current_Backup, "Parents");
 
-                    // Inherit Branches from the Parents Axe_Info.txt
+                    // Inherit Parents from the Axe_Info.txt
                     if (Temporal_E.Count() > 0) { Info_File += "\n" + string.Join("\n", Temporal_E) + "\n\n\n"; }
                  
 
@@ -5232,7 +5216,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             bool Same_Minute = !Is_Time_To_Backup();
             if (!Same_Minute) { Backup_Time(); }
 
-            iConsole(400, 100, "Test: Creating New Backup");
+            // iConsole(400, 100, "Creating New Backup");
 
             Package_Name = Time_Stamp + User_Name;
          
@@ -5386,7 +5370,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
             string Target_Name = Package_Name;
-            if (Same_Minute) {  Target_Name = "Current"; }
+            if (Same_Minute) { Target_Name = "Current"; }
 
 
             // !Same_Minute because if in the same minute we load the backup below
@@ -5397,10 +5381,13 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
             if (Same_Minute)
-            { 
+            {
+                if (Directory.Exists(Selected_Backup_Path + Package_Name + "_Base")) { Package_Name += "_Base"; }
+
                 Fuse_Segments(Package_Name, Target_Name);
                 try
-                {  File.Copy(Backup_Path + Backup_Folder + @"\" + Package_Name + Backup_Info,
+                {
+                    File.Copy(Selected_Backup_Path + Package_Name + Backup_Info,
                         Backup_Path + Backup_Folder + Backup_Info, true);
                 } catch {}
 
@@ -5553,7 +5540,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             if (Include_Selection) { Current_Branch.Add(Backup_Name); }
 
 
-            foreach (string Backup in Get_Segment_Info(Backup_Name, "Branches"))
+            foreach (string Backup in Get_Segment_Info(Backup_Name, "Parents"))
             {               
                 if (!Current_Branch.Contains(Backup)) { Current_Branch.Add(Backup); } // Preventing Duplicates
             }
@@ -5580,11 +5567,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         public void Fuse_Segments(string Source_Backup, string Target_Backup, string Segment_Name = "")
         {
             List<string> Target_Content = new List<string>();
-            string[] Segments = new string[] { "Comments", "Changed_Files", "Added_Files", "Removed_Files"}; // , "Branches"}; Ignore Branches
+            string[] Segments = new string[] { "Comments", "Changed_Files", "Added_Files", "Removed_Files" }; // , "Parents"}; Ignore Parents
             if (Segment_Name != "") { Segments = new string[] { Segment_Name }; } // Just the specified segment instead of all
 
-            try
-            {
+            try {
+
                 // string Stitched_File = ""; // We stitch segment by segment into this new file
                 string Stitched_File = File.ReadAllText(Selected_Backup_Path + Source_Backup + Backup_Info).Replace("\r", "");
                 // If "" it will run Write_Into_Segment() to just return "".
@@ -5614,8 +5601,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 // iConsole(600, 600, "Final file is :\n" + Stitched_File);
                 File.WriteAllText(Selected_Backup_Path + Source_Backup + Backup_Info, Stitched_File);
-            }
-            catch { iConsole(500, 140, "\nFailed to stitch Axe_Info.txt files together."); }
+
+            } catch { iConsole(500, 140, "\nFailed to stitch Axe_Info.txt files together."); }
         }
 
 
