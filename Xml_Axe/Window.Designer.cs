@@ -35,7 +35,7 @@
             this.Label_Tag_Value = new System.Windows.Forms.Label();
             this.Label_Tag_Name = new System.Windows.Forms.Label();
             this.Button_Start = new System.Windows.Forms.PictureBox();
-            this.Open_File_Dialog_1 = new System.Windows.Forms.OpenFileDialog();
+            this.Open_File_Dialog = new System.Windows.Forms.OpenFileDialog();
             this.Button_Toggle_Settings = new System.Windows.Forms.PictureBox();
             this.Button_Reset_Blacklist = new System.Windows.Forms.PictureBox();
             this.Combo_Box_Tag_Name = new System.Windows.Forms.ComboBox();
@@ -58,6 +58,7 @@
             this.Button_Browse_Folder = new System.Windows.Forms.PictureBox();
             this.Button_Undo = new System.Windows.Forms.PictureBox();
             this.Button_Attribute = new System.Windows.Forms.PictureBox();
+            this.Save_File_Dialog = new System.Windows.Forms.SaveFileDialog();
             ((System.ComponentModel.ISupportInitialize)(this.Drop_Zone)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Track_Bar_Tag_Value)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.Button_Start)).BeginInit();
@@ -147,9 +148,9 @@
             this.Button_Start.MouseLeave += new System.EventHandler(this.Button_Start_MouseLeave);
             this.Button_Start.MouseHover += new System.EventHandler(this.Button_Start_MouseHover);
             // 
-            // Open_File_Dialog_1
+            // Open_File_Dialog
             // 
-            this.Open_File_Dialog_1.FileName = "Open_File_Dialog_1";
+            this.Open_File_Dialog.FileName = "Open_File_Dialog";
             // 
             // Button_Toggle_Settings
             // 
@@ -516,7 +517,7 @@
         private System.Windows.Forms.Label Label_Tag_Value;
         private System.Windows.Forms.Label Label_Tag_Name;
         private System.Windows.Forms.PictureBox Button_Start;
-        private System.Windows.Forms.OpenFileDialog Open_File_Dialog_1;
+        private System.Windows.Forms.OpenFileDialog Open_File_Dialog;
         private System.Windows.Forms.PictureBox Button_Toggle_Settings;
         private System.Windows.Forms.PictureBox Button_Reset_Blacklist;
         private System.Windows.Forms.ComboBox Combo_Box_Tag_Name;
@@ -539,6 +540,7 @@
         private System.Windows.Forms.PictureBox Button_Browse_Folder;
         private System.Windows.Forms.PictureBox Button_Undo;
         private System.Windows.Forms.PictureBox Button_Attribute;
+        private System.Windows.Forms.SaveFileDialog Save_File_Dialog;
     }
 }
 

@@ -178,5 +178,17 @@ namespace Xml_Axe.Properties {
                 this["Last_Height"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string Last_Query {
+            get {
+                return ((string)(this["Last_Query"]));
+            }
+            set {
+                this["Last_Query"] = value;
+            }
+        }
     }
 }

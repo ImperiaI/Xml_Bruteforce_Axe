@@ -241,6 +241,11 @@ namespace Xml_Axe
 
             Text_Box_Original_Path.BackColor = Theme_Color;
 
+
+
+            try { Found_Entities = File.ReadAllLines(Properties.Settings.Default.Last_Query).ToList(); } catch {}
+
+
             User_Input = true;
         }
 
@@ -711,6 +716,45 @@ namespace Xml_Axe
         {
             if (UI_Mode == "Script") { Execute(Script_Directory); }
 
+            else if (UI_Mode == "Search") 
+            {
+                if (Mouse.Button == MouseButtons.Right)
+                {
+                    if (Properties.Settings.Default.Last_Query == "") { return; }
+                    Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_File_Lit);
+                    
+
+                    // Execute(Properties.Settings.Default.Last_Query);
+                    try 
+                    {   Found_Entities = File.ReadAllLines(Properties.Settings.Default.Last_Query).ToList(); 
+
+                        List_View_Selection.Items.Clear();
+                     
+                        foreach (string Entry in Found_Entities)
+                        { List_View_Selection.Items.Add(Entry); }
+                        Set_Checker(List_View_Selection, Color.Black);                      
+                    } catch {}          
+
+                    System.Threading.Thread.Sleep(2000);
+                    return;
+                }
+                   
+                
+       
+                Save_File_Dialog.Filter = "Text file (*.txt)|*.txt|Csv file (*.csv)|*.csv";
+
+                try
+                {   // If the Open Dialog found a File
+                    if (Save_File_Dialog.ShowDialog() == DialogResult.OK)
+                    {   // iConsole(400, 100, Save_File_Dialog.FileName);
+                        File.WriteAllText(Save_File_Dialog.FileName, string.Join("\n", Found_Entities));
+                        Properties.Settings.Default.Last_Query = Save_File_Dialog.FileName;
+                        Properties.Settings.Default.Save();
+                    }
+                } catch { iConsole(400, 100, "\nFailed to write search results into\n" + Save_File_Dialog.FileName); }          
+            }
+         
+
             else if (UI_Mode == "Backup") 
             {
                 if (At_Top_Level) { Execute(Backup_Path); } 
@@ -755,11 +799,11 @@ namespace Xml_Axe
                 }
 
 
-                Open_File_Dialog_1.FileName = "";
+                Open_File_Dialog.FileName = "";
                 if (Properties.Settings.Default.Last_File != null & Properties.Settings.Default.Last_File != "")
-                { Open_File_Dialog_1.InitialDirectory = Path.GetDirectoryName(Properties.Settings.Default.Last_File); }
+                { Open_File_Dialog.InitialDirectory = Path.GetDirectoryName(Properties.Settings.Default.Last_File); }
 
-                Open_File_Dialog_1.Filter = "xml files (*.xml)|*.xml|Text files (*.txt)|*.txt";
+                Open_File_Dialog.Filter = "xml files (*.xml)|*.xml|Text files (*.txt)|*.txt";
                 //Open_File_Dialog_1.FilterIndex = 1;
                 //Open_File_Dialog_1.RestoreDirectory = true;
                 //Open_File_Dialog_1.CheckFileExists = true;
@@ -767,10 +811,10 @@ namespace Xml_Axe
 
                 try
                 {   // If the Open Dialog found a File
-                    if (Open_File_Dialog_1.ShowDialog() == DialogResult.OK)
+                    if (Open_File_Dialog.ShowDialog() == DialogResult.OK)
                     {
-                        Text_Box_Original_Path.Text = Open_File_Dialog_1.FileName;
-                        Set_Paths(Open_File_Dialog_1.FileName);
+                        Text_Box_Original_Path.Text = Open_File_Dialog.FileName;
+                        Set_Paths(Open_File_Dialog.FileName);
                     }
                 } catch {}
             }
@@ -2559,6 +2603,12 @@ Percent Fire_Min_Recharge_Seconds = 10
 
 Percent Fire_Max_Recharge_Seconds = 10
 
+int Fire_Pulse_Delay_Seconds = 10
+
+int Fire_Pulse_Count = 10
+
+int Fire_Range_Distance  = 100
+
 Percent Scale_Factor = 1 # Use this in Percent Mode to scale all units in a Mod. NOTE: The *All Types* filter only means SpaceUnit, UniqueUnit and StarBase. You need to select all other entities explicitly as Filter Type: TransportUnit, Space Heroes, Projectile, Particle and Planet will be ignored, unless you scale them type by type. Keep in mind to not scale too much, because the Particles in models are not scaled by this. Reversible.
 
 Percent Scale_Galaxies = 100 # Adjusts size of Planets and their *Galaxy_Core_Art_Model* and scales their relative position to each other through the Galactic_Position tag. If you are lucky and single GCs are sorted within certain files you can *ignore their files and scale GCs individually.
@@ -3859,7 +3909,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         {
 
             // iConsole(400, 100, "\"" + Mod_Name + "\""); return;                   
-            // iConsole(500, 500, string.Join("\n", The_Backup_Folders)); return; 
+            // iConsole(500, 500, string.Join("\n", Found_Entities)); return; 
             // return;
 
 
@@ -5150,7 +5200,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         }
 
         private void Set_UI_Into_Search_Mode(bool Mode)
-        {   Control[] Controls = { Button_Browse_Folder, Button_Run, Button_Attribute, Button_Scripts, Button_Percentage, Button_Operator, Button_Toggle_Settings };
+        {   Control[] Controls = { Button_Run, Button_Attribute, Button_Scripts, Button_Percentage, Button_Operator, Button_Toggle_Settings };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = !Mode; } // Hide or show all        
         }
 
