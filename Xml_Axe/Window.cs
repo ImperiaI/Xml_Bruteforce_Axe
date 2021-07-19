@@ -65,6 +65,7 @@ namespace Xml_Axe
 
         string UI_Mode = "Normal"; // Settings, Backup, Script, Search
         string Operation_Mode = "Int";
+        string Program_Scope = "All";
         string Scale_Mode = "XY";
 
         bool EAW_Mode = true;
@@ -226,11 +227,16 @@ namespace Xml_Axe
             
             Label_Entity_Name.Text = Queried_Attribute; 
 
+         
+
             if (Match_Setting("Disable_EAW_Mode"))
             {
                 EAW_Mode = false;                      
                 Label_Type_Filter.Text = "Parent Name";
             }
+
+            Set_Program_Scope();
+
 
 
             Text_Box_Original_Path.BackColor = Theme_Color;
@@ -241,6 +247,25 @@ namespace Xml_Axe
 
 
 
+
+
+        private void Set_Program_Scope()
+        {
+            Temporal_A = Get_Setting_Value("Program_Scope");
+
+            if (!Is_Match_2(Temporal_A, "All"))
+            {
+                if (Temporal_A.ToLower().Contains("backup")) { Program_Scope = "Backups"; }
+                else if (Temporal_A.ToLower().Contains("script")) { Program_Scope = "Scripts"; }
+                else { Program_Scope = "All"; }
+            }
+            Temporal_A = ""; // Clear
+
+
+            if (Program_Scope == "All") { Button_Backup.Visible = true; Button_Scripts.Visible = true; }
+            else if (Program_Scope == "Backups") { Button_Backup_Click(null, null); Button_Backup.Visible = false; }
+            else if (Program_Scope == "Scripts") { Button_Scripts_Click(null, null); Button_Scripts.Visible = false; }
+        }
 
         //-----------------------------------------------------------------------------
         // Enabling Drag and Drop
@@ -1934,7 +1959,13 @@ namespace Xml_Axe
       
         //===========================//
         private void Button_Toggle_Settings_Click(object sender, EventArgs e)
-        {            
+        {
+            // Clearing other modes before accessing Settings
+            if (UI_Mode == "Script") { Button_Scripts_Click(null, null); } 
+            else if (UI_Mode == "Backup") { Button_Backup_Click(null, null); }
+
+
+
             if (Text_Box_Tags.Visible == true)
             {
                 if (Combo_Box_Type_Filter.Text != "Faction Name Filter" && Combo_Box_Type_Filter.Text != "Category Mask Filter") 
@@ -1980,6 +2011,8 @@ namespace Xml_Axe
                    
                 Reset_Tag_Box();
                 Reset_Root_Tag_Box();
+                Set_Program_Scope();
+
 
                 Toggle_Undo_Button(Enable_Undo); // Show it if it was visible before
              
@@ -2147,7 +2180,8 @@ namespace Xml_Axe
                 } 
                 else if (EAW_Mode) { Program_Path = Path.GetDirectoryName(Steam_Path) + @"\steamapps\common\Star Wars Empire at War\corruption\StarWarsG.exe"; }
               
-
+                  
+            
                 
 
 
@@ -2465,6 +2499,7 @@ namespace Xml_Axe
 # Backups_Per_Directory = 10
 # Program_Directory = %AppData%\Local\Xml_Axe\
 # Disable_EAW_Mode = false
+# Program_Scope = All
 # Text_Format_Delimiter = ;
 
 
@@ -3807,9 +3842,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         //=====================//
         private void Button_Search_Click(object sender, EventArgs e)
-        {    
+        {
 
-            // iConsole(400, 100, "false"); return;                   
+            // iConsole(400, 100, "\"" + Program_Scope + "\""); return;                   
             // iConsole(500, 500, string.Join("\n", The_Backup_Folders)); return; 
             // return;
 
@@ -5091,12 +5126,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         }
 
         private void Set_UI_Into_Backup_Mode(bool Mode)
-        {   Control[] Controls = { Button_Run, Button_Attribute, Button_Scripts, Button_Percentage, Button_Toggle_Settings };
+        {   Control[] Controls = { Button_Run, Button_Attribute, Button_Scripts, Button_Percentage };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = !Mode; } // Hide or show all        
         }
 
         private void Set_UI_Into_Script_Mode(bool Mode)
-        {   Control[] Controls = { Button_Start, Button_Run, Button_Backup, Button_Search, Button_Attribute, Button_Percentage, Button_Operator, Button_Toggle_Settings };
+        {   Control[] Controls = { Button_Start, Button_Run, Button_Backup, Button_Search, Button_Attribute, Button_Percentage, Button_Operator };
             foreach (Control Selectrion in Controls) { Selectrion.Visible = !Mode; } // Hide or show all        
         }
 
