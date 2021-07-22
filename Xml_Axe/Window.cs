@@ -979,7 +979,7 @@ namespace Xml_Axe
 
            
             // iConsole(600, 400, Check_for_Steam_Version()); // Debug
-            if (Child_Name == "") { return; }
+            if (Child_Name == "") { iConsole(540, 80, "\nYou need to write something into the " + Label_Tag_Name.Text); return; }
 
 
             if (Operation_Mode == "Percent" && Child_Value == "-100%")
@@ -2589,7 +2589,8 @@ namespace Xml_Axe
 # Custom_Program_Path = 
 # Custom_Start_Parameters = 
 # User_Name = false
-# Backups_Per_Directory = 10
+# Backups_Per_Directory = 15
+# Move_To_Trash = true
 # Program_Directory = %AppData%\Local\Xml_Axe\
 # Disable_EAW_Mode = false
 # Program_Scope = All
@@ -3830,11 +3831,15 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         {
             if (Directory.Exists(Data)) 
             {
+                if (!Match_Setting("Move_To_Trash")) { Directory.Delete(Data, true); return; }
+
                 try { Microsoft.VisualBasic.FileIO.FileSystem.DeleteDirectory(Data, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin); }
                 catch {}
             }
             else if (File.Exists(Data)) 
             {
+                if (!Match_Setting("Move_To_Trash")) { File.Delete(Data); return; }
+
                 try { Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(Data, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin); }
                 catch {}
             }
@@ -5519,10 +5524,13 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
 
-            string Target_Name = Package_Name;         
-          
+            string Target_Name = Package_Name;
+            if (Directory.Exists(Selected_Backup_Path + @"\Current")) { Deleting(Selected_Backup_Path + @"\Current"); } // Artifact from last usage
+
+
             if (Same_Minute) 
-            {   if (Directory.Exists(Selected_Backup_Path + Package_Name + "_Base")) { Package_Name += "_Base"; }
+            {             
+                if (Directory.Exists(Selected_Backup_Path + Package_Name + "_Base")) { Package_Name += "_Base"; }
                 else { Target_Name = "Current"; } // Base version has a own directory, so a temporal "Current" dir is not necessary here
             }
 
