@@ -360,40 +360,13 @@ namespace Xml_Axe
         {
             if (UI_Mode == "Script") { Run_Script(); } // Script Mode override
 
-            else if (UI_Mode == "Backup") // Just move into the Xml Directory that is currently selected 
-            {   if (At_Top_Level) // Leave this below here!
-                {   Button_Operator_MouseLeave(null, null);
-                    // Button_Scripts.Visible = true;
-                    Button_Attribute.Visible = true;
-
-                    Backup_Folder = Select_List_View_First(List_View_Selection); // This defines which Backup dir is targeted!!
-                    Selected_Backup_Path = Backup_Path + Backup_Folder + @"\";
-
-                    Zoom_List_View(2); 
-                    // Grabbing the Path we're going to use to sync at
-                    
-                    Refresh_Backup_Stack();
-                    // Get_Sync_Path() needs to run AFTER Refresh_Backup_Stack() because it loads Root_Backup_Info  
-                    Get_Sync_Path();
-                   
-
-                    Button_Search_MouseLeave(null, null);
-                    Button_Attribute_MouseLeave(null, null);           
-                }
-
-                else // if (!At_Top_Level)
-                {
-                    // User_Input coordinates the timing with the Restore() function.
-                    // De-select Parent Backups while no slot is selected
-                    if (User_Input) { Set_Backup_Checker(); } 
-                    
-                    // Switch between Red and Green Color
-                    Button_Start_MouseLeave(null, null);   
-                    Button_Browse_Folder_MouseLeave(null, null);
-                    Button_Search_MouseLeave(null, null);                    
-                }                                                             
+            else if (UI_Mode == "Backup")
+            {  // Switch between Red and Green Color
+                Button_Start_MouseLeave(null, null);
+                Button_Browse_Folder_MouseLeave(null, null);
+                Button_Search_MouseLeave(null, null);
             }
-
+                
             else // Normal Mode
             {
                 if (List_View_Selection.SelectedItems.Count < 2)
@@ -879,7 +852,9 @@ namespace Xml_Axe
             if (UI_Mode == "Backup") // Deletion Function
             {
                 Temporal_E = Select_List_View_Items(List_View_Selection);
-                if (Temporal_E.Count() == 0) { iConsole(400, 100, "\nPlease select any of the backups."); return; }
+                if (Temporal_E.Count() == 0 || Temporal_E == null) { iConsole(400, 100, "\nPlease select any of the Entries."); return; }
+
+                // iConsole(540, 200, string.Join("\n", Temporal_E)); return;
 
 
                 bool Selected_Base = false;
@@ -887,7 +862,7 @@ namespace Xml_Axe
                 {
                     if (Folder_Path == Current_Backup)
                     {
-                        iConsole(540, 140, "\nYou can not delete the selected backup, \nplease checkout -> any other backup and try again.\nI recommend to checkout the newest possible one.");
+                        iConsole(540, 140, "\nYou can not delete the selected Backup, \nplease checkout any other backup and try it again.\nI recommend to checkout the newest possible one.");
                         return; // Exit as the Checked out Backup can not be deleted.
                     }
 
@@ -906,20 +881,28 @@ namespace Xml_Axe
                 }
               
                 else
-                {   string s = "";
-                    if (Temporal_E.Count > 1) { s = "s"; }
-
-                    iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nAre you sure you wish to delete the \nselected backup" + s + "?");
+                {  
+                    if (Temporal_E.Count > 1)
+                    { iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nAre you sure you wish to delete the \nselected Items?"); }
+                   
+                    else try
+                    { iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nAre you sure you wish to delete \n" + Temporal_E[0] + "?");                  
+                    } catch { return; }
                 }
 
                 if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
 
+
+
+                
            
 
                 foreach (string Folder_Path in Temporal_E)
                 {
                     string Full_Path = Selected_Backup_Path + Folder_Path;
-                    // iConsole(600, 100, Full_Path);
+                    if (At_Top_Level) { Full_Path = Backup_Path + Folder_Path; }
+                    // iConsole(600, 100, "\n" + Full_Path); 
+
 
                     if (Directory.Exists(Full_Path)) 
                     { 
@@ -931,7 +914,7 @@ namespace Xml_Axe
                     }                   
                 }
 
-                Refresh_Backup_Stack();
+                if (!At_Top_Level) { Refresh_Backup_Stack(); } // Because At_Top_Level, this would write none sense
             }
             
             else
@@ -5544,8 +5527,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             }
 
 
-            // Load_Backup uses "!Same_Minute", because if in the same minute we load the backup below
-            Create_Backup_Info(Backup_Folder, Target_Name, Temporal_A, Changes, !Same_Minute, true,  // "Created a backup, based on different file sizes from:\n\n\n" +                
+            // Load_Backup used to be "!Same_Minute", because if in the same minute we load the backup below
+            Create_Backup_Info(Backup_Folder, Target_Name, Temporal_A, Changes, true, true,  // "Created a backup, based on different file sizes from:\n\n\n" +                
                 string.Join("\n", Added_Files), string.Join("\n", Missing_Files)); // "Load_Backup" was Has_Collapsed
                 // Use "\n\n" for additional new lines between the entries.
 
@@ -5590,7 +5573,39 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         // Mouse Up because this event runs the right timing to grab the newest selected item.
         private void List_View_Selection_MouseUp(object sender, MouseEventArgs Mouse)
         {
-            if (UI_Mode != "Backup" || At_Top_Level) { return; }
+            if (UI_Mode != "Backup") { return; }
+
+
+            if (At_Top_Level) 
+            {
+                if (Mouse.Button == MouseButtons.Left)
+                {
+                    Backup_Folder = Select_List_View_First(List_View_Selection); // This defines which Backup dir is targeted!!
+                    if (Backup_Folder == "") { return; }
+                    Selected_Backup_Path = Backup_Path + Backup_Folder + @"\";
+
+
+                    Button_Operator_MouseLeave(null, null);
+                    // Button_Scripts.Visible = true;
+                    Button_Attribute.Visible = true;
+               
+                   
+                    Zoom_List_View(2);
+                    // Grabbing the Path we're going to use to sync at
+
+                    Refresh_Backup_Stack();
+                    // Get_Sync_Path() needs to run AFTER Refresh_Backup_Stack() because it loads Root_Backup_Info  
+                    Get_Sync_Path();
+
+
+                    Button_Search_MouseLeave(null, null);
+                    Button_Attribute_MouseLeave(null, null);
+                }
+                return;
+            }
+
+                      
+              
             if (Skipp_First_Trigger) { Skipp_First_Trigger = false; return; }
 
 
@@ -5608,10 +5623,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             { Set_Backup_Checker(); } // Ignore Parents
             else { Set_Backup_Checker(Selection); }
 
-
+     
             Text_Box_Description.Text = ""; // Clear last entry
           
-
 
             // ========================================================
             // Save eventual changes to Comment Section
@@ -5679,7 +5693,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 //    Text_Box_Description.Text += "\n\n//======= Changed Files: =======\\\\ \n\n"
                 //        + string.Join("\n", Get_Segment_Info(Selection, "Changed_Files"));
                 //}
-            }                        
+            }
+           
         }
 
 
