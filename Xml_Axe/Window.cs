@@ -5535,11 +5535,16 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             if (Is_Auto_Stash) { Temporal_A = Changes; } // Auto Stash has Changes as copy in the Coment
 
 
-            string Target_Name = Package_Name;
-            if (Same_Minute) { Target_Name = "Current"; }
+
+            string Target_Name = Package_Name;         
+          
+            if (Same_Minute) 
+            {   if (Directory.Exists(Selected_Backup_Path + Package_Name + "_Base")) { Package_Name += "_Base"; }
+                else { Target_Name = "Current"; } // Base version has a own directory, so a temporal "Current" dir is not necessary here
+            }
 
 
-            // !Same_Minute because if in the same minute we load the backup below
+            // Load_Backup uses "!Same_Minute", because if in the same minute we load the backup below
             Create_Backup_Info(Backup_Folder, Target_Name, Temporal_A, Changes, !Same_Minute, true,  // "Created a backup, based on different file sizes from:\n\n\n" +                
                 string.Join("\n", Added_Files), string.Join("\n", Missing_Files)); // "Load_Backup" was Has_Collapsed
                 // Use "\n\n" for additional new lines between the entries.
@@ -5547,13 +5552,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
             if (Same_Minute)
-            {
-                if (Directory.Exists(Selected_Backup_Path + Package_Name + "_Base")) { Package_Name += "_Base"; }
-
-                Fuse_Segments(Package_Name, Target_Name);
+            {   Fuse_Segments(Package_Name, Target_Name);
                 try
                 {
-                    File.Copy(Selected_Backup_Path + Package_Name + Backup_Info,
+                    File.Copy(Selected_Backup_Path + Package_Name.Replace("_Base", "") + Backup_Info,
                         Backup_Path + Backup_Folder + Backup_Info, true);
                 } catch {}
 
@@ -6023,9 +6025,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                                     if (Length_A == Length_B) // If file sizes match 
                                     {
                                         MD5 Md5 = MD5.Create();
-                                        // FileStream Stream = File.OpenRead(File_A); // using (FileStream stream = File.OpenRead(File_A))
-                                        byte[] Hash_A = Md5.ComputeHash(File.OpenRead(File_A));
-                                        byte[] Hash_B = Md5.ComputeHash(File.OpenRead(File_B));
+                                        FileStream Stream_A = File.OpenRead(File_A); // using (FileStream stream = File.OpenRead(File_A))
+                                        byte[] Hash_A = Md5.ComputeHash(Stream_A);
+
+                                        FileStream Stream_B = File.OpenRead(File_B);
+                                        byte[] Hash_B = Md5.ComputeHash(Stream_B);
+                                        Stream_A.Close(); Stream_B.Close(); // Prevent "File is open in another program" issues.
                                         if (!Hash_A.SequenceEqual(Hash_B)) { continue; }
 
 
