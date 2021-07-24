@@ -4482,13 +4482,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             Temporal_D = Current_Branch.Count() -1;
            
             Temporal_B = "any other backup \noutside of the marked area ";
-            bool Top_One_Selected = false;
             string Slot_0 = "";
             try { Slot_0 = List_View_Selection.Items[0].Text; } catch { iConsole(400, 100, "Error: List View Slot 0 not found."); }
 
 
             if (Current_Branch.Contains(Slot_0) && Slot_0 != Current_Backup)
-            { Top_One_Selected = true; Temporal_B = "the top most backup\n"; } // if (Current_Branch.First() == Current_Backup)
+            { Temporal_B = "the top most backup\n"; } // if (Current_Branch.First() == Current_Backup)
           
         
             Temporal_A = "\nThe selected Backup was marked for merging.\n" +
@@ -4512,7 +4511,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
       
 
             // Collecting all entries from all files and moving down towards the _Base version.
-            Collapse_Segment_Infos(Current_Branch, Selected_Backup, "", Top_One_Selected); // return false;
+            Collapse_Segment_Infos(Current_Branch, Selected_Backup, ""); // return false;
 
 
 
@@ -5761,10 +5760,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         // Just dump in the whole parent history of a backup here. Insert the selected Backup as Last_Backup, in order to start at its Axe_Info.txt
         // It iterates and syncs all Segment types, if you specify no certain Segment_Name
-        public void Collapse_Segment_Infos(List<string> Backup_List, string Last_Backup = "", string Segment_Name = "", bool Load_Backup = false)
+        public void Collapse_Segment_Infos(List<string> Backup_List, string Last_Backup = "", string Segment_Name = "")
         {
             foreach (string Backup in Backup_List) 
             {
+                if (Backup == "" || Backup == " ") { continue; }
+
                 if (Last_Backup == "") { Last_Backup = Backup; }
                 // Keep on fusing with both their predecessor and successor, until we reach the last backup in the list :)
                 else { Fuse_Segments(Backup, Last_Backup, Segment_Name); Last_Backup = Backup; }
@@ -5773,13 +5774,15 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         //=====================//
       
-        public void Fuse_Segments(string Source_Backup, string Target_Backup, string Segment_Name = "", bool Load_Backup = false)
+        public void Fuse_Segments(string Source_Backup, string Target_Backup, string Segment_Name = "")
         {
             List<string> Target_Content = new List<string>();
             string[] Segments = new string[] { "Comments", "Changed_Files", "Added_Files", "Removed_Files" }; // , "Parents"}; Ignore Parents
             if (Segment_Name != "") { Segments = new string[] { Segment_Name }; } // Just the specified segment instead of all
 
             try {
+
+                if (!Directory.Exists(Selected_Backup_Path + Source_Backup)) { return; } // Because some parent references might be outdated/false/missing
 
                 // string Stitched_File = ""; // We stitch segment by segment into this new file
                 string Stitched_File = File.ReadAllText(Selected_Backup_Path + Source_Backup + Backup_Info).Replace("\r", "").Replace("\t", "");
@@ -5808,8 +5811,9 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     }
                 }
 
+
                 // iConsole(600, 600, "Final file is :\n" + Stitched_File);
-                // if (Load_Backup) { 
+                // iConsole(600, 600, Selected_Backup_Path + Source_Backup + Backup_Info);
                 File.WriteAllText(Selected_Backup_Path + Source_Backup + Backup_Info, Stitched_File); 
 
             } catch { iConsole(500, 140, "\nFailed to stitch Axe_Info.txt files together."); }
