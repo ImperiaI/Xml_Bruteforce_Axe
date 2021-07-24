@@ -4480,9 +4480,21 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             List<string> Found_Backups = new List<string>();
             List<string> Current_Branch = Get_Backup_Parents(Selected_Backup, true);
             Temporal_D = Current_Branch.Count() -1;
+           
+            Temporal_B = "any other backup \noutside of the marked area ";
+            bool Top_One_Selected = false;
+            string Slot_0 = "";
+            try { Slot_0 = List_View_Selection.Items[0].Text; } catch { iConsole(400, 100, "Error: List View Slot 0 not found."); }
 
-            Temporal_A = "\nThe selected Backup was marked for merging \ninto the Base backup. " +
-                         "Please load/checkout any \nother backup by the arrow button to unlock this one.";
+
+            if (Current_Branch.Contains(Slot_0) && Slot_0 != Current_Backup)
+            { Top_One_Selected = true; Temporal_B = "the top most backup\n"; } // if (Current_Branch.First() == Current_Backup)
+          
+        
+            Temporal_A = "\nThe selected Backup was marked for merging.\n" +
+                         "Please load/checkout " + Temporal_B + "to unlock this one.";
+
+
             // iConsole(600, 400, string.Join("\n", Current_Branch)); return false;
           
 
@@ -4497,9 +4509,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                 if (Caution_Window.Passed_Value_A.Text_Data == "false") { return false; }
             }
+      
 
             // Collecting all entries from all files and moving down towards the _Base version.
-            Collapse_Segment_Infos(Current_Branch, Selected_Backup); // return false;
+            Collapse_Segment_Infos(Current_Branch, Selected_Backup, "", Top_One_Selected); // return false;
 
 
 
@@ -4513,6 +4526,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             if (Directory.Exists(Working_Directory)) { Deleting(Working_Directory); } // Artifact from last usage
             Directory.CreateDirectory(Working_Directory);
 
+            bool Assigned_First = false;
 
           
             try {   
@@ -4524,12 +4538,22 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
                         if (Entry != "" && Entry != " " && !Found_Backups.Contains(Entry)) { Found_Backups.Add(Entry); } // Match
                         else { continue; }
- 
 
-                        // Comment out this line out to fall back into "Current" as working dir.
-                        if (Entry.EndsWith("Base"))
+
+
+                        // Stop, we can't Collapse the currently loaded backup unless its on top
+                        if (Entry == Current_Backup)
+                        {
+                            if (Slot_0 != "" && Entry != Slot_0) { iConsole(500, 160, Temporal_A); return false; }
+                        } 
+
+                        // Comment out this part to fall back into "Current" as working dir:
+                        if (!Assigned_First) // if (Entry.EndsWith("Base"))
                         {   Target_Path = File_Path + @"\";
+                            Assigned_First = true;
 
+                           
+                            if (Current_Branch.Last() != Current_Backup) { continue; } // Topmost needs to be the selected backup or let it be
 
                             try
                             {   // The .txt of the Base directory is already stitched together by Collapse_Segment_Infos() at the top here.
@@ -4543,9 +4567,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         } 
 
 
-                        else if (Entry == Current_Backup) // Stop, we can't Collapse the currently loaded backup
-                        { iConsole(550, 180, Temporal_A); return false; } // Can't be Entry.EndsWith("Base")
-
+                        
                   
                         // iConsole(600, 300, "\n" + Entry + " in " + File_Path + "\n\nto\n\n" + Working_Directory);
                         Copy_Now(File_Path, Working_Directory);
@@ -5739,7 +5761,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         // Just dump in the whole parent history of a backup here. Insert the selected Backup as Last_Backup, in order to start at its Axe_Info.txt
         // It iterates and syncs all Segment types, if you specify no certain Segment_Name
-        public void Collapse_Segment_Infos(List<string> Backup_List, string Last_Backup = "", string Segment_Name = "") 
+        public void Collapse_Segment_Infos(List<string> Backup_List, string Last_Backup = "", string Segment_Name = "", bool Load_Backup = false)
         {
             foreach (string Backup in Backup_List) 
             {
@@ -5751,7 +5773,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         //=====================//
       
-        public void Fuse_Segments(string Source_Backup, string Target_Backup, string Segment_Name = "")
+        public void Fuse_Segments(string Source_Backup, string Target_Backup, string Segment_Name = "", bool Load_Backup = false)
         {
             List<string> Target_Content = new List<string>();
             string[] Segments = new string[] { "Comments", "Changed_Files", "Added_Files", "Removed_Files" }; // , "Parents"}; Ignore Parents
@@ -5760,7 +5782,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             try {
 
                 // string Stitched_File = ""; // We stitch segment by segment into this new file
-                string Stitched_File = File.ReadAllText(Selected_Backup_Path + Source_Backup + Backup_Info).Replace("\r", "");
+                string Stitched_File = File.ReadAllText(Selected_Backup_Path + Source_Backup + Backup_Info).Replace("\r", "").Replace("\t", "");
                 // If "" it will run Write_Into_Segment() to just return "".
 
 
@@ -5787,7 +5809,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }
 
                 // iConsole(600, 600, "Final file is :\n" + Stitched_File);
-                File.WriteAllText(Selected_Backup_Path + Source_Backup + Backup_Info, Stitched_File);
+                // if (Load_Backup) { 
+                File.WriteAllText(Selected_Backup_Path + Source_Backup + Backup_Info, Stitched_File); 
 
             } catch { iConsole(500, 140, "\nFailed to stitch Axe_Info.txt files together."); }
         }
