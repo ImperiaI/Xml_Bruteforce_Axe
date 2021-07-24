@@ -73,7 +73,6 @@ namespace Xml_Axe
         bool Silent_Mode = false;
         bool Debug_Mode = true;
         bool Ying_Dominates = false;
-        bool Skipp_First_Trigger = true;
 
         string Temporal_A, Temporal_B = "";
         int Temporal_C = 0;
@@ -767,6 +766,7 @@ namespace Xml_Axe
                     else if (Mouse.Button == MouseButtons.Right)
                     {   Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_File_Lit);
                         Execute(Get_Backup_Path(Selection) + Backup_Info);
+                        // Visualize_Characters(File.ReadAllText(Get_Backup_Path(Selection) + Backup_Info));  // Debug
                         System.Threading.Thread.Sleep(2000);
                         return;                      
                     }
@@ -3857,7 +3857,6 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Set_UI_Into_Backup_Mode(false); // Needs to run after Clear_Last_Mode(); 
 
                 At_Top_Level = true;
-                Skipp_First_Trigger = true;
                 Load_Xml_Content(Properties.Settings.Default.Last_File); // Auto toggles to visible  
 
                 Button_Operator.Location = new Point(1, 510); // Back to its original location
@@ -5131,13 +5130,16 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 }
 
 
+                This_Backup_Path = Current_Backup;
+                if (Current_Backup == "Current") { This_Backup_Path = "";}
+
                 if (Create_Parents && Current_Backup != "None") try
                 {
                     Info_File +=
                        "//============================================================\\\\" +
                        "\nParents" +
                        "\n//============================================================\\\\" +
-                       "\n" + Current_Backup;
+                       "\n" + This_Backup_Path;
 
 
                     Temporal_E.Clear();
@@ -5613,10 +5615,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             }
 
                       
-              
-            if (Skipp_First_Trigger) { Skipp_First_Trigger = false; return; }
-
-
+    
             string Selection = Select_List_View_First(List_View_Selection);
             if (Selection == "") { return; }
             // iConsole(400, 100, Selection);
@@ -5631,7 +5630,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             { Set_Backup_Checker(); } // Ignore Parents
             else { Set_Backup_Checker(Selection); }
 
-     
+
+  
             Text_Box_Description.Text = ""; // Clear last entry
           
 
@@ -5937,7 +5937,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
 
-                if (Passed_File == "") { The_File = File.ReadAllText(Backup + Backup_Info); }
+                if (Passed_File == "") { The_File = File.ReadAllText(Backup + Backup_Info).Replace("\r", "").Replace("\t", ""); }
                 // else { iConsole(500, 600, "Reading passed file:\n\n" + The_File); }  // Otherwise it remains the Passed_File
                
 
