@@ -4511,7 +4511,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
       
 
             // Collecting all entries from all files and moving down towards the _Base version.
-            Collapse_Segment_Infos(Current_Branch, Selected_Backup, ""); // return false;
+            Collapse_Segment_Infos(Current_Branch, Selected_Backup); // return false;
 
 
 
@@ -4616,10 +4616,12 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 List<string> Found_Backups = new List<string>();
                 string Target_Path = "";
                 string Working_Directory = Backup_Path + Backup_Folder + @"\Current\";
-           
-              
+
+                string Slot_0 = "";
+                try { Slot_0 = List_View_Selection.Items[0].Text; } catch { iConsole(400, 100, "Error: List View Slot 0 not found."); }
+
                 Temporal_A = "\nThe selected Backup was marked for merging \ninto the Base backup. " +
-                             "Please load/checkout any \nother backup by the arrow button to unlock this one.";
+                             "Please load/checkout the \ntop most backup to unlock this one.";
 
 
                 if (Certain_Backup != "")
@@ -4640,11 +4642,17 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         else // if (!Entry.EndsWith("Base")) 
                         {
                             // Stop, we can't Collapse the currently loaded backup
-                            if (Entry == Current_Backup && Certain_Backup != "Silent") { iConsole(550, 180, Temporal_A); return false; }
+                            if (Entry == Current_Backup && Certain_Backup != "Silent" && Slot_0 != "" && Entry != Slot_0) 
+                            { iConsole(550, 180, Temporal_A); return false; }
 
                             Backup_Files.Add(Entry); break; // Bottom most Backup                        
                         }                                                                           
                     }
+
+                    Backup_Files.Reverse();
+                    Collapse_Segment_Infos(Backup_Files);
+                    Backup_Files.Reverse(); // Undo
+
                     // iConsole(400, 100, string.Join("\n", Backup_Files));
                 }
 
@@ -4662,16 +4670,20 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                             }
                             else // if (!Item.Text.EndsWith("Base")) 
                             {   // Stop, we can't Collapse the currently loaded backup
-                                if (Item.Text == Current_Backup) { iConsole(550, 180, Temporal_A); return false; }
+                                if (Item.Text == Current_Backup && Slot_0 != "" && Item.Text != Slot_0) { iConsole(550, 180, Temporal_A); return false; }
                                 Backup_Files.Add(Item.Text); Selected_First = true; 
                             }
                         
                         } else if (Selected_First) { Detected_Selection_Gap = true; } // Ignoring all gaps until the first is selected                                
                     }
 
+                    Collapse_Segment_Infos(Backup_Files); 
 
                     Backup_Files.Reverse(); // Important, to paste the versions over each other in chronological order.                   
                 }
+
+
+            
 
 
                 if (Directory.Exists(Working_Directory)) { Deleting(Working_Directory); } // Artifact from last usage
@@ -5790,25 +5802,27 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
                 foreach (string Segment in Segments)
-                {
-                    Target_Content.Clear();
-                    Target_Content = Get_Segment_Info(Target_Backup, Segment);
+                {   try
+                    {   Target_Content.Clear();
+                        Target_Content = Get_Segment_Info(Target_Backup, Segment);
 
 
-                    foreach (string Entry in Get_Segment_Info(Source_Backup, Segment))
-                    {
-                        if (Target_Content.Contains(Entry)) { Target_Content.Remove(Entry); } // Removing duplicate lines
-                    }
+                        foreach (string Entry in Get_Segment_Info(Source_Backup, Segment))
+                        {
+                            if (Target_Content.Contains(Entry)) { Target_Content.Remove(Entry); } // Removing duplicate lines
+                        }
 
 
-                    if (Target_Content.Count() > 0)
-                    {
-                        // iConsole(500, 400, Segment + " is :\n\n" + string.Join("\n", Target_Content));
+                        if (Target_Content.Count() > 0)
+                        {
+                            // iConsole(500, 400, Segment + " is :\n\n" + string.Join("\n", Target_Content));
 
-                        // Position of Target and Source backup are exchanged here!!!
-                        Stitched_File = Write_Into_Segment(Source_Backup, Segment, Target_Content, Target_Backup, true, Stitched_File);
-                        // iConsole(600, 600, "The file is :\n" + Stitched_File);
-                    }
+                            // Position of Target and Source backup are exchanged here!!!
+                            Stitched_File = Write_Into_Segment(Source_Backup, Segment, Target_Content, Target_Backup, true, Stitched_File);
+                            // iConsole(600, 600, "The file is :\n" + Stitched_File);
+                        }
+
+                    } catch {}
                 }
 
 
