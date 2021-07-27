@@ -4609,9 +4609,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         public bool Collapse_Backup_Stack(string Certain_Backup = "")
         {                             
-            try
-            {   bool Selected_First = false;
-                bool Detected_Selection_Gap = false;
+            try {   
+                bool Is_Loaded = false;
+                bool Selected_First = false;
+                bool Detected_Selection_Gap = false;               
                 List<string> Backup_Files = new List<string>();
                 List<string> Found_Backups = new List<string>();
                 string Target_Path = "";
@@ -4642,8 +4643,10 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         else // if (!Entry.EndsWith("Base")) 
                         {
                             // Stop, we can't Collapse the currently loaded backup
-                            if (Entry == Current_Backup && Certain_Backup != "Silent" && Slot_0 != "" && Entry != Slot_0) 
+                            if (Entry == Current_Backup && Certain_Backup != "Silent" && Slot_0 != "" && Entry != Slot_0)
                             { iConsole(550, 180, Temporal_A); return false; }
+
+                            if ( Entry == Slot_0) { Is_Loaded = true; }
 
                             Backup_Files.Add(Entry); break; // Bottom most Backup                        
                         }                                                                           
@@ -4671,6 +4674,8 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                             else // if (!Item.Text.EndsWith("Base")) 
                             {   // Stop, we can't Collapse the currently loaded backup
                                 if (Item.Text == Current_Backup && Slot_0 != "" && Item.Text != Slot_0) { iConsole(550, 180, Temporal_A); return false; }
+                                if (Item.Text == Slot_0) { Is_Loaded = true; }
+
                                 Backup_Files.Add(Item.Text); Selected_First = true; 
                             }
                         
@@ -4706,9 +4711,13 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
 
                 if (Target_Path != "") // Because dynamic assigning of Working_Directory to Target_Path above, wouldn't work timing wise. 
-                {   Copy_Now(Working_Directory, Target_Path);
+                {
+                    if (Is_Loaded) try { File.Copy(Target_Path + Backup_Info, Root_Backup_Path, true); } catch {}
+
+                    Copy_Now(Working_Directory, Target_Path);
                     Deleting(Working_Directory);
                 }
+
 
 
                 if (Certain_Backup != "Silent") // Only for auto-merge mode the notification is muted
@@ -4772,7 +4781,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     }
                     else if (Segment_Name == "Added_Files")
                     {
-                        File.Copy(Noted_Path, Working_Directory + @"\" + Noted_File, true);             
+                        try {  File.Copy(Noted_Path, Working_Directory + @"\" + Noted_File, true); } catch {}    
                         if (Debug_Mode) { Managed_Files.Add("Create  " + Noted_File); }
                     }                                                                
                 }
