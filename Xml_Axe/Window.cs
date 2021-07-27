@@ -324,10 +324,20 @@ namespace Xml_Axe
         { if (!Typed_Something) { Typed_Something = true; } }
 
 
+        //===========================//
+
         private void Disable_Description()
         {
             Text_Box_Description.Text = "";
             Text_Box_Description.Visible = false;
+        }
+
+        //===========================//
+
+        private void Enable_Description()
+        {
+            Text_Box_Description.Text = "";
+            Text_Box_Description.Visible = true;
         }
 
         //===========================// 
@@ -2272,14 +2282,19 @@ namespace Xml_Axe
                     if (EAW_Mode && !Program_Path.EndsWith(".exe")) { Program_Path += ".exe"; } // Append suffix
                 } 
                 else if (EAW_Mode) { Program_Path = Path.GetDirectoryName(Steam_Path) + @"\steamapps\common\Star Wars Empire at War\corruption\StarWarsG.exe"; }
-              
-                  
-            
+
+
+                if (Program_Path.Contains("%AppData%\\Local")) // Extract the full path
+                { Program_Path = Program_Path.Replace("%AppData%\\Local", Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)); }
+                                
+                else if (Program_Path.Contains("%AppData%")) 
+                { Program_Path = Program_Path.Replace("%AppData%", Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData)); }
+                
                 
 
 
                 // if (Custom_Parameters != "" & !Match_Without_Emptyspace(Properties.Settings.Default.Tags, "Custom_Start_Parameters = false"))
-                if (Verify_Setting("Custom_Start_Parameters"))
+                if (Verify_Setting("Custom_Start_Parameters")) 
                 {  
                     if (!EAW_Mode) { Arguments = Custom_Parameters; }  
 
@@ -2312,9 +2327,11 @@ namespace Xml_Axe
 
                         // Prepending
                         if (!Arguments.ToLower().StartsWith("modpath") && !Arguments.ToLower().StartsWith("steammod")) { Arguments = @"Modpath=Mods\" + Arguments; }
+                        
+                        Check_Process(Steam_Path); // Now, that we made sure Steam is running, we can launch the game 
                     }                                                                              
                 }
-
+   
                 else if (EAW_Mode) // Otherwised this button is used to launch the game
                 {                                 
                     Arguments = @"Modpath=Mods\" + Mod_Name + " Ignoreasserts"; // Auto complete Arguments from Modname
@@ -2328,16 +2345,16 @@ namespace Xml_Axe
                     if (Mod_Name.All(char.IsDigit)) // If all characters are numbers, that means we target a Workshop mod
                     {   // So argument 1 targets now the Workshop dir            
                         // Arguments = @"Modpath=..\..\..\workshop\content\32470\" + Mod_Name; 
-                        Arguments = @"Steammod=" + Mod_Name + " Ignoreasserts";
+                        Arguments = "Ignoreasserts " + @"Steammod=" + Mod_Name;
                     }
 
                     Check_Process(Steam_Path); // Now, that we made sure Steam is running, we can launch the game 
                 }
+                
 
-
-                iConsole(400, 100, "\"" + Program_Path + " " + Arguments + "\""); // Debug
-                // Execute(Command[0], Arguments); // This version would throw no error if the process can't be found                                                                                      
-                // Check_Process(Program_Path, Arguments, Affinity, Priority);              
+                Enable_Description();
+                Text_Box_Description.Text = "Launch Path:\n\n\"" + Program_Path + "\n\nLaunch Arguments:\n\n" + Arguments + "\"";                                                    
+                Check_Process(Program_Path, Arguments, Affinity, Priority);              
             }      
         }
 
@@ -2345,7 +2362,7 @@ namespace Xml_Axe
 
         public bool Check_Process(string Program_Path, string Arguments = "", bool Set_Affinity = false, bool High_Priority = false)
         {
-            string Program_Name = "";
+            string Program_Name = "";       
             try { Path.GetFileNameWithoutExtension(Program_Path); } catch {}
             Process[] The_Process = Process.GetProcessesByName(Program_Name);
 
@@ -2366,6 +2383,8 @@ namespace Xml_Axe
             }
 
 
+
+            if (Program_Path == Properties.Settings.Default.Steam_Exe_Path) { return true; }
 
             try 
             {   if (Set_Affinity | High_Priority) //Process[] The_Processes; 
