@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<Tooltips> 
+
+
+    <Open_Folder>Left click to browse for a file, 
+right click to open the selected file.</Open_Folder>   
+    
+    <Open_Backup>Left click while button is red to open parent 
+directory. Left click while green to open directory of selected backup.
+
+Right click to open Axe_Info.txt of the selected Backup.</Open_Backup>  
+  
+    <Toggle_List>Click to toggle the List of Instances
+in the selected Xml.</Toggle_List>
+    <Remove_Backup>Green means there is no Backup selected,
+that you could delete. Red means delete the selected Backup.</Remove_Backup>
+    
+    <Backup>Toggle Backup Mode</Backup>    
+    <Undo>Undo the last changes and remove the corresponding auto backup.</Undo>   
+    
+    <Search>If the parent name text box is selected, 
+browse the whole xml directory for nodes of this name.
+If attribute name text box is selected we search the selected file for an entity with that attribute value.</Search>
+    <Merge_Backups>Left click a backup (green) to merge its whole branch.
+
+Left click multiple backups while holding the shift key (red) to merge
+the selected Backups into their base backup.</Merge_Backups> 
+       
+    <Set_Attribute>Click to toggle between name of the Attribute (black) and its value (white).</Set_Attribute>
+    <Checkout>Checkout the selected Backup.
+This loads it into your working directory.
+
+If you checkout older backups it will overwrite new changes in the working directory.</Checkout>
+        
+        
+    <Percent>While in Percent Mode, Xml Axe gets the original values of the selected tag.
+And it scales them either UP or DOWN by the specified amount of %.
+                                        
+If no certain unit is selected, and no Type Filter is set, this percent balancing will be applied to all entities that have the selected tag.</Percent>
+    <Script>Toggle Script mode</Script>    
+    <Operator>Inverts from + to - and the other way around when pressed.
+You can select "True" in the drop down box to switch into bool mode, 
+or move the track bar below to get back to numbers.</Operator>
+    <Add_Backup>Create a new Backup of the current working directory.</Add_Backup>   
+    <Axe>Run Xml Axe for the settings in the text boxes.
+This asks which files should be edited and automatically creates a backup of these files before applying their changes.</Axe>
+    <Settings>Toggle settings mode</Settings>
+    <Run>Starts a program and its parameters, 
+if they are defined in the Settings. 
+
+Otherwise if in EAW mode, it will seek to lauch the mod of the selected xml.</Run>
+    <Reset>Reset all settings to their default state. 
+Caution, this will erase all custom xml tags you wrote.</Reset>
+
+
+
+</Tooltips>
+

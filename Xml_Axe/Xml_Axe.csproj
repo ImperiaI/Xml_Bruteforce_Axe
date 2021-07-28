@@ -128,6 +128,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Axe_Icon.ico" />
+    <None Include="Resources\Tooltips_English.xml" />
     <None Include="Resources\Button_Stack_Blue_Lit.png" />
     <None Include="Resources\Button_Stack_Blue.png" />
     <None Include="Resources\Button_Save.png" />

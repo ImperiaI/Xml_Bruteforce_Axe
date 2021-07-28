@@ -14,6 +14,7 @@ using System.Xml.Linq;
 
 using System.Diagnostics;
 using Microsoft.Win32;
+using System.Threading;
 using Microsoft.VisualBasic.FileIO; // For the "Deleting()" function
 using System.Security.Cryptography;
 
@@ -45,6 +46,8 @@ namespace Xml_Axe
         }
 
 
+        bool Hovering = false;
+        int Tooltip_Delay = 3; // Seconds
         int Scale_Factor = 10;
         float Min_Float_Range = 0.1F;
         float Max_Float_Range = 1.0F;
@@ -206,7 +209,15 @@ namespace Xml_Axe
             }
 
 
-   
+            if (!Directory.Exists(Program_Directory + "Localization"))
+            { Directory.CreateDirectory(Program_Directory + "Localization"); }
+
+            string Xml_Path = Program_Directory + @"Localization\Tooltips_English.xml";
+            if (!File.Exists(Xml_Path))
+            {
+                byte[] Tooltips = Properties.Resources.Tooltips_English;
+                File.WriteAllBytes(Xml_Path, Tooltips);
+            }
 
 
 
@@ -344,10 +355,13 @@ namespace Xml_Axe
 
         //===========================//
 
-        private void Enable_Description()
+        private void Description(string New_Text = "", bool In_Black = true)
         {
-            Text_Box_Description.Text = "";
+            Text_Box_Description.Text = New_Text;
             Text_Box_Description.Visible = true;
+
+            if (In_Black) { Text_Box_Description.BackColor = Color.Black; }
+            else { Text_Box_Description.BackColor = Theme_Color; }
         }
 
         //===========================// 
@@ -748,7 +762,7 @@ namespace Xml_Axe
                         Set_Checker(List_View_Selection, Color.Black);                      
                     } catch {}          
 
-                    // System.Threading.Thread.Sleep(2000);
+                    // Thread.Sleep(2000);
                     return;
                 }
 
@@ -787,7 +801,7 @@ namespace Xml_Axe
                     {   Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_File_Lit);
                         Execute(Get_Backup_Path(Selection) + Backup_Info);
                         // Visualize_Characters(File.ReadAllText(Get_Backup_Path(Selection) + Backup_Info));  // Debug
-                        System.Threading.Thread.Sleep(2000);
+                        Thread.Sleep(2000);
                         return;                      
                     }
                    
@@ -814,7 +828,7 @@ namespace Xml_Axe
                 {
                     Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_File_Lit);
                     Execute(Properties.Settings.Default.Last_File);
-                    System.Threading.Thread.Sleep(2000); // Leave some time to show the File Icon
+                    Thread.Sleep(2000); // Leave some time to show the File Icon
                     return;
                 }
 
@@ -843,6 +857,8 @@ namespace Xml_Axe
 
         private void Button_Browse_Folder_MouseHover(object sender, EventArgs e)
         {
+            Hovering = true;
+
             Temporal_C = 0;
             try { Temporal_C = Select_List_View_Items(List_View_Selection).Count; } catch {}
 
@@ -851,10 +867,19 @@ namespace Xml_Axe
             else if (UI_Mode == "Script" || UI_Mode == "Backup" && Temporal_C == 0)
             { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Red_Lit); }         
             else { Set_Resource_Button(Button_Browse_Folder, Properties.Resources.Button_Folder_Green_Lit); }
+
+          
+            if (Show_Tooltip)
+            {   string Tooltip_Name = "Open_Folder";
+                if (UI_Mode == "Backup") { Tooltip_Name = "Open_Backup"; }
+
+                Run_Tooltip(Tooltip_Name); 
+            }   
         }
 
         private void Button_Browse_Folder_MouseLeave(object sender, EventArgs e)
         {
+            Hovering = false;
             Temporal_C = 0;
             try { Temporal_C = Select_List_View_Items(List_View_Selection).Count; }  catch {}
 
@@ -958,18 +983,22 @@ namespace Xml_Axe
 
         private void Button_Start_MouseHover(object sender, EventArgs e)
         {
+            Hovering = true;
             Temporal_C = 0;
             try { Temporal_C = Select_List_View_Items(List_View_Selection).Count; } catch {}         
 
             if (UI_Mode == "Backup") 
             {   if (Temporal_C != 0) { Set_Resource_Button(Button_Start, Properties.Resources.Button_Delete_Lit); }
-                else { Set_Resource_Button(Button_Start, Properties.Resources.Button_Delete_Green_Lit); }             
+                else { Set_Resource_Button(Button_Start, Properties.Resources.Button_Delete_Green_Lit); }
+                Run_Tooltip("Remove_Backup"); 
             }
-            else { Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit); }
+            else { Set_Resource_Button(Button_Start, Properties.Resources.Button_Logs_Lit); Run_Tooltip("Toggle_List"); }
+                  
         }
 
         private void Button_Start_MouseLeave(object sender, EventArgs e)
         {
+            Hovering = false;
             Temporal_C = 0;
             try { Temporal_C = Select_List_View_Items(List_View_Selection).Count; } catch {}         
 
@@ -1172,10 +1201,10 @@ namespace Xml_Axe
 
 
         private void Button_Run_MouseHover(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Run, Properties.Resources.Button_Axe_Lit); }
+        { Hovering = true; Run_Tooltip("Axe"); Set_Resource_Button(Button_Run, Properties.Resources.Button_Axe_Lit); }
 
         private void Button_Run_MouseLeave(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Run, Properties.Resources.Button_Axe); }
+        { Hovering = false; Set_Resource_Button(Button_Run, Properties.Resources.Button_Axe); }
 
 
         public bool Verify_Setting(string The_Setting)
@@ -1237,6 +1266,56 @@ namespace Xml_Axe
 
             return "";
         }
+
+
+
+
+        public void Run_Tooltip(string Tooltip)
+        {   if (Show_Tooltip)
+            {   // Thread.Sleep(Tooltip_Delay);
+
+                DateTime Then = DateTime.Now;
+                do
+                {
+                    Application.DoEvents();
+                } while (Then.AddSeconds(Tooltip_Delay) > DateTime.Now);
+
+                if (Hovering && UI_Mode != "Script") 
+                {
+                    if (At_Top_Level && UI_Mode == "Backup") { return; }
+                    Description(Get_Tooltip(Tooltip), false); 
+                }
+            }
+        }
+
+        public string Get_Tooltip(string Tooltip)
+        {
+            string Xml_Path = Program_Directory + @"Localization\Tooltips_English.xml";
+            // iConsole(400, 200, Xml_Path); return;
+
+            IEnumerable<XElement> First_Gen = null;
+            if (Debug_Mode && !File.Exists(Xml_Path)) { iConsole(200, 100, "\nCan't find the Xml."); return ""; }
+
+      
+            try 
+            {   
+                // ===================== Opening Xml File =====================
+                XDocument Xml_File = XDocument.Load(Xml_Path, LoadOptions.PreserveWhitespace);
+
+                First_Gen =
+                  from All_Tags in Xml_File.Root.Descendants()
+                  where All_Tags.Name == Tooltip
+                  select All_Tags;
+
+
+                if (First_Gen.Any()) { return First_Gen.First().Value; }
+
+            } catch {}
+
+            return "";
+        }
+
+
 
 
         // public List <string> Load_Xml_Content(string Xml_Path)
@@ -2166,12 +2245,11 @@ namespace Xml_Axe
 
 
                 if (Show_Tooltip)
-                {   Text_Box_Description.Visible = true;
-
+                {   
                     // Special Tooltip, that describes the Settings                   
-                    Text_Box_Description.Text = "Syntax: \nType Tag_Name = Type # Comment\n" + 
+                    Description(Text_Box_Description.Text = "Syntax: \nType Tag_Name = Type # Comment\n" + 
                        "The expected variable type can be:\nbool, string or int\n" +
-                       "You can also set any number after = sign as scale factor for the scrollbar.";
+                       "You can also set any number after = sign as scale factor for the scrollbar.");
                  }
 
                 Toggle_Undo_Button(); // Hide it
@@ -2182,10 +2260,11 @@ namespace Xml_Axe
 
   
         private void Button_Toggle_Settings_MouseHover(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Toggle_Settings, Properties.Resources.Button_Settings_Lit); }
+        { Hovering = true; Run_Tooltip("Settings"); Set_Resource_Button(Button_Toggle_Settings, Properties.Resources.Button_Settings_Lit); }
 
         private void Button_Toggle_Settings_MouseLeave(object sender, EventArgs e)
         {
+            Hovering = false;
             if (Text_Box_Tags.Visible) // Use its visability as bool toggle ;)
             { Set_Resource_Button(Button_Toggle_Settings, Properties.Resources.Button_Settings_Lit); }
             else { Set_Resource_Button(Button_Toggle_Settings, Properties.Resources.Button_Settings); }    
@@ -2222,10 +2301,10 @@ namespace Xml_Axe
         }
 
         private void Button_Undo_MouseHover(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Undo_Lit); }
+        { Hovering = true; Run_Tooltip("Undo"); Set_Resource_Button(Button_Undo, Properties.Resources.Button_Undo_Lit); }
 
         private void Button_Undo_MouseLeave(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Undo, Properties.Resources.Button_Undo); }
+        { Hovering = false; Set_Resource_Button(Button_Undo, Properties.Resources.Button_Undo); }
 
 
 
@@ -2247,7 +2326,8 @@ namespace Xml_Axe
         {
             if (Text_Box_Tags.Visible)
             {
-                iDialogue(540, 200, "Do It", "Cancel", "false", "false", "\nAre you sure you wish reset the List of Tags?");
+                iDialogue(540, 220, "Do It", "Cancel", "false", "false", "\nAre you sure you wish reset settings and \nthe List of Tags?"
+                    + "\nCaution, this will remove all custom tags.");
                 if (Caution_Window.Passed_Value_A.Text_Data == "false") { return; }
 
                 Reset_Tag_List();
@@ -2361,8 +2441,7 @@ namespace Xml_Axe
                 }
                 
 
-                Enable_Description();
-                Text_Box_Description.Text = "Launch Path:\n\n\"" + Program_Path + "\n\nLaunch Arguments:\n\n" + Arguments + "\"";                                                    
+                Description("Launch Path:\n\n\"" + Program_Path + "\n\nLaunch Arguments:\n\n" + Arguments + "\"");                                                    
                 Check_Process(Program_Path, Arguments, Affinity, Priority);              
             }      
         }
@@ -2464,13 +2543,15 @@ namespace Xml_Axe
 
 
         private void Button_Reset_Blacklist_MouseHover(object sender, EventArgs e)
-        {   if (Text_Box_Tags.Visible == true)
-            { Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Refresh_Lit); }
-            else { Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller_Lit); }
+        {   Hovering = true;
+            if (Text_Box_Tags.Visible == true)
+            { Run_Tooltip("Reset"); Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Refresh_Lit); }
+            else { Run_Tooltip("Run"); Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller_Lit); }
         }
 
         private void Button_Reset_Blacklist_MouseLeave(object sender, EventArgs e)
-        {   if (Text_Box_Tags.Visible == true)
+        {   Hovering = false;
+            if (Text_Box_Tags.Visible == true)
             { Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Refresh); }
             else { Set_Resource_Button(Button_Reset_Blacklist, Properties.Resources.Button_Controller); } 
         }
@@ -2817,7 +2898,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 {   Text_Box_Description.Visible = true;
 
                     // Special Tooltip, that describes the Random Mode                   
-                    Text_Box_Description.Text = "The two entries in the value text box define the range of random values to fill into each selected xml tag while the Axe runns in Random Mode. Please watch out to not use this for tags that expect any other variable type then int.";                   
+                    Description("The two entries in the value text box define the range of random values to fill into each selected xml tag while the Axe runns in Random Mode. Please watch out to not use this for tags that expect any other variable type then int.");                   
                 }
             }
             else if (Combo_Box_Entity_Name.Text == "Insert_Random_Float")
@@ -2835,7 +2916,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                     Text_Box_Description.Visible = true;
 
                     // Special Tooltip, that describes the Random Float Mode                   
-                    Text_Box_Description.Text = "The two entries in the value text box define the range of random values to fill into each selected xml tag while the Axe runns in Random Mode. Please watch out to not use this for tags that expect any other variable type then float.";
+                    Description("The two entries in the value text box define the range of random values to fill into each selected xml tag while the Axe runns in Random Mode. Please watch out to not use this for tags that expect any other variable type then float.");
                 }
             }
             else 
@@ -3339,6 +3420,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                             if (Tag_Comment[0] == ' ') { Tag_Comment = Remove_Emptyspace_Prefix(Tag_Comment); }
 
                             Text_Box_Description.Text = Tag_Comment;
+                            Text_Box_Description.BackColor = Color.Black;
                             Text_Box_Description.Visible = true;
                         }
                         break;
@@ -3929,10 +4011,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         }
 
         private void Button_Backup_MouseHover(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Backup, Properties.Resources.Button_Clock_Lit); }
+        { Set_Resource_Button(Button_Backup, Properties.Resources.Button_Clock_Lit); Hovering = true; Run_Tooltip("Backup"); }
 
         private void Button_Backup_MouseLeave(object sender, EventArgs e)
-        {   if (UI_Mode == "Backup") { Set_Resource_Button(Button_Backup, Properties.Resources.Button_Clock_Lit); }
+        {   Hovering = false;
+            if (UI_Mode == "Backup") { Set_Resource_Button(Button_Backup, Properties.Resources.Button_Clock_Lit); }
             else { Set_Resource_Button(Button_Backup, Properties.Resources.Button_Clock); }
         }
 
@@ -3977,7 +4060,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         private void Button_Search_Click(object sender, EventArgs e)
         {
 
-            // iConsole(400, 100, "\"" + Mod_Name + "\""); return;                   
+            // iConsole(400, 100, "\"" + Hovering + "\""); return;                   
             // iConsole(500, 500, string.Join("\n", Found_Entities)); return; 
             // return;
 
@@ -4147,20 +4230,26 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         }
 
 
-
         private void Button_Search_MouseHover(object sender, EventArgs e)
-        {   if (UI_Mode == "Backup" && !At_Top_Level)
+        {
+            Hovering = true;
+            if (UI_Mode == "Backup" && !At_Top_Level)
             {   
                 if (List_View_Selection.SelectedItems.Count == 1)
                 { Set_Resource_Button(Button_Search, Properties.Resources.Button_Stack_Green_Lit); }
-                else { Set_Resource_Button(Button_Search, Properties.Resources.Button_Stack_Red_Lit); }          
+                else { Set_Resource_Button(Button_Search, Properties.Resources.Button_Stack_Red_Lit); }
+
+                Run_Tooltip("Merge_Backups");                 
             }
             
-            else { Set_Resource_Button(Button_Search, Properties.Resources.Button_Search_Lit); }
+            else 
+            { Set_Resource_Button(Button_Search, Properties.Resources.Button_Search_Lit); Run_Tooltip("Search"); }                 
         }
 
         private void Button_Search_MouseLeave(object sender, EventArgs e)
-        {   if (UI_Mode == "Backup" && !At_Top_Level)
+        {   Hovering = false;
+
+            if (UI_Mode == "Backup" && !At_Top_Level)
             {
                 if (List_View_Selection.SelectedItems.Count == 1)
                 { Set_Resource_Button(Button_Search, Properties.Resources.Button_Stack_Green); }
@@ -4284,21 +4373,25 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Button_Attribute_MouseHover(object sender, EventArgs e)
         {
-            if (UI_Mode == "Backup") { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Commits_Lit); }
+            Hovering = true;
+            if (UI_Mode == "Backup") { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Commits_Lit); Run_Tooltip("Checkout"); }
             else 
             { 
                 if (Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Yang_Lit); }
                 else if (!Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Ying_Lit); }
+
+                Run_Tooltip("Set_Attribute"); 
             }
         }
 
         private void Button_Attribute_MouseLeave(object sender, EventArgs e)
         {
+            Hovering = false;
             if (UI_Mode == "Backup") { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Commits); }
             else
             {   if (Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Yang); }
                 else if (!Ying_Dominates) { Set_Resource_Button(Button_Attribute, Properties.Resources.Button_Ying); }
-            }
+            }                              
         }
 
    
@@ -4353,9 +4446,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 {   Text_Box_Description.Visible = true;
 
                     // Special Tooltip, that describes the Percent Mode                   
-                    Text_Box_Description.Text = "While in Percent Mode, Xml Axe gets the original values of the selected tag.\n" +
-                    "And it scales them either UP or DOWN by the specified amount of %.\n\n" +
-                    "If no certain unit is selected, and no Type Filter is set, this percent balancing will be applied to all entities that posess the selected tag.";                   
+                    Description(Get_Tooltip("Percent"), false); 
                 }
             }
         }
@@ -4364,10 +4455,11 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         { return The_Text.Replace("+", "").Replace("-", "").Replace("%", ""); }
 
         private void Button_Percentage_MouseHover(object sender, EventArgs e)
-        { Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent_Lit); }
+        { Hovering = true; Run_Tooltip("Percent"); Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent_Lit); }
 
         private void Button_Percentage_MouseLeave(object sender, EventArgs e)
         {
+            Hovering = false;
             if (Operation_Mode == "Percent") { Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent_Lit); }
             else { Set_Resource_Button(Button_Percentage, Properties.Resources.Button_Percent); }
         }
@@ -4475,17 +4567,19 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
         private void Button_Scripts_MouseHover(object sender, EventArgs e)
         {
+            Hovering = true;
             if (Operation_Mode.Contains("Point") | Combo_Box_Tag_Name.Text == "Scale_Galaxies")
             {
                 if (Scale_Mode == "XY") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_XY_Lit); }
                 else if (Scale_Mode == "X") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_X_Lit); }
                 else if (Scale_Mode == "Y") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Y_Lit); }
-            }           
-            else { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash_Lit); }
+            }
+            else { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash_Lit); Run_Tooltip("Script"); }
         }
 
         private void Button_Scripts_MouseLeave(object sender, EventArgs e)
         {
+            Hovering = false;
             if (UI_Mode == "Script") { Set_Resource_Button(Button_Scripts, Properties.Resources.Button_Flash_Lit); }
             else
             {             
@@ -5261,8 +5355,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 List_View_Selection.Size = new Size(this.Size.Width - 76, 398);
                 List_View_Selection.Location = new Point(31, 194);
 
-                Text_Box_Description.Text = ""; // Clear
-                Text_Box_Description.Visible = true;
+                Description(); // Clear         
             }
             else if (List_Size == 3)
             {
@@ -5703,8 +5796,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
             else { Set_Backup_Checker(Selection); }
 
 
-  
-            Text_Box_Description.Text = ""; // Clear last entry
+            Description(); // Clear last entry
           
 
             // ========================================================
@@ -5766,7 +5858,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
 
              
                 Last_Backup_Comment = string.Join("\n", Comment);
-                Text_Box_Description.Text = Last_Backup_Comment;
+                Description(Last_Backup_Comment);
 
                 //if (Temporal_E.Count() > 0)
                 //{
@@ -6299,22 +6391,26 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
      
         private void Button_Operator_MouseHover(object sender, EventArgs e)
         {
-            if (UI_Mode == "Backup") { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Plus_Lit); }
+            Hovering = true;
+            if (UI_Mode == "Backup") { Run_Tooltip("Add_Backup"); Set_Resource_Button(Button_Operator, Properties.Resources.Button_Plus_Lit); }
 
             else if (Operation_Mode == "Bool")
             {   if (Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "True") | Match_Without_Emptyspace(Combo_Box_Tag_Value.Text, "Yes"))
                 { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool_Lit); }
                 else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Bool); }
+                Run_Tooltip("Operator");
             }
             else
             {   if (Combo_Box_Tag_Value.Text.Contains("-")) { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Plus_Lit); }
                 else { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Minus_Lit); }
+                Run_Tooltip("Operator");
             }
 
         }
 
         private void Button_Operator_MouseLeave(object sender, EventArgs e)
         {
+            Hovering = false;
             if (UI_Mode == "Backup") { Set_Resource_Button(Button_Operator, Properties.Resources.Button_Plus); }
 
             else if (Operation_Mode == "Bool")

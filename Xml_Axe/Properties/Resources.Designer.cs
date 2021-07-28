@@ -659,5 +659,15 @@ namespace Xml_Axe.Properties {
                 return ((byte[])(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] Tooltips_English {
+            get {
+                object obj = ResourceManager.GetObject("Tooltips_English", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
     }
 }
