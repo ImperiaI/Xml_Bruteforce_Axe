@@ -73,6 +73,7 @@ namespace Xml_Axe
         bool Silent_Mode = false;
         bool Debug_Mode = true;
         bool Ying_Dominates = false;
+        bool Show_Tooltip = false;
 
         string Temporal_A, Temporal_B = "";
         int Temporal_C = 0;
@@ -225,9 +226,10 @@ namespace Xml_Axe
             // Running this AFTER loading of settings so Combo_Box_Entity_Name.Text can select the last attribute that was selected before close of application.
             Load_Xml_Content(Properties.Settings.Default.Last_File, false); // Need this loaded so In_Selected_Xml(); can match true
             
-            Label_Entity_Name.Text = Queried_Attribute; 
+            Label_Entity_Name.Text = Queried_Attribute;
 
-         
+
+            if (Match_Setting("Show_Tooltip")) { Show_Tooltip = true; }
 
             if (Match_Setting("Disable_EAW_Mode"))
             {
@@ -258,18 +260,26 @@ namespace Xml_Axe
         {
             Temporal_A = Get_Setting_Value("Program_Scope");
 
-            if (!Is_Match_2(Temporal_A, "All"))
-            {
-                if (Temporal_A.ToLower().Contains("backup")) { Program_Scope = "Backups"; }
-                else if (Temporal_A.ToLower().Contains("script")) { Program_Scope = "Scripts"; }
-                else { Program_Scope = "All"; }
-            }
+           
+            if (Temporal_A.ToLower().Contains("backup")) { Program_Scope = "Backups"; }
+            else if (Temporal_A.ToLower().Contains("script")) { Program_Scope = "Scripts"; }
+            else { Program_Scope = "All"; }          
             Temporal_A = ""; // Clear
 
 
-            if (Program_Scope == "All") { Button_Backup.Visible = true; Button_Scripts.Visible = true; }
-            else if (Program_Scope == "Backups") { Button_Backup_Click(null, null); Button_Backup.Visible = false; }
-            else if (Program_Scope == "Scripts") { Button_Scripts_Click(null, null); Button_Scripts.Visible = false; }
+      
+            if (Program_Scope == "Backups") 
+            {   Button_Backup_Click(null, null); Button_Backup.Visible = false;
+                this.Text = this.Text.Replace("Bruteforce", "Backup").Replace("Script", "Backup");
+            }
+            else if (Program_Scope == "Scripts") 
+            {   Button_Scripts_Click(null, null); Button_Scripts.Visible = false;
+                this.Text = this.Text.Replace("Bruteforce", "Script").Replace("Backup", "Script");
+            }
+            else // All
+            {   Button_Backup.Visible = true; Button_Scripts.Visible = true;
+                this.Text = this.Text.Replace("Backup", "Bruteforce").Replace("Script", "Bruteforce");
+            } 
         }
 
         //-----------------------------------------------------------------------------
@@ -2155,9 +2165,8 @@ namespace Xml_Axe
                 Text_Box_Tags.Focus(); // So the user can scroll
 
 
-                if (Match_Setting("Show_Tooltip"))
-                {
-                    Text_Box_Description.Visible = true;
+                if (Show_Tooltip)
+                {   Text_Box_Description.Visible = true;
 
                     // Special Tooltip, that describes the Settings                   
                     Text_Box_Description.Text = "Syntax: \nType Tag_Name = Type # Comment\n" + 
@@ -2804,7 +2813,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Int_Distance = 10; // Reset distance between x and y value
                 Last_Value = 0;
 
-                if (Match_Setting("Show_Tooltip"))
+                if (Show_Tooltip)
                 {   Text_Box_Description.Visible = true;
 
                     // Special Tooltip, that describes the Random Mode                   
@@ -2821,7 +2830,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Float_Distance = 1F;
                 Last_Value = 0;
 
-                if (Match_Setting("Show_Tooltip"))
+                if (Show_Tooltip)
                 {
                     Text_Box_Description.Visible = true;
 
@@ -3325,7 +3334,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                         // iConsole(400, 200, Tag_Name + " + " + Tag_Comment);
 
                         if (Tag_Comment == "") { Disable_Description(); }
-                        else if (Match_Setting("Show_Tooltip"))
+                        else if (Show_Tooltip)
                         {
                             if (Tag_Comment[0] == ' ') { Tag_Comment = Remove_Emptyspace_Prefix(Tag_Comment); }
 
@@ -4340,7 +4349,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
                 Combo_Box_Tag_Value.Text = ""; // Prepare for percent input
                 Button_Scripts_MouseLeave(null, null); // Starting or exiting XY mode for Points
 
-                if (sender != null & Match_Setting("Show_Tooltip"))
+                if (sender != null && Show_Tooltip)
                 {   Text_Box_Description.Visible = true;
 
                     // Special Tooltip, that describes the Percent Mode                   
