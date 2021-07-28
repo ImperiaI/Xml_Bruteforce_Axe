@@ -301,4 +301,7 @@
   <data name="Tooltips_English" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Tooltips_English.xml;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </data>
+  <data name="Localization" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Localization.zip;System.Byte[], mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </data>
 </root>

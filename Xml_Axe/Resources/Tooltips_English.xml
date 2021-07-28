@@ -44,7 +44,7 @@ You can select "True" in the drop down box to switch into bool mode,
 or move the track bar below to get back to numbers.</Operator>
     <Add_Backup>Create a new Backup of the current working directory.</Add_Backup>   
     <Axe>Run Xml Axe for the settings in the text boxes.
-This asks which files should be edited and automatically creates a backup of these files before applying their changes.</Axe>
+A prompt asks which files should be edited and automatically creates a backup of these files before applying their changes.</Axe>
     <Settings>Toggle settings mode</Settings>
     <Run>Starts a program and its parameters, 
 if they are defined in the Settings. 

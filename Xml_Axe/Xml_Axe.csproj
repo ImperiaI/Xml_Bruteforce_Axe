@@ -112,6 +112,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Resources\Localization.zip" />
     <None Include="Resources\Scripts.zip" />
   </ItemGroup>
   <ItemGroup>

@@ -653,6 +653,16 @@ namespace Xml_Axe.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
+        internal static byte[] Localization {
+            get {
+                object obj = ResourceManager.GetObject("Localization", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
         internal static byte[] Scripts {
             get {
                 object obj = ResourceManager.GetObject("Scripts", resourceCulture);

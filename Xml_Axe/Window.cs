@@ -47,7 +47,6 @@ namespace Xml_Axe
 
 
         bool Hovering = false;
-        int Tooltip_Delay = 3; // Seconds
         int Scale_Factor = 10;
         float Min_Float_Range = 0.1F;
         float Max_Float_Range = 1.0F;
@@ -71,6 +70,7 @@ namespace Xml_Axe
         string Operation_Mode = "Int";
         string Program_Scope = "All";
         string Scale_Mode = "XY";
+        string Language = "English";
 
         bool EAW_Mode = true;
         bool Silent_Mode = false;
@@ -210,7 +210,15 @@ namespace Xml_Axe
 
 
             if (!Directory.Exists(Program_Directory + "Localization"))
-            { Directory.CreateDirectory(Program_Directory + "Localization"); }
+            {
+                byte[] Archive = Properties.Resources.Localization;
+                File.WriteAllBytes(Program_Directory + "Delete_Me_2.zip", Archive);
+
+                System.IO.Compression.ZipFile.ExtractToDirectory(Program_Directory + @"Delete_Me_2.zip", Path.GetDirectoryName(Program_Directory));      
+                Deleting(Program_Directory + "Delete_Me_2.zip");
+         
+                // Directory.CreateDirectory(Program_Directory + "Localization");
+            }
 
             string Xml_Path = Program_Directory + @"Localization\Tooltips_English.xml";
             if (!File.Exists(Xml_Path))
@@ -248,9 +256,11 @@ namespace Xml_Axe
                 Label_Type_Filter.Text = "Parent Name";
             }
 
+            Set_Language();
             Set_Program_Scope();
 
 
+       
 
             Text_Box_Original_Path.BackColor = Theme_Color;
 
@@ -264,7 +274,12 @@ namespace Xml_Axe
 
 
 
-
+        private void Set_Language()
+        {
+            Temporal_A = Get_Setting_Value("Language");
+            if (Temporal_A.ToLower().Contains("german") || Temporal_A.ToLower().Contains("deutsch")) { Language = "German"; }
+            else { Language = "English"; }
+        }
 
 
         private void Set_Program_Scope()
@@ -1267,18 +1282,20 @@ namespace Xml_Axe
             return "";
         }
 
-
-
+            
+        //===========================//
 
         public void Run_Tooltip(string Tooltip)
         {   if (Show_Tooltip)
-            {   // Thread.Sleep(Tooltip_Delay);
+            {   // Thread.Sleep(300);
 
                 DateTime Then = DateTime.Now;
                 do
                 {
                     Application.DoEvents();
-                } while (Then.AddSeconds(Tooltip_Delay) > DateTime.Now);
+                } while (Then.AddSeconds(3) > DateTime.Now && Hovering);
+                // while (Hovering) is important to break this loop as soon as the process was canceled
+
 
                 if (Hovering && UI_Mode != "Script") 
                 {
@@ -1288,17 +1305,20 @@ namespace Xml_Axe
             }
         }
 
+            
+        //===========================//
+
         public string Get_Tooltip(string Tooltip)
         {
-            string Xml_Path = Program_Directory + @"Localization\Tooltips_English.xml";
-            // iConsole(400, 200, Xml_Path); return;
+            
+            string Xml_Path = Program_Directory + @"Localization\Tooltips_" + Language + ".xml";
+            // iConsole(400, 200, Xml_Path); return "";
 
             IEnumerable<XElement> First_Gen = null;
             if (Debug_Mode && !File.Exists(Xml_Path)) { iConsole(200, 100, "\nCan't find the Xml."); return ""; }
 
       
-            try 
-            {   
+            try {   
                 // ===================== Opening Xml File =====================
                 XDocument Xml_File = XDocument.Load(Xml_Path, LoadOptions.PreserveWhitespace);
 
@@ -1315,7 +1335,7 @@ namespace Xml_Axe
             return "";
         }
 
-
+        //===========================//
 
 
         // public List <string> Load_Xml_Content(string Xml_Path)
@@ -2194,6 +2214,7 @@ namespace Xml_Axe
                 Reset_Tag_Box();
                 Reset_Root_Tag_Box();
                 Set_Program_Scope();
+                Set_Language();
 
 
                 Toggle_Undo_Button(Enable_Undo); // Show it if it was visible before
@@ -2702,6 +2723,7 @@ namespace Xml_Axe
 # Move_To_Trash = true
 # Program_Directory = %AppData%\Local\Xml_Axe\
 # Disable_EAW_Mode = false
+# Language = English
 # Program_Scope = All
 # Text_Format_Delimiter = ;
 
@@ -4060,7 +4082,7 @@ Percent Rebalance_Everything = Tactical_Health, Shield_Points, Shield_Refresh_Ra
         private void Button_Search_Click(object sender, EventArgs e)
         {
 
-            // iConsole(400, 100, "\"" + Hovering + "\""); return;                   
+            // iConsole(400, 100, "\"" + Language + "\""); return;                   
             // iConsole(500, 500, string.Join("\n", Found_Entities)); return; 
             // return;
 
